@@ -1,0 +1,81 @@
+#version 450
+
+layout (local_size_x = 16, local_size_y = 16) in; // https://www.khronos.org/opengl/wiki/Compute_Shader
+layout (binding = 0, rgba8) uniform writeonly image2D img;
+
+layout (push_constant) uniform PUSH
+{
+    float time;
+} push;
+
+layout (binding = 1) uniform UBO // https://www.reddit.com/r/vulkan/comments/9spolm/help_with_compute_shader_misaligned_write/
+{
+    vec2 complex;    // 8
+    vec2 pan;        // 8
+
+    int flags;       // 4
+    int iterations;  // 4
+    float zoom;      // 4
+
+} ubo;
+
+layout (binding = 2) uniform COLOUR
+{
+    vec4 d;
+    vec4 e;
+    vec4 f;
+    vec4 g;
+} ubo_colour;
+
+#define PI 3.1415926538
+#define TAU 2.0 * 3.1415962
+
+void main() {
+
+    const ivec2 dim = imageSize (img);
+    const vec2 uv = vec2 (gl_GlobalInvocationID.xy) / dim;
+    const float aspect = float (dim.x) / float (dim.y);
+
+    const float anim_range = 0.1;
+    const float anim_speed = 2.0;
+
+    const float anim_delta = cos (push.time * anim_speed) * anim_range;
+    const float anim_delta_r = (((ubo.flags >> 0) & 1u) > 0) ? anim_delta : 0.0;
+    const float anim_delta_c = (((ubo.flags >> 1) & 1u) > 0) ? anim_delta : 0.0;
+
+
+    vec2 point = vec2(0, 0);
+    float distance = 1e20;
+
+    int n = 0;
+    vec2 z = vec2 (
+        aspect * (gl_GlobalInvocationID.x - dim.x / 2.0) / (0.5 * ubo.zoom * dim.x) - ubo.pan.x,
+        (gl_GlobalInvocationID.y - dim.y / 2.0) / (0.5 * ubo.zoom * dim.y) - ubo.pan.y);
+
+    for (n = 0; n < ubo.iterations; n++) {
+        z = vec2 (
+            z.x * z.x - z.y * z.y + ubo.complex.x + anim_delta_r,
+            2.0 * z.x * z.y + ubo.complex.y + anim_delta_c);
+
+        float mp = length (z - point);
+
+        if (mp < distance)
+            distance = mp;
+
+        if ((z.x * z.x + z.y * z.y) > 4.0)
+            break;
+    }
+
+    const float t = float (n) / float (ubo.iterations);
+
+    // colouring
+    const vec3 d = ubo_colour.d.xyz;
+    const vec3 e = ubo_colour.e.xyz;
+    const vec3 f = ubo_colour.f.xyz;
+    const vec3 g = ubo_colour.g.xyz;
+    const vec4 colour = vec4 (d + e * cos (TAU * (f * t + g)), 1.0);
+
+    //const vec4 colour = vec4 (cos (distance), cos (distance), cos (distance), 1.0);
+
+    imageStore (img, ivec2 (gl_GlobalInvocationID.xy), colour);
+}
