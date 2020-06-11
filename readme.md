@@ -19,7 +19,6 @@
   <a href="https://github.com/sungiant/sge/issues">
     <img alt="Issues" src="https://img.shields.io/github/issues-raw/sungiant/sge.svg"/>
   </a>
-  <img alt="Size" src="https://img.shields.io/github/languages/code-size/sungiant/sge"/>
   <img alt="License" src="https://img.shields.io/github/license/sungiant/sge"/>
   <br/>
 </p>
