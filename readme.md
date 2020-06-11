@@ -75,13 +75,18 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Review codebase and simplify where needed, resolve inconsistencies.
+- [ ] CI integration.
 
 ### 0.2.0
 
+- [ ] Compute shader input/output textures to be user configurable (formats selection, depth write option).
+- [ ] User shape/model rendering support (allow amalgamation of 3D primitives into compute generated scenes).
+- [ ] User control over multiple parallel compute pipelines.
 - [ ] Multi-threaded renderer.
 
 ### 0.X.0
 
+- [ ] Runtime shader compilation via glslang runtime integration.
 - [ ] Qt host implementation.
 - [ ] Linux host implementation.
 
