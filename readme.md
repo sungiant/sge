@@ -35,7 +35,8 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [x] Cross platform desktop window management: fullscreen, resize, title, console, dpi.
 - [x] Easy to access and to hook into ImGui.
 - [x] Built in debugging overlays.
-- [x] Modular design, minimal codebase.
+- [x] Modular design.
+- [x] Minimal codebase, ~6000 lines total (including platform code).
 - [x] Almost no dependencies (OS, Vulkan, ImGui).
 
 ## Rationale
