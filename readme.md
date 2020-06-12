@@ -54,7 +54,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 | Example 04 |  |
 |:---:|:---:|
-|<a href="/examples/ex04_mandlebulb"><img src="/docs/ex04.jpg"/></a>|</a>|
+|<a href="/examples/ex04_mandlebulb"><img src="/docs/ex04.jpg" width="431px"/></a>|</a>|
 
 ## Releases
 
@@ -145,6 +145,7 @@ To build SGE and it's associated examples:
 
 * [ShaderToy](https://www.shadertoy.com)
 * [Bonzomatic](https://github.com/Gargaj/Bonzomatic)
+* [Taichi](https://github.com/taichi-dev/taichi)
 
 ## License
 
