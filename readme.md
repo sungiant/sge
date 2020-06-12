@@ -54,7 +54,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 | Example 04 |  |
 |:---:|:---:|
-|<a href="/examples/ex04_mandlebulb"><img src="/docs/ex04.jpg" width="431px"/></a>|</a>|
+|<a href="/examples/ex04_mandlebulb"><img src="/docs/ex04.jpg" width="426px"/></a>|</a>|
 
 ## Releases
 
