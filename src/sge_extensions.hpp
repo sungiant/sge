@@ -54,7 +54,7 @@ public:
                 *py = yy;
             };
 
-            char text[64];
+            char text[128];
             sprintf (text, "SGE v%s", sge_version.c_str());
             ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
 
@@ -62,6 +62,9 @@ public:
             ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
 
             sprintf (text, "Screen size: %d x %d", sge.system__get_state_int (sge::runtime::system_int_state::screenwidth), sge.system__get_state_int (sge::runtime::system_int_state::screenheight));
+            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
+
+            sprintf (text, "GPU: %s", sge.system__get_state_string (sge::runtime::system_string_state::gpu_name));
             ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
 
             //sprintf (text, "Fullscreen: %s", sge.system__get_state_bool (sge::runtime::system_bool_state::fullscreen) ? "enabled" : "disabled");

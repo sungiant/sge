@@ -150,7 +150,7 @@ void kernel::create_instance () {
     size_t sz = sizeof (MVKConfiguration);
     vkGetMoltenVKConfigurationMVK (state.instance, &config, &sz);
     config.debugMode = false;
-#if SGE_DEBUG_MODE
+#if SGE_PROFILING_MODE
     config.performanceTracking = true;
     config.performanceLoggingFrameCount = true;
 #endif
@@ -176,7 +176,15 @@ void kernel::get_physical_devices () {
 
     // get info
     for (auto physical_device : state.physical_devices) {
+        
         state.physical_device_info[physical_device] = vk::physical_device_info {};
+        
+        VkPhysicalDeviceProperties physical_device_properties = {};
+        vkGetPhysicalDeviceProperties (physical_device, &physical_device_properties);
+        
+        state.physical_device_info[physical_device].name = physical_device_properties.deviceName;
+        state.physical_device_info[physical_device].driver_version = physical_device_properties.driverVersion;
+        state.physical_device_info[physical_device].vulkan_api_version = physical_device_properties.apiVersion;
 
         uint32_t queue_family_properties_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties (physical_device, &queue_family_properties_count, nullptr);
@@ -209,12 +217,10 @@ void kernel::get_physical_devices () {
         }
 
 
-        VkPhysicalDeviceProperties p1 = {};
-        vkGetPhysicalDeviceProperties (physical_device, &p1);
 
 
-        std::cout << "vulkan api version: " << VK_VERSION_MAJOR (p1.apiVersion) << "." << VK_VERSION_MINOR (p1.apiVersion) << "." << VK_VERSION_PATCH (p1.apiVersion) << "\n";
-        std::cout << "vulkan driver version: " << VK_VERSION_MAJOR (p1.driverVersion) << "." << VK_VERSION_MINOR (p1.driverVersion) << "." << VK_VERSION_PATCH (p1.driverVersion) << "\n";
+        std::cout << "vulkan api version: " << VK_VERSION_MAJOR (physical_device_properties.apiVersion) << "." << VK_VERSION_MINOR (physical_device_properties.apiVersion) << "." << VK_VERSION_PATCH (physical_device_properties.apiVersion) << "\n";
+        std::cout << "vulkan driver version: " << VK_VERSION_MAJOR (physical_device_properties.driverVersion) << "." << VK_VERSION_MINOR (physical_device_properties.driverVersion) << "." << VK_VERSION_PATCH (physical_device_properties.driverVersion) << "\n";
 
     }
 }

@@ -31,6 +31,7 @@ enum class system_int_state {
 
 enum class system_string_state {
     title,                              // window title
+    gpu_name,
 };
 
 // the runtime api is a low level interface for interacting with SGE at runtime.

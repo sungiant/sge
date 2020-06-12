@@ -3,7 +3,6 @@
 #define TREE_NODE 0
 #define TREE_LEAF 1
 
-
 #define CSG_UNION 0
 #define CSG_INTERSECTION 1
 #define CSG_DIFFERENCE 2
@@ -12,13 +11,13 @@
 #define SDF_CUBE 1
 #define SDF_CUBOID 2
 
-const float INFINITY = 1.0 / 0.0;
-const float MINIMUM_STEP = 0.00001;
-const float TOLERANCE = 0.0001;
-const float NORM_SAMPLE = 0.001;
-const vec3 AMBIENT_COLOUR = vec3 (0.2, 0.2, 0.2);
-const vec3 SPECULAR_COLOUR = vec3 (1, 1, 1);
-const float EPISILON = 0.000001;
+#define INFINITY 1.0 / 0.0
+#define MINIMUM_STEP 0.00001
+#define TOLERANCE 0.0001
+#define NORM_SAMPLE 0.001
+#define AMBIENT_COLOUR vec3 (0.2, 0.2, 0.2)
+#define SPECULAR_COLOUR vec3 (1, 1, 1)
+#define EPISILON 0.000001
 
 //-------------------------------------------------------------------------------------------------------------------//
 
@@ -264,7 +263,7 @@ MarchResult march (Ray ray, float start, float end) {
     }
 
     // We've run out of marching steps and not found a sausage.  If a material has not been assigned assume we
-    // have hit something, as normally when we run out of iteration steps we are close to something.
+    // have not hit something - normally when we run out of iteration steps we are close to something.
     if (material == -1)
         return MarchResult (false, distanceCovered, minimumConeRatio, stepsTaken, material);
     else

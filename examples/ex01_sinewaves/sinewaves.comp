@@ -1,9 +1,5 @@
 #version 450
 
-layout (local_size_x = 16, local_size_y = 16) in;
-layout (binding = 0, rgba8) uniform writeonly image2D img;
-layout (push_constant) uniform PUSH { float time; } push;
-
 #define PI 3.1415926538
 #define TAU 2.0 * 3.1415962
 #define NUM_WAVES 3
@@ -12,6 +8,10 @@ layout (push_constant) uniform PUSH { float time; } push;
 #define AXIS_BOUND_X 1.0 // x: -1.0 to 1.0
 #define AXIS_BOUND_Y 2.0 // y: -2.0 to 2.0
 #define PERIOD 1.4
+
+layout (local_size_x = 16, local_size_y = 16) in;
+layout (binding = 0, rgba8) uniform writeonly image2D img;
+layout (push_constant) uniform PUSH { float time; } push;
 
 void main () {
     ivec2 dim = imageSize (img);

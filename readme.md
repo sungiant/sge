@@ -52,6 +52,10 @@ SGE has a minimal feature set - you could think of it as being something like [S
 |:---:|:---:|
 |<a href="/examples/ex02_juliaset"><img src="/docs/ex02.jpg"/></a>|<a href="/examples/ex03_staticsdf"><img src="/docs/ex03.jpg"/></a>|
 
+| Example 04 |  |
+|:---:|:---:|
+|<a href="/examples/ex04_mandlebulb"><img src="/docs/ex04.jpg"/></a>|</a>|
+
 ## Releases
 
 ### Current

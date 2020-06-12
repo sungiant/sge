@@ -37,6 +37,8 @@ public:
     void                                destroy                                 ();
 
     void                                append_debug_fns (std::vector<std::function<void ()>>&);
+    
+    const char*                         get_physical_device_name                () const { return primary_context().physical_device_info.name.c_str (); }
 
 
 private:

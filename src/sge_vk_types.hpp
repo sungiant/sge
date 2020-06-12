@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <string>
 
 #include <vulkan/vulkan.h>
 
@@ -32,6 +33,9 @@ struct physical_device_queue_family_info {
 };
 
 struct physical_device_info {
+    std::string name;
+    std::string driver_version;
+    std::string vulkan_api_version;
     std::vector<physical_device_queue_family_info> queue_families;
 };
 

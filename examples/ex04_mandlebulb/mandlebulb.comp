@@ -1,0 +1,145 @@
+#version 450
+
+#define PI 3.1415926538
+#define TAU 2.0 * 3.1415962
+#define EPISILON 0.000001
+
+#define MINIMUM_STEP 0.00001
+#define TOLERANCE 0.0001
+
+#define CAM_NEAR 0.01
+#define CAM_FAR 100
+#define CAM_FOV 57.5
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+bool is_zero (float f) { return (f >= -EPISILON) && (f <= EPISILON); }
+
+vec3 qtransform (vec3 vector, vec4 q) {
+  float ii = q.x * q.x; float jj = q.y * q.y; float kk = q.z * q.z;
+  float ui = q.w * q.x; float uj = q.w * q.y; float uk = q.w * q.z;
+  float ij = q.x * q.y; float ik = q.x * q.z; float jk = q.y * q.z;
+  return vec3 (
+    + vector.x - (2.0 * vector.x * (jj + kk)) + (2.0 * vector.y * (ij - uk)) + (2.0 * vector.z * (ik + uj)),
+    + vector.y + (2.0 * vector.x * (ij + uk)) - (2.0 * vector.y * (ii + kk)) + (2.0 * vector.z * (jk - ui)),
+    + vector.z + (2.0 * vector.x * (ik - uj)) + (2.0 * vector.y * (jk + ui)) - (2.0 * vector.z * (ii + jj)));
+}
+
+struct Ray { vec3 position; vec3 direction; };
+struct MarchResult { bool has_value; float distance; int stepCount; };
+
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+layout (local_size_x = 16, local_size_y = 16) in;
+layout (binding = 0, rgba8) uniform writeonly image2D img;
+
+layout (push_constant) uniform PUSH {
+    float time;
+} push;
+
+layout (binding = 1) uniform UBO {
+    // 4
+    vec3 position;
+    float gamma;
+    // 4
+    vec4 orientation;
+    // 4
+    int marching_step_limit;
+    int fractal_step_limit;
+    float anim_speed;
+    float anim_range;
+    // 4
+    vec3 d;
+    float fractal_power;
+    // 4
+    vec3 e;
+    float brightness_amount;
+    // 4
+    vec3 glow_colour;
+    float glow_amount;
+} ubo;
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+float mandlebulb_sdf (vec3 position) {
+    const float power = ubo.fractal_power + sin (push.time * ubo.anim_speed) * ubo.anim_range;
+    vec3 z = position;
+    float dr = 1.0;
+    float r = 0.0;
+    for (int i = 0; i < ubo.fractal_step_limit; i++) {
+        r = length (z);
+        if (r > 2.0) break;
+        float theta = acos (z.z / r);
+        float phi = 2.0 * atan (z.y, z.x);
+        dr = pow (r, power - 1.0) * power * dr + 1.0;
+        float zr = pow (r, power);
+        theta = theta * power;
+        phi = phi * power;
+        z = vec3 (sin (theta) * cos (phi), sin (phi) * sin (theta), cos (theta)) * zr;
+        z += position;
+    }
+    return (0.5 * log (r) * r / dr);
+}
+
+MarchResult march (Ray ray, float start, float end) {
+    float distanceCovered = start;
+    int stepsTaken = 0;
+    while (stepsTaken <= ubo.marching_step_limit) {
+        stepsTaken++;
+        float d = mandlebulb_sdf (ray.position + (ray.direction * distanceCovered));
+        float nextStepSize = max (MINIMUM_STEP, d);
+        distanceCovered += nextStepSize;
+        if (distanceCovered > end) return MarchResult (false, distanceCovered, stepsTaken);
+        if (nextStepSize < TOLERANCE) return MarchResult (true, distanceCovered, stepsTaken);
+    }
+    return MarchResult (false, distanceCovered, stepsTaken);
+}
+
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+vec4 run (vec2 uv, float aspect) {
+    const float sh = sin (radians (CAM_FOV)  / 2.0);
+    const vec3 nnw = vec3 ( CAM_NEAR * sh * aspect,  CAM_NEAR * sh, CAM_NEAR);
+    const vec3 nse = vec3 (-CAM_NEAR * sh * aspect, -CAM_NEAR * sh, CAM_NEAR);
+    const vec3 fnw = vec3 (  CAM_FAR * sh * aspect,   CAM_FAR * sh, CAM_FAR);
+    const vec3 fsw = vec3 (- CAM_FAR * sh * aspect, - CAM_FAR * sh, CAM_FAR);
+    const Ray ray = Ray (
+        ubo.position + qtransform (mix (nnw, nse, vec3 (uv, 0.0)), ubo.orientation),
+        normalize (qtransform (mix (fnw - nnw, fsw - nse, vec3 (uv, 0.0)), ubo.orientation)));
+
+    const float frustumDepth = CAM_FAR - CAM_NEAR;
+    const MarchResult marchResult = march (ray, 0.0, frustumDepth);
+    const float depth = marchResult.distance;
+
+    const vec3 sp = ray.position + (ray.direction * depth);
+
+    const float h = length (sp) / 2.0;
+    const float t = clamp (h, 0.0, 1.0);
+
+    const vec3 col = normalize (ubo.d.xyz + ubo.e.xyz * t);
+
+    if (marchResult.has_value) {
+        const float brightness = clamp ((float (marchResult.stepCount) / (float (ubo.marching_step_limit) * (1.0 - ubo.brightness_amount))), 0.0, 1.0);
+        return vec4 (col * brightness, 1);
+    }
+    else {
+        const float glow = clamp (((float (marchResult.stepCount) - 0) / (float (ubo.marching_step_limit) - 0)) * (ubo.glow_amount - 0), 0.0f, 1.0f);
+        return vec4 (ubo.glow_colour * glow, 1);
+    }
+
+    return vec4 (0);
+}
+
+void main () {
+    ivec2 dim = imageSize (img);
+    vec2 uv = vec2 (gl_GlobalInvocationID.xy) / dim; uv.y = 1.0 - uv.y;
+    const vec3 bg = vec3 (.5) * (1. - (length (uv - vec2 (0.5)) - .2));
+    const float aspect = float (dim.x) / float (dim.y);
+    const vec4 result = run (uv, aspect);
+    vec4 final = vec4 ((result.rgb * result.a) + (bg.rgb * (1.0 - result.a)), 1);
+    final = vec4 (pow (final.xyz, vec3 (1.0 / ubo.gamma)), final.w);
+    imageStore (img, ivec2 (gl_GlobalInvocationID.xy), final);
+}
+
