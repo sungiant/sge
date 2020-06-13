@@ -314,6 +314,10 @@ void compute_target::create_descriptor_set () {
     if (content.uniforms.size ()) {
         pool_sizes.emplace_back (utils::init_VkDescriptorPoolSize (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (uint32_t) content.uniforms.size ()));
     }
+    if (content.blobs.size ()) {
+        pool_sizes.emplace_back (utils::init_VkDescriptorPoolSize (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (uint32_t)content.blobs.size ()));
+    }
+
 
     auto descriptor_pool_create_info = utils::init_VkDescriptorPoolCreateInfo (pool_sizes, (uint32_t) content.uniforms.size () + 1, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
     vk_assert (vkCreateDescriptorPool (context.logical_device, &descriptor_pool_create_info, context.allocation_callbacks, &state.descriptor_pool));
@@ -346,7 +350,7 @@ void compute_target::create_descriptor_set () {
         write_descriptor_sets.emplace_back (
             utils::init_VkWriteDescriptorSet (
                 state.descriptor_set,
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                 idx++,
                 &state.blob_storage_buffers[i].descriptor, 1));
     };

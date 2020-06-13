@@ -147,7 +147,7 @@ void initialise () {
             sge::app::content::span { &ubo_settings,            sizeof (UBO_SETTINGS) },
         },
         {
-            sge::app::content::span { sbo_materials.data(),     sbo_materials.size() },
+            sge::app::content::span { sbo_materials.data(),     sbo_materials.size() * sizeof (Material) },
          //   sge::app::content::span { sbo_lights.data(),        sbo_lights.size() },
         }
     });
