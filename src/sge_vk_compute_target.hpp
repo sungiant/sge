@@ -56,6 +56,8 @@ private:
         VkSemaphore                     compute_complete;
         VkFence                         fence;
         std::vector<device_buffer>      uniform_buffers;
+        std::vector<device_buffer>      blob_staging_buffers;
+        std::vector<device_buffer>      blob_storage_buffers;
     };
 
     const context&                      context;
@@ -78,9 +80,18 @@ private:
     void                                destroy_command_buffer                  ();
     void                                record_command_buffer                   ();
     void                                run_command_buffer                      ();
+
     void                                prepare_texture_target                  (VkFormat);
+    void                                destroy_texture_target                  ();
+
     void                                prepare_uniform_buffers                 ();
     void                                update_uniform_buffer                   (int);
+    void                                destroy_uniform_buffers                 ();
+
+    void                                prepare_blob_buffers                    ();
+    void                                copy_blob_from_staging_to_storage       (int);
+    void                                update_blob_buffer                      (int, uint64_t, void*);
+    void                                destroy_blob_buffers                    ();
 
 
 };

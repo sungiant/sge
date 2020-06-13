@@ -46,7 +46,7 @@ struct device_buffer {
         descriptor.range = size;
     }
 
-    void copy_to (void* data, VkDeviceSize size) {
+    void copy (void* data, VkDeviceSize size) {
         assert (mapped);
         memcpy (mapped, data, size);
     }

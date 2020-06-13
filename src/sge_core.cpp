@@ -73,7 +73,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
     // VULKAN
     engine_state.graphics.update (
         user_response.push_constants_changed,
-        user_response.uniforms_changed,
+        user_response.uniform_changes,
         engine_state.instrumentation.frameTimer);
 
     // INSTRUMENTATION
@@ -149,7 +149,7 @@ void engine::setup (
     engine_extensions.emplace_back (std::move (up_instrumentation));
     engine_extensions.emplace_back (std::move (up_overlay));
 
-    user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size ());
+    user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
     user_api = std::make_unique<app::api> (
         *engine_api,
         // yuck

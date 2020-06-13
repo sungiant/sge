@@ -3,7 +3,8 @@ list (APPEND EXAMPLES
     ex01_sinewaves
     ex02_juliaset
     ex03_staticsdf
-    ex04_mandlebulb)
+    ex04_mandlebulb
+    ex05_dynamicsdf)
 
 foreach(PROJ IN LISTS EXAMPLES)
 

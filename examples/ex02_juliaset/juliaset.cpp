@@ -109,7 +109,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
 
     if (u != ubo) {
         ubo = u;
-        r.uniforms_changed[0] = true;
+        r.uniform_changes[0] = true;
     }
 
     if (ubo.flags != 0) { // if we are animating update the timer
@@ -141,7 +141,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 
         if (u != ubo) {
             ubo = u;
-            r.uniforms_changed[0] = true;
+            r.uniform_changes[0] = true;
         }
 
         COLOUR uc = ubo_colour;
@@ -155,7 +155,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 
         if (uc != ubo_colour) {
             ubo_colour = uc;
-            r.uniforms_changed[1] = true;
+            r.uniform_changes[1] = true;
         }
 
     }

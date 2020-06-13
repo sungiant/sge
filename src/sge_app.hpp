@@ -45,6 +45,7 @@ struct content {
     std::string shader_path;
     std::optional<span> push_constants;
     std::vector<span> uniforms;
+    std::vector<span> blobs;
 };
 
 struct api { // used by an SGE app to interact with SGE
@@ -67,8 +68,9 @@ struct api { // used by an SGE app to interact with SGE
 struct response {
     bool request_shutdown;
     bool push_constants_changed;
-    std::vector<bool> uniforms_changed;
-    response (int sz): uniforms_changed (sz) {}
+    std::vector<bool> uniform_changes;
+    std::vector<bool> blob_changes;
+    response (int usz, int bsz): uniform_changes (usz), blob_changes (bsz) {}
 };
 
 // Called by the engine at ealiest point possible - use this to allocate.

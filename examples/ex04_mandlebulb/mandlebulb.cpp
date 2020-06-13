@@ -81,7 +81,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     u.orientation = camera.orientation;
     if (u != ubo) {
         ubo = u;
-        r.uniforms_changed[0] = true;
+        r.uniform_changes[0] = true;
     }
 
     push.time = sge.instrumentation.timer();
@@ -112,7 +112,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     
     if (u != ubo) {
         ubo = u;
-        r.uniforms_changed[0] = true;
+        r.uniform_changes[0] = true;
     }
 }
 

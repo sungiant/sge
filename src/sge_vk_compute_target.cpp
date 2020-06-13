@@ -33,8 +33,9 @@ void compute_target::create () {
 }
 
 void compute_target::create_r () {
-    prepare_uniform_buffers ();
     prepare_texture_target (VK_FORMAT_R8G8B8A8_UNORM);
+    prepare_uniform_buffers ();
+    prepare_blob_buffers ();
     create_rl ();
 }
 
@@ -47,7 +48,6 @@ void compute_target::create_rl () {
 }
 
 void compute_target::destroy_rl () {
-
     destroy_command_buffer ();
     destroy_compute_pipeline ();
 
@@ -59,19 +59,13 @@ void compute_target::destroy_rl () {
 
 }
 void compute_target::destroy_r () {
-
     destroy_rl ();
-
-    state.compute_tex.destroy ();
-
-    for (int i = 0; i < content.uniforms.size (); ++i) {
-        state.uniform_buffers[i].destroy (context.allocation_callbacks);
-    }
-    state.uniform_buffers.clear ();
+    destroy_blob_buffers ();
+    destroy_uniform_buffers ();
+    destroy_texture_target ();
 
 }
 void compute_target::destroy () {
-
     destroy_r ();
 
     state.compute_tex.destroy ();
@@ -141,6 +135,68 @@ void compute_target::update_uniform_buffer (int ubo_idx) {
     state.uniform_buffers[ubo_idx].unmap ();
 }
 
+void compute_target::destroy_uniform_buffers () {
+    for (int i = 0; i < content.uniforms.size (); ++i) {
+        state.uniform_buffers[i].destroy (context.allocation_callbacks);
+    }
+    state.uniform_buffers.clear ();
+}
+
+void compute_target::copy_blob_from_staging_to_storage (int blob_idx) {
+    assert (state.blob_staging_buffers[blob_idx].size == state.blob_storage_buffers[blob_idx].size);
+    VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    VkBufferCopy copy_region = {};
+    copy_region.size = state.blob_staging_buffers[blob_idx].size;
+    vkCmdCopyBuffer (
+        copy_command,
+        state.blob_staging_buffers[blob_idx].buffer,
+        state.blob_storage_buffers[blob_idx].buffer,
+        1, &copy_region);
+    VkQueue queue = context.get_queue (identifier);
+    context.flush_command_buffer (copy_command, queue, true);
+    vkQueueWaitIdle (queue);
+}
+
+void compute_target::prepare_blob_buffers () {
+    const int num_storage_buffers = content.blobs.size ();
+    state.blob_staging_buffers.resize (num_storage_buffers);
+    state.blob_storage_buffers.resize (num_storage_buffers);
+    for (int i = 0; i < num_storage_buffers; ++i) {
+        auto& blob = content.blobs[i];
+        // copy user data into a staging buffer
+        context.create_buffer (
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &state.blob_staging_buffers[i],
+            blob.size,
+            blob.address);
+        // create an empty buffer on the gpu of the same size
+        context.create_buffer(
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            &state.blob_storage_buffers[i],
+            blob.size);
+        // copy the data from staging to gpu storage
+        copy_blob_from_staging_to_storage (i);
+    }
+}
+
+void compute_target::update_blob_buffer (int blob_idx, uint64_t size, void* data) {
+    state.blob_staging_buffers[blob_idx].map ();
+    state.blob_staging_buffers[blob_idx].copy (data, size);
+    state.blob_staging_buffers[blob_idx].unmap ();
+    copy_blob_from_staging_to_storage (blob_idx);
+}
+
+void compute_target::destroy_blob_buffers () {
+    for (int i = 0; i < state.blob_staging_buffers.size (); ++i) {
+        state.blob_storage_buffers[i].destroy (context.allocation_callbacks);
+        state.blob_staging_buffers[i].destroy (context.allocation_callbacks);
+    }
+    state.blob_storage_buffers.clear ();
+    state.blob_staging_buffers.clear ();
+}
+
 void compute_target::prepare_texture_target (VkFormat format) {
     VkFormatProperties formatProperties;
     vkGetPhysicalDeviceFormatProperties (context.physical_device, format, &formatProperties);
@@ -181,9 +237,10 @@ void compute_target::prepare_texture_target (VkFormat format) {
         VK_IMAGE_ASPECT_COLOR_BIT,
         VK_IMAGE_LAYOUT_UNDEFINED,
         state.compute_tex.image_layout);
-
-    context.flush_command_buffer (layoutCmd, context.get_queue (identifier), true);
-    vk_assert (vkQueueWaitIdle (context.get_queue (identifier)));
+    
+    VkQueue queue = context.get_queue (identifier);
+    context.flush_command_buffer (layoutCmd, queue, true);
+    vk_assert (vkQueueWaitIdle (queue));
 
     auto sampler = utils::init_VkSamplerCreateInfo ();
     sampler.magFilter = VK_FILTER_LINEAR;
@@ -214,23 +271,33 @@ void compute_target::prepare_texture_target (VkFormat format) {
     state.compute_tex.context = &context;
 }
 
+void compute_target::destroy_texture_target () {
+    state.compute_tex.destroy ();
+}
 
 void compute_target::create_descriptor_set_layout () {
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings = {
-        // Binding 0: Storage image (raytraced output)
         utils::init_VkDescriptorSetLayoutBinding (
             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
             VK_SHADER_STAGE_COMPUTE_BIT,
             0)
     };
 
+    int idx = 1;
     for (int i = 0; i < state.uniform_buffers.size (); ++i) {
-        // Binding 1: Uniform buffer block
         descriptor_set_layout_bindings.emplace_back (
             utils::init_VkDescriptorSetLayoutBinding (
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 VK_SHADER_STAGE_COMPUTE_BIT,
-                i + 1));
+                idx++));
+    }
+
+    for (int i = 0; i < state.blob_storage_buffers.size (); ++i) {
+        descriptor_set_layout_bindings.emplace_back (
+            utils::init_VkDescriptorSetLayoutBinding (
+                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                VK_SHADER_STAGE_COMPUTE_BIT,
+                idx++));
     }
 
     auto descriptor_set_layout_create_info = utils::init_VkDescriptorSetLayoutCreateInfo (descriptor_set_layout_bindings);
@@ -257,9 +324,7 @@ void compute_target::create_descriptor_set () {
     auto write_descriptor_set = utils::init_VkWriteDescriptorSet (state.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0, &state.compute_tex.descriptor, 1);
     vkUpdateDescriptorSets (context.logical_device, 1, &write_descriptor_set, 0, nullptr);
 
-    std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-    {
-        // Binding 0: Output storage image
+    std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
         utils::init_VkWriteDescriptorSet (
             state.descriptor_set,
             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
@@ -267,15 +332,23 @@ void compute_target::create_descriptor_set () {
             &state.compute_tex.descriptor, 1)
     };
 
-    for (int i = 0; i < state.uniform_buffers.size (); ++i)
-    {
-        // Binding i + 1: Uniform buffer block
+    int idx = 1;
+    for (int i = 0; i < state.uniform_buffers.size (); ++i) {
         write_descriptor_sets.emplace_back (
             utils::init_VkWriteDescriptorSet (
                 state.descriptor_set,
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                i + 1,
+                idx++,
                 &state.uniform_buffers[i].descriptor, 1));
+    };
+
+    for (int i = 0; i < state.blob_storage_buffers.size (); ++i) {
+        write_descriptor_sets.emplace_back (
+            utils::init_VkWriteDescriptorSet (
+                state.descriptor_set,
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                idx++,
+                &state.blob_storage_buffers[i].descriptor, 1));
     };
 
     vkUpdateDescriptorSets (context.logical_device, (uint32_t) write_descriptor_sets.size (), write_descriptor_sets.data (), 0, nullptr);
