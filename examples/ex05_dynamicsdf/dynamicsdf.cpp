@@ -7,6 +7,7 @@
 
 #include "../ex_common/free_camera.hpp"
 
+#define UPDATE_STORAGE_BUFFER_DELAY 0.2f
 
 enum TreeElement : uint32_t { TREE_NODE, TREE_LEAF };
 enum ShapeType : uint32_t { SDF_SPHERE, SDF_CUBE, SDF_CUBOID };
@@ -85,6 +86,8 @@ struct UBO_SETTINGS {
 
 typedef std::vector<Material> SBO_MATERIALS;
 typedef std::vector<PointLight> SBO_LIGHTS;
+typedef std::vector<Shape> SBO_SHAPES;
+typedef std::vector<Tree> SBO_TREE;
 
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
@@ -94,15 +97,16 @@ PUSH push;
 UBO_CAMERA ubo_camera;
 UBO_SETTINGS ubo_settings;
 
+std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>> local_blob_changes;
+float last_blob_update_time = 0.0f;
+
 SBO_MATERIALS sbo_materials;
+#if !TARGET_MACOSX
 SBO_LIGHTS sbo_lights;
 
-bool light_to_add = false;
-std::optional <int> light_to_delete = std::nullopt;
-
-//std::vector<Shape> scene_shapes;
-//std::vector<Tree> scene_tree;
-
+SBO_SHAPES sbo_shapes;
+SBO_TREE sbo_tree;
+#endif
 
 void initialise () {
     config = std::make_unique<sge::app::configuration> ();
@@ -133,11 +137,85 @@ void initialise () {
     sbo_materials.emplace_back (Material { persimmon, 8 });
     sbo_materials.emplace_back (Material { vermillion, 32 });
 
+#if !TARGET_MACOSX
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {6, 8, 2}, 18.0f, sge::math::vector3 {1, 0.71, 0}, 1 });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {-5.7, 1.2, 5}, 16.0f, sge::math::vector3 {0.28, 0.12, 0.40}, 1 });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {0, 0, 0}, 2.3f, sge::math::vector3 {0.32, 0.32, 0.32}, 0.7f });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {3, 3, 0}, 12.0f, sge::math::vector3 {1, 1, 1}, 1.0f });
 
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3 {0, -5.8, 0},  ShapeType::SDF_CUBE, sge::math::vector4 {10, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-3.5, 0.7, -3.5}, ShapeType::SDF_CUBE, sge::math::vector4 {3, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{2, 0.2, -4.5}, ShapeType::SDF_CUBOID, sge::math::vector4 {1, 2.4, 1, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-4, 0.2, 0}, ShapeType::SDF_CUBE, sge::math::vector4 {2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-4.5, 0.2, 2}, ShapeType::SDF_CUBOID, sge::math::vector4 {1, 2.8, 1, 0} });
+
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{0, 0, 0}, ShapeType::SDF_CUBE, sge::math::vector4 {1.9, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{0, 0, 0}, ShapeType::SDF_SPHERE, sge::math::vector4 {1.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{0, 0, 0}, ShapeType::SDF_CUBOID, sge::math::vector4 {2.2, 0.7, 0.7, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{0, 0, 0}, ShapeType::SDF_CUBOID, sge::math::vector4 {0.7, 2.2, 0.7, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{0, 0, 0}, ShapeType::SDF_CUBOID, sge::math::vector4 {0.7, 0.7, 2.2, 0} });
+
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-1.35, -0.6, 1.65}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-1.45, -0.6, 2.35}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-1.75, -0.6, 1.09}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-2.70, -0.6, 2.05}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-2.00, -0.6, 3.25}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{-3.20, -0.6, 3.60}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{2.50, -0.6, 0.40}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{2.50, -0.6, 1.40}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{1.50, -0.6, 1.40}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{2.50, -0.6, -2.85}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{1.70, -0.6, -2.15}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+    sbo_shapes.emplace_back (Shape{ sge::math::vector3{2.30, -0.6, -3.55}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
+
+
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 0u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 1u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 2u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 3u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 4u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (3u << 24) | 5u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (3u << 24) | 6u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_INTERSECTION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (3u << 24) | 7u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (3u << 24) | 8u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (3u << 24) | 9u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_DIFFERENCE });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (4u << 24) | 10u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (4u << 24) | 11u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (4u << 24) | 12u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (5u << 24) | 13u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (5u << 24) | 14u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (5u << 24) | 15u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (6u << 24) | 16u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (6u << 24) | 17u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (6u << 24) | 18u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (2u << 24) | 19u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (2u << 24) | 20u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (2u << 24) | 21u });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+    sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
+
+#endif
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "dynamicsdf.comp.spv",
@@ -148,10 +226,15 @@ void initialise () {
         },
         {
             sge::app::content::span { sbo_materials.data(),     sbo_materials.size() * sizeof (Material) },
-         //   sge::app::content::span { sbo_lights.data(),        sbo_lights.size() },
+#if !TARGET_MACOSX
+            sge::app::content::span { sbo_lights.data(),        sbo_lights.size() * sizeof (PointLight) },
+            sge::app::content::span { sbo_shapes.data (),       sbo_shapes.size () * sizeof (Shape) },
+            sge::app::content::span { sbo_tree.data (),         sbo_tree.size () * sizeof (Tree) },
+#endif
         }
     });
 
+    local_blob_changes.resize (computation->blobs.size ());
 
     push.time = 0.0f;
     push.no_change = false;
@@ -190,6 +273,18 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     if ((r.uniform_changes[0] || r.uniform_changes[1] || sge.runtime.system__did_container_just_change ()) && push.no_change) {
         push.no_change = false;
         r.push_constants_changed = true;
+    }
+
+
+
+    if (last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
+        // no need to update blobs every frames when user is just changing colours
+        push.no_change = false;
+        r.push_constants_changed = true;
+        r.blob_changes = local_blob_changes;
+        last_blob_update_time = sge.instrumentation.timer ();
+        local_blob_changes.clear ();
+        local_blob_changes.resize (computation->blobs.size ());
     }
 
 }
@@ -269,19 +364,13 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
             sprintf(&id[0], "##mat:%d-colour", i);
 
             ImGui::PushItemWidth(180.0f);
-            if (ImGui::ColorEdit3(id, &sbo_materials[i].colour.x))
-            {
-                r.blob_changes[0] = true;
-            }
+            if (ImGui::ColorEdit3 (id, &sbo_materials[i].colour.x)) { local_blob_changes[0] = std::monostate{}; }
             ImGui::PopItemWidth();
 
             ImGui::NextColumn();
             ImGui::PushItemWidth(-1);
             sprintf(&id[0], "##mat:%d-shininess", i);
-            if (ImGui::SliderFloat(id, &(sbo_materials[i].shininess), 0.0f, 256.0f))
-            {
-                r.blob_changes[0] = true;
-            }
+            if (ImGui::SliderFloat(id, &(sbo_materials[i].shininess), 0.0f, 256.0f)) { local_blob_changes[0] = std::monostate{};  }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
         }
@@ -320,32 +409,34 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 
             sprintf(&id[0], "##light:%d-pos", i);
             ImGui::PushItemWidth(220.0f);
-            if (ImGui::SliderFloat3(id, &sbo_lights[i].position.x, -20.0f, 20.0f)) { r.blob_changes[1] = true; }
+            if (ImGui::SliderFloat3(id, &sbo_lights[i].position.x, -20.0f, 20.0f)) { local_blob_changes[1] = std::monostate{}; }
             ImGui::PopItemWidth();
 
             ImGui::NextColumn();
 
             ImGui::PushItemWidth(180.0f);
-            if (ImGui::ColorEdit3(id, &sbo_lights[i].colour.x)) { r.blob_changes[1] = true; }
+            if (ImGui::ColorEdit3(id, &sbo_lights[i].colour.x)) { local_blob_changes[1] = std::monostate{}; }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
 
             sprintf(&id[0], "##light:%d-range", i);
             ImGui::PushItemWidth(-1);
-            if (ImGui::SliderFloat(id, &sbo_lights[i].range, 0.5f, 50.0f)) { r.blob_changes[1] = true; }
+            if (ImGui::SliderFloat(id, &sbo_lights[i].range, 0.5f, 50.0f)) { local_blob_changes[1] = std::monostate{}; }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
 
             sprintf(&id[0], "##light:%d-casts", i);
             ImGui::PushItemWidth(-1);
-            if (ImGui::SliderFloat(id, &sbo_lights[i].shadow_factor, 0.0f, 1.0f)) { r.blob_changes[1] = true; }
+            if (ImGui::SliderFloat(id, &sbo_lights[i].shadow_factor, 0.0f, 1.0f)) { local_blob_changes[1] = std::monostate{}; }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
 
             if (sbo_lights.size() > 1) {
                 sprintf(&id[0], "Delete:%d", i);
                 if (ImGui::Button(id)) {
-                    light_to_delete = i;
+                    //light_to_delete = i;
+                    sbo_lights.erase (sbo_lights.begin () + i);
+                    local_blob_changes[1] = sge::app::response::span{ sbo_lights.data (), sbo_lights.size() * sizeof (PointLight), };
                 }
             }
             ImGui::NextColumn();
@@ -353,7 +444,9 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         }
 
         if (ImGui::Button("Add light")) {
-            light_to_add = true;
+            //light_to_add = true;
+            sbo_lights.emplace_back (PointLight{ sge::math::vector3 {0, 5, 5}, 18.0f, sge::math::vector3 {0.5, 0.21, 0.9}, 0 });
+            local_blob_changes[1] = sge::app::response::span{ sbo_lights.data (), sbo_lights.size () * sizeof (PointLight), };
         }
     }
     ImGui::End();

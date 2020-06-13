@@ -141,12 +141,26 @@ layout (binding = 3) buffer Materials
 {
     Material sbo_materials[];
 };
-/*
+
+
+#if !TARGET_MACOSX
+
 layout (binding = 4) buffer Lights
 {
     PointLight sbo_lights[];
 };
-*/
+
+layout (binding = 5) buffer Shapes
+{
+    Shape sbo_scene_shapes[];
+};
+
+layout (binding = 6) buffer Tree
+{
+    SceneTreeElement sbo_scene_tree[];
+};
+
+#else
 
 PointLight[] sbo_lights = {
     PointLight (vec3 (6, 8, 2), 18.0f, vec3 (1.0, 0.71, 0.0), 1.0),
@@ -155,10 +169,85 @@ PointLight[] sbo_lights = {
     PointLight (vec3 (3, 3, 0), 12.0f, vec3 (1, 1, 1), 1.0f),
 };
 
+#endif
+#if !TARGET_MACOSX
+Z sdf_m (vec3 position) {
+    Z HACK[16];
+
+    for (int i = 0; i < HACK.length(); ++i)
+    {
+        HACK[i] = Z (INFINITY, 0);
+    }
+
+    int numCachedResults = 0;
+
+    for (int i = 0; i < sbo_scene_tree.length(); ++i)
+    {
+        if (sbo_scene_tree[i].type == TREE_LEAF)
+        {
+            int idx = sbo_scene_tree[i].data & 0xfff;
+            int material = (sbo_scene_tree[i].data >> 24) & 0xf;
+
+            if (sbo_scene_shapes[idx].type == SDF_SPHERE) {
+                vec3 offset = sbo_scene_shapes[idx].position;
+                float radius = sbo_scene_shapes[idx].data.x;
+                HACK[numCachedResults].d = sdf_sphere (position, offset, radius);
+                HACK[numCachedResults].m = material;
+                numCachedResults++;
+                continue;
+            }
+
+            if (sbo_scene_shapes[idx].type == SDF_CUBE) {
+                vec3 offset = sbo_scene_shapes[idx].position;
+                float size = sbo_scene_shapes[idx].data.x;
+                HACK[numCachedResults].d = sdf_cube (position, offset, size);
+                HACK[numCachedResults].m = material;
+                numCachedResults++;
+                continue;
+            }
+
+            if (sbo_scene_shapes[idx].type == SDF_CUBOID) {
+                vec3 offset = sbo_scene_shapes[idx].position;
+                vec3 size = sbo_scene_shapes[idx].data.xyz;
+                HACK[numCachedResults].d = sdf_cuboid (position, offset, size);
+                HACK[numCachedResults].m = material;
+                numCachedResults++;
+                continue;
+            }
+        }
+
+        if (sbo_scene_tree[i].type == TREE_NODE)
+        {
+            int op = sbo_scene_tree[i].data;
+
+            if (op == CSG_UNION) {
+                HACK[numCachedResults - 2] = sdf_union_m (HACK[numCachedResults - 2], HACK[numCachedResults - 1]);
+                numCachedResults -= 1;
+                continue;
+            }
+
+            if (op == CSG_INTERSECTION) {
+                HACK[numCachedResults - 2] = sdf_intersection_m (HACK[numCachedResults - 2], HACK[numCachedResults - 1]);
+                numCachedResults -= 1;
+                continue;
+            }
+
+            if (op == CSG_DIFFERENCE) {
+                HACK[numCachedResults - 2] = sdf_difference_m (HACK[numCachedResults - 2], HACK[numCachedResults - 1]);
+                numCachedResults -= 1;
+                continue;
+            }
+        }
+    }
+
+    return HACK[0];
+}
+
+#else
 Z sdf_m (vec3 position) {
     Z ground = Z (sdf_cube (position, vec3 (0.0, -5.8, 0.0), 10.0), 1);
 
-    Z boxes = 
+    Z boxes =
         sdf_union_m (
             Z (sdf_cube (position, vec3 (-3.5, 0.7, -3.5), 3.0), 1),
             sdf_union_m (
@@ -209,6 +298,7 @@ Z sdf_m (vec3 position) {
     return sdf_union_m (sdf_union_m (sdf_union_m (boxes, ground), debris), shape);
 }
 
+#endif
 
 //-------------------------------------------------------------------------------------------------------------------//
 
@@ -464,7 +554,7 @@ vec4 run(vec2 uv) {
         vec3 c = lighting * aoMultiplier * softShadowMultiplier;
         c = pow (c.xyz, vec3 (1.0 / ubo_settings.gamma)); // gamma correction.
         return vec4 (c, 1);
-        
+
     }
 
     return vec4 (0); // not a sausage

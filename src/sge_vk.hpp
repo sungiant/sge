@@ -12,6 +12,7 @@
 #include "sge_vk_compute_target.hpp"
 #include "sge_vk_fullscreen_render.hpp"
 #include "sge_vk_imgui.hpp"
+#include "sge_app.hpp"
 
 namespace sge::vk {
     struct vk {
@@ -27,10 +28,10 @@ namespace sge::vk {
 #elif TARGET_MACOSX
         void create (void*, int, int);
 #endif
-        
+
         void create_systems (std::vector<std::function<void ()>>&);
         void destroy ();
-        void update (bool&, std::vector<bool>&, float);
+        void update (bool&, std::vector<bool>&, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>&, float);
     };
 
 };

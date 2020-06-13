@@ -29,18 +29,18 @@ public:
 
     compute_target (const struct context&, const struct queue_identifier&, const class presentation&, const struct sge::app::content&);
     ~compute_target () {};
-    
+
     void                                create                                  ();
     void                                destroy                                 ();
     void                                recreate                                ();
     void                                refresh                                 ();
     void                                enqueue                                 ();
-    void                                update                                  (bool&, std::vector<bool>&);
+    void                                update                                  (bool&, std::vector<bool>&, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>&);
 
     void                                append_pre_render_submissions           (std::vector<VkSemaphore>&, std::vector<VkPipelineStageFlags>&);
 
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
-
+    void                                end_of_frame ();
 private:
 
     struct state {
@@ -58,6 +58,12 @@ private:
         std::vector<device_buffer>      uniform_buffers;
         std::vector<device_buffer>      blob_staging_buffers;
         std::vector<device_buffer>      blob_storage_buffers;
+
+        struct span { void* address; size_t size; };
+        std::vector <span>              blob_reference;
+
+        struct sbo_to_update { int idx; uint64_t sz; void* addr; };
+        std::vector<sbo_to_update>      todo;
     };
 
     const context&                      context;
@@ -89,8 +95,10 @@ private:
     void                                destroy_uniform_buffers                 ();
 
     void                                prepare_blob_buffers                    ();
+    void                                prepare_blob_buffer                     (int, uint64_t, void*);
     void                                copy_blob_from_staging_to_storage       (int);
     void                                update_blob_buffer                      (int, uint64_t, void*);
+    void                                destroy_blob_buffer                     (int);
     void                                destroy_blob_buffers                    ();
 
 

@@ -94,11 +94,11 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
     submit (command_buffer, queue, wait_on, stageFlags, sx);
 }
 
-void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, float dt) {
+void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>& sbo_flags, float dt) {
 
 	bool refresh = false;
 
-    compute_target->update (push_flag, ubo_flags);
+    compute_target->update (push_flag, ubo_flags, sbo_flags);
     compute_target->enqueue ();
 
 	auto image_index_opt = presentation->next_image ();
@@ -179,6 +179,9 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, float dt) {
         compute_target->recreate ();
 		fullscreen_render->refresh ();
 		imgui->refresh ();
+    }
+    else {
+        compute_target->end_of_frame ();
     }
 }
 

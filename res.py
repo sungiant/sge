@@ -7,14 +7,17 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 
 def compile_shader (file):
     print ("compile shader: " + file)
-    subprocess.call (['glslangvalidator', '--target-env', 'vulkan1.0', '-V', file, '-o', file + '.spv'])
 
     if os.name == 'nt':
         dest = script_dir + '/projects/'
+        target_macro = 'TARGET_WIN32=1'
     elif os.name == 'posix':
         dest = script_dir + '/projects/Debug/'
+        target_macro = 'TARGET_MACOSX=1'
     else:
         raise NotImplementedError
+
+    subprocess.call (['glslangvalidator', '--define-macro', target_macro, '--target-env', 'vulkan1.0', '-V', file, '-o', file + '.spv'])
 
     os.makedirs (dest, exist_ok = True)
 

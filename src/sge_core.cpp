@@ -74,6 +74,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
     engine_state.graphics.update (
         user_response.push_constants_changed,
         user_response.uniform_changes,
+        user_response.blob_changes,
         engine_state.instrumentation.frameTimer);
 
     // INSTRUMENTATION

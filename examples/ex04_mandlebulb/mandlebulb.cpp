@@ -50,9 +50,10 @@ free_camera camera;
 void initialise () {
     config = std::make_unique<sge::app::configuration> ();
     config->app_name = "mandlebulb";
-    config->app_width = 640;
-    config->app_height = 480;
+    config->app_width = 1280;
+    config->app_height = 720;
     config->enable_console = true;
+    config->ignore_os_dpi_scaling = true;
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "mandlebulb.comp.spv",

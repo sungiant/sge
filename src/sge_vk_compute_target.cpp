@@ -13,6 +13,24 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
     , content (z_content)
 {}
 
+void compute_target::end_of_frame () {
+
+    if (state.todo.size () > 0) {
+
+        destroy_rl ();
+
+        for (int i = 0; i < state.todo.size (); ++i) {
+
+            destroy_blob_buffer (state.todo[i].idx);
+            prepare_blob_buffer (state.todo[i].idx, state.todo[i].sz, state.todo[i].addr);
+
+        }
+        state.todo.clear ();
+
+        create_rl ();
+    }
+}
+
 void compute_target::recreate () {
     destroy_r ();
     create_r ();
@@ -98,7 +116,7 @@ void compute_target::append_pre_render_submissions (std::vector<VkSemaphore>& wa
     stage_flags.emplace_back (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 }
 
-void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags) {
+void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>& sbo_flags) {
 
     if (push_flag) {
         record_command_buffer ();
@@ -109,6 +127,21 @@ void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags) {
         if (ubo_flags[i]) {
             update_uniform_buffer (i);
             ubo_flags[i] = false;
+        }
+    }
+
+    for (int i = 0; i < content.blobs.size (); ++i) {
+        if (sbo_flags[i].has_value ()) {
+
+            sge::app::response::span* sp = std::get_if<sge::app::response::span> (&sbo_flags[i].value ());
+
+            if (sp) {
+                state.todo.emplace_back (state::sbo_to_update{i, sp->size, sp->address });
+            }
+            else {
+                update_blob_buffer (i, state.blob_reference[i].size, state.blob_reference[i].address); //wrong size
+            }
+            sbo_flags[i].reset ();
         }
     }
 }
@@ -161,24 +194,32 @@ void compute_target::prepare_blob_buffers () {
     const int num_storage_buffers = content.blobs.size ();
     state.blob_staging_buffers.resize (num_storage_buffers);
     state.blob_storage_buffers.resize (num_storage_buffers);
+    state.blob_reference.resize (num_storage_buffers);
     for (int i = 0; i < num_storage_buffers; ++i) {
         auto& blob = content.blobs[i];
-        // copy user data into a staging buffer
-        context.create_buffer (
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &state.blob_staging_buffers[i],
-            blob.size,
-            blob.address);
-        // create an empty buffer on the gpu of the same size
-        context.create_buffer(
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &state.blob_storage_buffers[i],
-            blob.size);
-        // copy the data from staging to gpu storage
-        copy_blob_from_staging_to_storage (i);
+        prepare_blob_buffer (i, blob.size, blob.address);
     }
+}
+
+void compute_target::prepare_blob_buffer (int blob_idx, uint64_t size, void* data) {
+
+    state.blob_reference[blob_idx].address = data;
+    state.blob_reference[blob_idx].size = size;
+    // copy user data into a staging buffer
+    context.create_buffer (
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &state.blob_staging_buffers[blob_idx],
+        size,
+        data);
+    // create an empty buffer on the gpu of the same size
+    context.create_buffer (
+        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        &state.blob_storage_buffers[blob_idx],
+        size);
+    // copy the data from staging to gpu storage
+    copy_blob_from_staging_to_storage (blob_idx);
 }
 
 void compute_target::update_blob_buffer (int blob_idx, uint64_t size, void* data) {
@@ -188,10 +229,15 @@ void compute_target::update_blob_buffer (int blob_idx, uint64_t size, void* data
     copy_blob_from_staging_to_storage (blob_idx);
 }
 
+void compute_target::destroy_blob_buffer (int blob_idx) {
+    state.blob_storage_buffers[blob_idx].destroy (context.allocation_callbacks);
+    state.blob_staging_buffers[blob_idx].destroy (context.allocation_callbacks);
+}
+
+
 void compute_target::destroy_blob_buffers () {
     for (int i = 0; i < state.blob_staging_buffers.size (); ++i) {
-        state.blob_storage_buffers[i].destroy (context.allocation_callbacks);
-        state.blob_staging_buffers[i].destroy (context.allocation_callbacks);
+        destroy_blob_buffer (i);
     }
     state.blob_storage_buffers.clear ();
     state.blob_staging_buffers.clear ();
@@ -237,7 +283,7 @@ void compute_target::prepare_texture_target (VkFormat format) {
         VK_IMAGE_ASPECT_COLOR_BIT,
         VK_IMAGE_LAYOUT_UNDEFINED,
         state.compute_tex.image_layout);
-    
+
     VkQueue queue = context.get_queue (identifier);
     context.flush_command_buffer (layoutCmd, queue, true);
     vk_assert (vkQueueWaitIdle (queue));

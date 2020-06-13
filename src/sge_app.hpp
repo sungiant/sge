@@ -66,10 +66,11 @@ struct api { // used by an SGE app to interact with SGE
 
 // TODO: Replace - see notes in sge_runtime.hpp
 struct response {
+    struct span { void* address; size_t size; };
     bool request_shutdown;
     bool push_constants_changed;
     std::vector<bool> uniform_changes;
-    std::vector<bool> blob_changes;
+    std::vector<std::optional<std::variant<std::monostate, span>>> blob_changes;
     response (int usz, int bsz): uniform_changes (usz), blob_changes (bsz) {}
 };
 
