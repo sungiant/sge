@@ -293,9 +293,15 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         r.push_constants_changed = true;
     }
 
-
-
-    if (last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
+    bool has_change = false;
+    
+    for (auto& x : local_blob_changes) {
+        if (x.has_value()) {
+            has_change = true;
+            break;
+        }
+    }
+    if (has_change && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
         // no need to update blobs every frames when user is just changing colours
         push.no_change = false;
         r.push_constants_changed = true;
