@@ -5,7 +5,7 @@
 #define USE_SBO_LIGHTS 0
 #define USE_SBO_SCENE 0
 #else
-#define USE_SBO_MATERIAL 1
+#define USE_SBO_MATERIALS 1
 #define USE_SBO_LIGHTS 1
 #define USE_SBO_SCENE 1
 #endif
@@ -18,10 +18,10 @@
     #define SBO_LIGHTS_BINDING 3
 #endif
 
-#if (USE_SBO_MATERIALS == 1 && USE_SBO_LIGHTS == 1)
+#if ((USE_SBO_MATERIALS == 1) && (USE_SBO_LIGHTS == 1))
     #define SBO_SHAPES_BINDING 5
     #define SBO_TREE_BINDING 6
-#elif (USE_SBO_MATERIALS == 1 || USE_SBO_LIGHTS == 1)
+#elif ((USE_SBO_MATERIALS == 1) || (USE_SBO_LIGHTS == 1))
     #define SBO_SHAPES_BINDING 4
     #define SBO_TREE_BINDING 5
 #else
@@ -168,7 +168,7 @@ layout (binding = 2) uniform UBO_SETTINGS
 
 #if (USE_SBO_MATERIALS == 1)
 
-layout (binding = 3) buffer Materials
+layout (binding = SBO_MATERIALS_BINDING) buffer Materials
 {
     Material sbo_materials[];
 };

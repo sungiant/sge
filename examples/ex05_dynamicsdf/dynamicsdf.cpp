@@ -149,14 +149,14 @@ void initialise () {
     sbo_materials.emplace_back (Material { persimmon, 8 });
     sbo_materials.emplace_back (Material { vermillion, 32 });
 #endif
-    
+
 #if (USE_SBO_LIGHTS == 1)
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {6, 8, 2}, 18.0f, sge::math::vector3 {1, 0.71, 0}, 1 });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {-5.7, 1.2, 5}, 16.0f, sge::math::vector3 {0.28, 0.12, 0.40}, 1 });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {0, 0, 0}, 2.3f, sge::math::vector3 {0.32, 0.32, 0.32}, 0.7f });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {3, 3, 0}, 12.0f, sge::math::vector3 {1, 1, 1}, 1.0f });
 #endif
-    
+
 #if (USE_SBO_SCENE == 1)
     sbo_shapes.emplace_back (Shape{ sge::math::vector3 {0, -5.8, 0},  ShapeType::SDF_CUBE, sge::math::vector4 {10, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{-3.5, 0.7, -3.5}, ShapeType::SDF_CUBE, sge::math::vector4 {3, 0, 0, 0} });
@@ -359,7 +359,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 
     // ---------------------------------
 #if (USE_SBO_MATERIALS == 1)
-    ImGui::Begin("Material editor");   
+    ImGui::Begin("Material editor");
     {
         ImGui::Columns(3);
         ImGui::SetColumnWidth(0, 40.0f);
