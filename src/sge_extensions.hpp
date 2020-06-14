@@ -49,33 +49,25 @@ public:
             int y = 20;
             int* py = &y;
             const int line_spacing = 14;
-            std::function<void ()> next_line = [py]() {
+            const std::function<void ()> next_line = [py]() {
                 int yy = *py + line_spacing;
                 *py = yy;
             };
 
-            char text[128];
+            char text[64];
             sprintf (text, "SGE v%s", sge_version.c_str());
-            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
+            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text);
+            next_line ();
 
-            sprintf (text, "%d FPS", sge.timer__get_fps ());
-            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
+            sprintf (text, "%d FPS @ %dx%d",
+                sge.timer__get_fps (),
+                sge.system__get_state_int (sge::runtime::system_int_state::screenwidth),
+                sge.system__get_state_int (sge::runtime::system_int_state::screenheight));
+            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text);
+            next_line ();
 
-            sprintf (text, "Screen size: %d x %d", sge.system__get_state_int (sge::runtime::system_int_state::screenwidth), sge.system__get_state_int (sge::runtime::system_int_state::screenheight));
-            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
-
-            sprintf (text, "GPU: %s", sge.system__get_state_string (sge::runtime::system_string_state::gpu_name));
-            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
-
-            //sprintf (text, "Fullscreen: %s", sge.system__get_state_bool (sge::runtime::system_bool_state::fullscreen) ? "enabled" : "disabled");
-            //ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
-
-            //sprintf (text, "Window title: %s", sge.system__get_state_string (sge::runtime::system_string_state::title));
-            //ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
-
-            //sprintf (text, "Did container just change: %s", sge.system__did_container_just_change () ? "true" : "false");
-            //ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text); next_line ();
-
+            ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), sge.system__get_state_string (sge::runtime::system_string_state::gpu_name));
+            next_line ();
         }
         ImGui::End ();
 
