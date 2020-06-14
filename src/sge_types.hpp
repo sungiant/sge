@@ -11,6 +11,8 @@
 #include <variant>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+#include <optional>
 
 #include "sge_math.hpp"
 
@@ -22,6 +24,12 @@ struct dataspan {
     bool operator == (const dataspan& s) const { return address == s.address && size == s.size; }
     bool operator != (const dataspan& s) const { return !(*this == s); }
 };
+
+template <typename T>
+bool contains_value (std::vector<std::optional<T>> xs)
+{
+    return std::find_if (xs.begin (), xs.end (), [](std::optional<T> x) { return x.has_value ();  }) != xs.end ();
+}
 
 enum class input_control_identifier {
     // keyboard binary controls (virtual)

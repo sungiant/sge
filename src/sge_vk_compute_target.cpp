@@ -16,15 +16,7 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
 void compute_target::end_of_frame () {
     const int num_blobs = content.blobs.size ();
 
-    bool change_needed = false;
-    for (int i = 0; i < num_blobs; ++i) {
-        if (state.pending_blob_changes[i].has_value ()) {
-            change_needed = true;
-            break;
-        }
-    }
-
-    if (change_needed) {
+    if (contains_value (state.pending_blob_changes)) {
 
         destroy_rl ();
 
@@ -41,7 +33,6 @@ void compute_target::end_of_frame () {
 
     state.pending_blob_changes.clear ();
     state.pending_blob_changes.resize (num_blobs);
-
 }
 
 void compute_target::recreate () {

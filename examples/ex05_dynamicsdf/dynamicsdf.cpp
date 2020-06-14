@@ -298,13 +298,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         r.push_constants_changed = true;
     }
 
-    bool blob_update_needed = false;
-    for (auto& x : blobs_changed) {
-        if (x.has_value ()) {
-            blob_update_needed = true;
-            break;
-        }
-    }
+    const bool blob_update_needed = std::find_if (blobs_changed.begin (), blobs_changed.end (), [](std::optional<sge::dataspan> x) { return x.has_value ();  }) != blobs_changed.end ();
 
     if (blob_update_needed && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
         // no need to update blobs every frames when user is just changing colours
@@ -314,7 +308,6 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         last_blob_update_time = sge.instrumentation.timer ();
         blobs_changed.clear ();
         blobs_changed.resize (computation->blobs.size ());
-        blob_update_needed = false;
     }
 
 }
