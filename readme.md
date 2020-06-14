@@ -72,7 +72,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 ### 0.1.0 - Remaining tasks
 
 - [ ] Intelligent Vulkan queue selection.
-- [ ] Configurable storage buffers.
+- [x] Configurable storage buffers.
 - [ ] API stabilisation - `sge::runtime` to be independent from `sge::core`.
 - [ ] OSX gamepad rewrite.
 - [ ] Improve and make configurable SGE built-in ImGui windows.
