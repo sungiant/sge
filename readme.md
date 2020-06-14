@@ -45,7 +45,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 ## Examples
 
-<table style="width:100%">
+<table>
   <tr>
     <td><a href="/examples/ex00_vanilla"><img src="/docs/ex00.jpg" width="420px"/></a></td>
     <td><a href="/examples/ex01_sinewaves"><img src="/docs/ex01.jpg" width="420px"/></a></td>

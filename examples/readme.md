@@ -2,11 +2,11 @@
 
 | Example 00 | Example 01 |
 |:---:|:---:|
-|<a href="/ex00_vanilla"><img src="/docs/ex00.jpg"/></a>|<a href="/ex01_sinewaves"><img src="/docs/ex01.jpg"/></a>|
+|<a href="/ex00_vanilla"><img src="/docs/ex00.jpg" width="420px"/></a>|<a href="/ex01_sinewaves"><img src="/docs/ex01.jpg" width="420px"/></a>|
 
 | Example 02 | Example 03 |
 |:---:|:---:|
-|<a href="/ex02_juliaset"><img src="/docs/ex02.jpg"/></a>|<a href="/ex03_staticsdf"><img src="/docs/ex03.jpg"/></a>|
+|<a href="/ex02_juliaset"><img src="/docs/ex02.jpg" width="420px"/></a>|<a href="/ex03_staticsdf"><img src="/docs/ex03.jpg" width="420px"/></a>|
 
 | Example 04 | Example 05 |
 |:---:|:---:|
