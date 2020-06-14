@@ -1,5 +1,34 @@
 #version 450
 
+#ifdef TARGET_MACOSX
+#define USE_SBO_MATERIALS 1
+#define USE_SBO_LIGHTS 0
+#define USE_SBO_SCENE 0
+#else
+#define USE_SBO_MATERIAL 1
+#define USE_SBO_LIGHTS 1
+#define USE_SBO_SCENE 1
+#endif
+
+#define SBO_MATERIALS_BINDING 3
+
+#if (USE_SBO_MATERIALS == 1)
+    #define SBO_LIGHTS_BINDING 4
+#else
+    #define SBO_LIGHTS_BINDING 3
+#endif
+
+#if (USE_SBO_MATERIALS == 1 && USE_SBO_LIGHTS == 1)
+    #define SBO_SHAPES_BINDING 5
+    #define SBO_TREE_BINDING 6
+#elif (USE_SBO_MATERIALS == 1 || USE_SBO_LIGHTS == 1)
+    #define SBO_SHAPES_BINDING 4
+    #define SBO_TREE_BINDING 5
+#else
+    #define SBO_SHAPES_BINDING 3
+    #define SBO_TREE_BINDING 4
+#endif
+
 #define TREE_NODE 0
 #define TREE_LEAF 1
 
@@ -137,27 +166,42 @@ layout (binding = 2) uniform UBO_SETTINGS
 
 } ubo_settings;
 
+#if (USE_SBO_MATERIALS == 1)
+
 layout (binding = 3) buffer Materials
 {
     Material sbo_materials[];
 };
 
+#else
 
-#if !TARGET_MACOSX
+vec3 white      = vec3 (1.00, 1.00, 1.00);
+vec3 black      = vec3 (0.00, 0.00, 0.00);
+vec3 magenta    = vec3 (1.00, 0.00, 1.00);
+vec3 coolBlack  = vec3 (0.00, 0.18, 0.39);
+vec3 warmBlack  = vec3 (0.00, 0.26, 0.26);
+vec3 persimmon  = vec3 (0.93, 0.35, 0.00);
+vec3 vermillion = vec3 (0.35, 0.10, 0.08);
+vec3 jade       = vec3 (0.00, 0.66, 0.42);
 
-layout (binding = 4) buffer Lights
+Material[] sbo_materials = {
+    Material (magenta, 0),
+    Material (warmBlack, 1),
+    Material (coolBlack, 10.0),
+    Material (jade, 2.0),
+    Material (persimmon, 30.0),
+    Material (persimmon, 10.0),
+    Material (vermillion, 20.0),
+};
+
+#endif
+
+
+#if (USE_SBO_LIGHTS == 1)
+
+layout (binding = SBO_LIGHTS_BINDING) buffer Lights
 {
     PointLight sbo_lights[];
-};
-
-layout (binding = 5) buffer Shapes
-{
-    Shape sbo_scene_shapes[];
-};
-
-layout (binding = 6) buffer Tree
-{
-    SceneTreeElement sbo_scene_tree[];
 };
 
 #else
@@ -170,7 +214,20 @@ PointLight[] sbo_lights = {
 };
 
 #endif
-#if !TARGET_MACOSX
+
+
+#if (USE_SBO_SCENE == 1)
+
+layout (binding = SBO_SHAPES_BINDING) buffer Shapes
+{
+    Shape sbo_scene_shapes[];
+};
+
+layout (binding = SBO_TREE_BINDING) buffer Tree
+{
+    SceneTreeElement sbo_scene_tree[];
+};
+
 Z sdf_m (vec3 position) {
     Z HACK[16];
 

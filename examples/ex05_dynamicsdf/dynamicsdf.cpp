@@ -7,25 +7,17 @@
 
 #include "../ex_common/free_camera.hpp"
 
+#ifdef TARGET_MACOSX
+#define USE_SBO_MATERIALS 1
+#define USE_SBO_LIGHTS 0
+#define USE_SBO_SCENE 0
+#else
+#define USE_SBO_MATERIALS 1
+#define USE_SBO_LIGHTS 1
+#define USE_SBO_SCENE 1
+#endif
+
 #define UPDATE_STORAGE_BUFFER_DELAY 0.2f
-
-enum TreeElement : uint32_t { TREE_NODE, TREE_LEAF };
-enum ShapeType : uint32_t { SDF_SPHERE, SDF_CUBE, SDF_CUBOID };
-enum CSG_OP : uint32_t { CSG_UNION, CSG_INTERSECTION, CSG_DIFFERENCE };
-
-struct Material { sge::math::vector3 colour; float shininess; };
-
-struct PointLight {
-    sge::math::vector3 position;
-    float range; // for now linear fall off over range
-    sge::math::vector3 colour;
-    float shadow_factor;
-};
-
-struct Shape { sge::math::vector3 position; uint32_t type; sge::math::vector4 data; };
-
-struct Tree { uint32_t type; uint32_t data; };
-
 
 struct PUSH {
     float time;
@@ -84,10 +76,8 @@ struct UBO_SETTINGS {
     bool operator != (const UBO_SETTINGS& ubo) const { return !(*this == ubo); }
 };
 
-typedef std::vector<Material> SBO_MATERIALS;
-typedef std::vector<PointLight> SBO_LIGHTS;
-typedef std::vector<Shape> SBO_SHAPES;
-typedef std::vector<Tree> SBO_TREE;
+
+
 
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
@@ -100,10 +90,32 @@ UBO_SETTINGS ubo_settings;
 std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>> local_blob_changes;
 float last_blob_update_time = 0.0f;
 
-SBO_MATERIALS sbo_materials;
-#if !TARGET_MACOSX
-SBO_LIGHTS sbo_lights;
 
+#if (USE_SBO_MATERIALS == 1)
+struct Material { sge::math::vector3 colour; float shininess; };
+typedef std::vector<Material> SBO_MATERIALS;
+SBO_MATERIALS sbo_materials;
+#endif
+
+#if (USE_SBO_LIGHTS == 1)
+struct PointLight {
+    sge::math::vector3 position;
+    float range; // for now linear fall off over range
+    sge::math::vector3 colour;
+    float shadow_factor;
+};
+typedef std::vector<PointLight> SBO_LIGHTS;
+SBO_LIGHTS sbo_lights;
+#endif
+
+#if (USE_SBO_SCENE == 1)
+enum TreeElement : uint32_t { TREE_NODE, TREE_LEAF };
+enum ShapeType : uint32_t { SDF_SPHERE, SDF_CUBE, SDF_CUBOID };
+enum CSG_OP : uint32_t { CSG_UNION, CSG_INTERSECTION, CSG_DIFFERENCE };
+struct Shape { sge::math::vector3 position; uint32_t type; sge::math::vector4 data; };
+struct Tree { uint32_t type; uint32_t data; };
+typedef std::vector<Shape> SBO_SHAPES;
+typedef std::vector<Tree> SBO_TREE;
 SBO_SHAPES sbo_shapes;
 SBO_TREE sbo_tree;
 #endif
@@ -119,7 +131,7 @@ void initialise () {
     ubo_camera.aspect = (float)config->app_width / (float)config->app_height;
     ubo_settings.iterations = 64;
     ubo_settings.display_mode = 0;
-
+#if (USE_SBO_MATERIALS == 1)
     const auto white        = sge::math::vector3 { 1.00, 1.00, 1.00 };
     const auto black        = sge::math::vector3 { 0.00, 0.00, 0.00 };
     const auto magenta      = sge::math::vector3 { 1.00, 0.00, 1.00 };
@@ -136,13 +148,16 @@ void initialise () {
     sbo_materials.emplace_back (Material { persimmon, 128 });
     sbo_materials.emplace_back (Material { persimmon, 8 });
     sbo_materials.emplace_back (Material { vermillion, 32 });
-
-#if !TARGET_MACOSX
+#endif
+    
+#if (USE_SBO_LIGHTS == 1)
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {6, 8, 2}, 18.0f, sge::math::vector3 {1, 0.71, 0}, 1 });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {-5.7, 1.2, 5}, 16.0f, sge::math::vector3 {0.28, 0.12, 0.40}, 1 });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {0, 0, 0}, 2.3f, sge::math::vector3 {0.32, 0.32, 0.32}, 0.7f });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {3, 3, 0}, 12.0f, sge::math::vector3 {1, 1, 1}, 1.0f });
-
+#endif
+    
+#if (USE_SBO_SCENE == 1)
     sbo_shapes.emplace_back (Shape{ sge::math::vector3 {0, -5.8, 0},  ShapeType::SDF_CUBE, sge::math::vector4 {10, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{-3.5, 0.7, -3.5}, ShapeType::SDF_CUBE, sge::math::vector4 {3, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{2, 0.2, -4.5}, ShapeType::SDF_CUBOID, sge::math::vector4 {1, 2.4, 1, 0} });
@@ -167,7 +182,6 @@ void initialise () {
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{2.50, -0.6, -2.85}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{1.70, -0.6, -2.15}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{2.30, -0.6, -3.55}, ShapeType::SDF_SPHERE, sge::math::vector4 {0.2, 0, 0, 0} });
-
 
     sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 0u });
     sbo_tree.emplace_back (Tree{ TreeElement::TREE_LEAF, (1u << 24) | 1u });
@@ -225,9 +239,13 @@ void initialise () {
             sge::app::content::span { &ubo_settings,            sizeof (UBO_SETTINGS) },
         },
         {
+#if (USE_SBO_MATERIALS == 1)
             sge::app::content::span { sbo_materials.data(),     sbo_materials.size() * sizeof (Material) },
-#if !TARGET_MACOSX
+#endif
+#if (USE_SBO_LIGHTS == 1)
             sge::app::content::span { sbo_lights.data(),        sbo_lights.size() * sizeof (PointLight) },
+#endif
+#if (USE_SBO_SCENE == 1)
             sge::app::content::span { sbo_shapes.data (),       sbo_shapes.size () * sizeof (Shape) },
             sge::app::content::span { sbo_tree.data (),         sbo_tree.size () * sizeof (Tree) },
 #endif
@@ -340,6 +358,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     ImGui::End();
 
     // ---------------------------------
+#if (USE_SBO_MATERIALS == 1)
     ImGui::Begin("Material editor");   
     {
         ImGui::Columns(3);
@@ -350,7 +369,6 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         ImGui::NextColumn();
         ImGui::Text("Shininess");
         ImGui::NextColumn();
-
 
         for (int i = 0; i < sbo_materials.size(); ++i)
         {
@@ -376,8 +394,10 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         }
     }
     ImGui::End();
+#endif
 
     // ---------------------------------
+#if (USE_SBO_LIGHTS == 1)
     ImGui::Begin("Lighting Editor");
     {
         ImGui::Columns(6);
@@ -450,6 +470,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         }
     }
     ImGui::End();
+#endif
 
 }
 
