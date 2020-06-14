@@ -87,7 +87,7 @@ PUSH push;
 UBO_CAMERA ubo_camera;
 UBO_SETTINGS ubo_settings;
 
-std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>> local_blob_changes;
+std::vector<std::optional<sge::dataspan>> blobs_changed;
 float last_blob_update_time = 0.0f;
 
 
@@ -95,6 +95,7 @@ float last_blob_update_time = 0.0f;
 struct Material { sge::math::vector3 colour; float shininess; };
 typedef std::vector<Material> SBO_MATERIALS;
 SBO_MATERIALS sbo_materials;
+sge::dataspan current_materials_dataspan () { return sge::dataspan{ sbo_materials.data (), sbo_materials.size () * sizeof (Material) }; }
 #endif
 
 #if (USE_SBO_LIGHTS == 1)
@@ -106,6 +107,7 @@ struct PointLight {
 };
 typedef std::vector<PointLight> SBO_LIGHTS;
 SBO_LIGHTS sbo_lights;
+sge::dataspan current_lights_dataspan () { return sge::dataspan{ sbo_lights.data (), sbo_lights.size () * sizeof (PointLight) }; }
 #endif
 
 #if (USE_SBO_SCENE == 1)
@@ -118,6 +120,8 @@ typedef std::vector<Shape> SBO_SHAPES;
 typedef std::vector<Tree> SBO_TREE;
 SBO_SHAPES sbo_shapes;
 SBO_TREE sbo_tree;
+sge::dataspan current_shapes_dataspan () { return sge::dataspan{ sbo_shapes.data (), sbo_shapes.size () * sizeof (Shape) }; }
+sge::dataspan current_tree_dataspan () { return sge::dataspan{ sbo_tree.data (), sbo_tree.size () * sizeof (Tree) }; }
 #endif
 
 void initialise () {
@@ -233,26 +237,26 @@ void initialise () {
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "dynamicsdf.comp.spv",
-        std::optional<sge::app::content::span> ({ &push, sizeof (PUSH) }),
+        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {
-            sge::app::content::span { &ubo_camera,              sizeof (UBO_CAMERA) },
-            sge::app::content::span { &ubo_settings,            sizeof (UBO_SETTINGS) },
+            sge::dataspan { &ubo_camera,              sizeof (UBO_CAMERA) },
+            sge::dataspan { &ubo_settings,            sizeof (UBO_SETTINGS) },
         },
         {
 #if (USE_SBO_MATERIALS == 1)
-            sge::app::content::span { sbo_materials.data(),     sbo_materials.size() * sizeof (Material) },
+            current_materials_dataspan (),
 #endif
 #if (USE_SBO_LIGHTS == 1)
-            sge::app::content::span { sbo_lights.data(),        sbo_lights.size() * sizeof (PointLight) },
+            current_lights_dataspan (),
 #endif
 #if (USE_SBO_SCENE == 1)
-            sge::app::content::span { sbo_shapes.data (),       sbo_shapes.size () * sizeof (Shape) },
-            sge::app::content::span { sbo_tree.data (),         sbo_tree.size () * sizeof (Tree) },
+            current_shapes_dataspan (),
+            current_tree_dataspan (),
 #endif
         }
     });
 
-    local_blob_changes.resize (computation->blobs.size ());
+    blobs_changed.resize (computation->blobs.size ());
 
     push.time = 0.0f;
     push.no_change = false;
@@ -260,6 +264,7 @@ void initialise () {
 
 void terminate () { config.reset (); }
 
+bool has_local_blob_change = false;
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
@@ -293,22 +298,23 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         r.push_constants_changed = true;
     }
 
-    bool has_change = false;
-    
-    for (auto& x : local_blob_changes) {
-        if (x.has_value()) {
-            has_change = true;
+    bool blob_update_needed = false;
+    for (auto& x : blobs_changed) {
+        if (x.has_value ()) {
+            blob_update_needed = true;
             break;
         }
     }
-    if (has_change && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
+
+    if (blob_update_needed && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
         // no need to update blobs every frames when user is just changing colours
         push.no_change = false;
         r.push_constants_changed = true;
-        r.blob_changes = local_blob_changes;
+        r.blob_changes = blobs_changed;
         last_blob_update_time = sge.instrumentation.timer ();
-        local_blob_changes.clear ();
-        local_blob_changes.resize (computation->blobs.size ());
+        blobs_changed.clear ();
+        blobs_changed.resize (computation->blobs.size ());
+        blob_update_needed = false;
     }
 
 }
@@ -384,17 +390,16 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
             ImGui::Text(id);
             ImGui::NextColumn();
 
-            //ImGui::ColorButton("Colour", c);
             sprintf(&id[0], "##mat:%d-colour", i);
 
             ImGui::PushItemWidth(180.0f);
-            if (ImGui::ColorEdit3 (id, &sbo_materials[i].colour.x)) { local_blob_changes[0] = std::monostate{}; }
+            if (ImGui::ColorEdit3 (id, &sbo_materials[i].colour.x)) { blobs_changed[0] = current_materials_dataspan (); }
             ImGui::PopItemWidth();
 
             ImGui::NextColumn();
             ImGui::PushItemWidth(-1);
             sprintf(&id[0], "##mat:%d-shininess", i);
-            if (ImGui::SliderFloat(id, &(sbo_materials[i].shininess), 0.0f, 256.0f)) { local_blob_changes[0] = std::monostate{};  }
+            if (ImGui::SliderFloat(id, &(sbo_materials[i].shininess), 0.0f, 256.0f)) { blobs_changed[0] = current_materials_dataspan ();  }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
         }
@@ -435,34 +440,33 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 
             sprintf(&id[0], "##light:%d-pos", i);
             ImGui::PushItemWidth(220.0f);
-            if (ImGui::SliderFloat3(id, &sbo_lights[i].position.x, -20.0f, 20.0f)) { local_blob_changes[1] = std::monostate{}; }
+            if (ImGui::SliderFloat3(id, &sbo_lights[i].position.x, -20.0f, 20.0f)) { blobs_changed[1] = current_lights_dataspan (); }
             ImGui::PopItemWidth();
 
             ImGui::NextColumn();
 
             ImGui::PushItemWidth(180.0f);
-            if (ImGui::ColorEdit3(id, &sbo_lights[i].colour.x)) { local_blob_changes[1] = std::monostate{}; }
+            if (ImGui::ColorEdit3(id, &sbo_lights[i].colour.x)) { blobs_changed[1] = current_lights_dataspan (); }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
 
             sprintf(&id[0], "##light:%d-range", i);
             ImGui::PushItemWidth(-1);
-            if (ImGui::SliderFloat(id, &sbo_lights[i].range, 0.5f, 50.0f)) { local_blob_changes[1] = std::monostate{}; }
+            if (ImGui::SliderFloat(id, &sbo_lights[i].range, 0.5f, 50.0f)) { blobs_changed[1] = current_lights_dataspan (); }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
 
             sprintf(&id[0], "##light:%d-casts", i);
             ImGui::PushItemWidth(-1);
-            if (ImGui::SliderFloat(id, &sbo_lights[i].shadow_factor, 0.0f, 1.0f)) { local_blob_changes[1] = std::monostate{}; }
+            if (ImGui::SliderFloat(id, &sbo_lights[i].shadow_factor, 0.0f, 1.0f)) { blobs_changed[1] = current_lights_dataspan (); }
             ImGui::PopItemWidth();
             ImGui::NextColumn();
 
             if (sbo_lights.size() > 1) {
                 sprintf(&id[0], "Delete:%d", i);
                 if (ImGui::Button(id)) {
-                    //light_to_delete = i;
                     sbo_lights.erase (sbo_lights.begin () + i);
-                    local_blob_changes[1] = sge::app::response::span{ sbo_lights.data (), sbo_lights.size() * sizeof (PointLight), };
+                    blobs_changed[1] = current_lights_dataspan ();
                 }
             }
             ImGui::NextColumn();
@@ -470,9 +474,8 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         }
 
         if (ImGui::Button("Add light")) {
-            //light_to_add = true;
             sbo_lights.emplace_back (PointLight{ sge::math::vector3 {0, 5, 5}, 18.0f, sge::math::vector3 {0.5, 0.21, 0.9}, 0 });
-            local_blob_changes[1] = sge::app::response::span{ sbo_lights.data (), sbo_lights.size () * sizeof (PointLight), };
+            blobs_changed[1] = current_lights_dataspan ();
         }
     }
     ImGui::End();

@@ -84,10 +84,10 @@ void initialise () {
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "staticsdf.comp.spv",
-        std::optional<sge::app::content::span> ({ &push, sizeof (PUSH) }),
+        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {
-            sge::app::content::span { &ubo_camera, sizeof (UBO_CAMERA) },
-            sge::app::content::span { &ubo_settings, sizeof (UBO_SETTINGS) },
+            sge::dataspan { &ubo_camera, sizeof (UBO_CAMERA) },
+            sge::dataspan { &ubo_settings, sizeof (UBO_SETTINGS) },
         }
     });
 

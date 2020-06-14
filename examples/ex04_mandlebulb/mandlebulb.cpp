@@ -57,12 +57,12 @@ void initialise () {
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "mandlebulb.comp.spv",
-        std::optional<sge::app::content::span> ({ &push, sizeof (PUSH) }),
+        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {
-            sge::app::content::span { &ubo, sizeof (UBO) },
+            sge::dataspan { &ubo, sizeof (UBO) },
         }
     });
-    
+
     camera.position = { 0.62f, 0.53f, -2.65f };
     camera.orientation = { 0.09f, -0.10f, -0.01f, 0.99f };
 }
@@ -110,7 +110,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         ImGui::ColorEdit3("glow colour", &u.glow_colour.x);
     }
     ImGui::End();
-    
+
     if (u != ubo) {
         ubo = u;
         r.uniform_changes[0] = true;

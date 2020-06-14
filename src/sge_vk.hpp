@@ -31,7 +31,7 @@ namespace sge::vk {
 
         void create_systems (std::vector<std::function<void ()>>&);
         void destroy ();
-        void update (bool&, std::vector<bool>&, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>&, float);
+        void update (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&, float);
     };
 
 };

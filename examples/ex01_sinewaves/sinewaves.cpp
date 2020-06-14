@@ -21,7 +21,7 @@ void initialise () {
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "sinewaves.comp.spv",
-        std::optional<sge::app::content::span> ({ &push, sizeof (PUSH) }),
+        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {}
     });
 }
@@ -29,7 +29,7 @@ void initialise () {
 void terminate () { config.reset (); }
 
 void update (sge::app::response& r, const sge::app::api& sge) {
-    
+
     if (sge.input.keyboard.key_just_pressed (sge::input::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
     if (sge.input.keyboard.key_just_pressed (sge::input::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
     if (sge.input.keyboard.key_just_pressed (sge::input::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }

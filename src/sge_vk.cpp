@@ -94,7 +94,7 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
     submit (command_buffer, queue, wait_on, stageFlags, sx);
 }
 
-void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>& sbo_flags, float dt) {
+void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags, float dt) {
 
 	bool refresh = false;
 

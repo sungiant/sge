@@ -41,11 +41,10 @@ struct configuration {
 // Where the output format is currently fixed in the engine to be rgba8 - more flexibility
 // to be added in due course, i.e. optional depth buffer output and alternative formats.
 struct content {
-    struct span { void* address; size_t size; };
     std::string shader_path;
-    std::optional<span> push_constants;
-    std::vector<span> uniforms;
-    std::vector<span> blobs;
+    std::optional<dataspan> push_constants;
+    std::vector<dataspan> uniforms;
+    std::vector<dataspan> blobs; // todo: change to pair<dataspan, size_t> and make it possible to know the maximum size a blob could be over the full course of the app so we can allocate it on the gpu upfront.  right now when the user changes blob size at runtime the whole sbo is deallocated and reallocated to accomodate.
 };
 
 struct api { // used by an SGE app to interact with SGE
@@ -66,11 +65,10 @@ struct api { // used by an SGE app to interact with SGE
 
 // TODO: Replace - see notes in sge_runtime.hpp
 struct response {
-    struct span { void* address; size_t size; };
     bool request_shutdown;
     bool push_constants_changed;
     std::vector<bool> uniform_changes;
-    std::vector<std::optional<std::variant<std::monostate, span>>> blob_changes;
+    std::vector<std::optional<dataspan>> blob_changes;
     response (int usz, int bsz): uniform_changes (usz), blob_changes (bsz) {}
 };
 

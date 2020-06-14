@@ -50,10 +50,10 @@ void initialise () {
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "juliaset.comp.spv",
-        std::optional<sge::app::content::span> ({ &push, sizeof (PUSH) }),
+        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {
-            sge::app::content::span { &ubo, sizeof (UBO) },
-            sge::app::content::span { &ubo_colour, sizeof (COLOUR) }
+            sge::dataspan { &ubo, sizeof (UBO) },
+            sge::dataspan { &ubo_colour, sizeof (COLOUR) }
         }
     });
 }
@@ -128,7 +128,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 
         bool animate_imaginary = (u.flags >> 1) & 1u;
         if (ImGui::RadioButton("Animate imaginary", animate_imaginary)) { u.flags ^= (1u << 1); }
-        
+
         ImGui::SliderFloat("Real component", &u.complex.x, -2.0f, 2.0f);
         ImGui::SliderFloat("Imaginary component", &u.complex.y, -2.0f, 2.0f);
 

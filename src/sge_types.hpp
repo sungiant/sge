@@ -15,6 +15,14 @@
 #include "sge_math.hpp"
 
 namespace sge {
+
+struct dataspan {
+    void* address;
+    size_t size;
+    bool operator == (const dataspan& s) const { return address == s.address && size == s.size; }
+    bool operator != (const dataspan& s) const { return !(*this == s); }
+};
+
 enum class input_control_identifier {
     // keyboard binary controls (virtual)
     kb_escape, kb_enter, kb_spacebar, kb_shift, kb_control, kb_alt, kb_backspace, kb_tab,                                                                           // Control

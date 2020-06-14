@@ -14,21 +14,34 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
 {}
 
 void compute_target::end_of_frame () {
+    const int num_blobs = content.blobs.size ();
 
-    if (state.todo.size () > 0) {
+    bool change_needed = false;
+    for (int i = 0; i < num_blobs; ++i) {
+        if (state.pending_blob_changes[i].has_value ()) {
+            change_needed = true;
+            break;
+        }
+    }
+
+    if (change_needed) {
 
         destroy_rl ();
 
-        for (int i = 0; i < state.todo.size (); ++i) {
-
-            destroy_blob_buffer (state.todo[i].idx);
-            prepare_blob_buffer (state.todo[i].idx, state.todo[i].sz, state.todo[i].addr);
-
+        for (int i = 0; i < num_blobs; ++i) {
+            if (state.pending_blob_changes[i].has_value ()) {
+                dataspan& data = state.pending_blob_changes[i].value ();
+                destroy_blob_buffer (i);
+                prepare_blob_buffer (i, data);
+            }
         }
-        state.todo.clear ();
 
         create_rl ();
     }
+
+    state.pending_blob_changes.clear ();
+    state.pending_blob_changes.resize (num_blobs);
+
 }
 
 void compute_target::recreate () {
@@ -116,7 +129,7 @@ void compute_target::append_pre_render_submissions (std::vector<VkSemaphore>& wa
     stage_flags.emplace_back (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 }
 
-void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>& sbo_flags) {
+void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {
 
     if (push_flag) {
         record_command_buffer ();
@@ -133,13 +146,13 @@ void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std:
     for (int i = 0; i < content.blobs.size (); ++i) {
         if (sbo_flags[i].has_value ()) {
 
-            sge::app::response::span* sp = std::get_if<sge::app::response::span> (&sbo_flags[i].value ());
+            dataspan& ds = sbo_flags[i].value ();
 
-            if (sp) {
-                state.todo.emplace_back (state::sbo_to_update{i, sp->size, sp->address });
+            if (ds == state.latest_blob_infos[i]) {
+                update_blob_buffer (i, ds);
             }
             else {
-                update_blob_buffer (i, state.blob_reference[i].size, state.blob_reference[i].address); //wrong size
+                state.pending_blob_changes[i] = ds;
             }
             sbo_flags[i].reset ();
         }
@@ -194,37 +207,38 @@ void compute_target::prepare_blob_buffers () {
     const int num_storage_buffers = content.blobs.size ();
     state.blob_staging_buffers.resize (num_storage_buffers);
     state.blob_storage_buffers.resize (num_storage_buffers);
-    state.blob_reference.resize (num_storage_buffers);
+    state.latest_blob_infos.resize (num_storage_buffers);
+    state.pending_blob_changes.resize (num_storage_buffers);
     for (int i = 0; i < num_storage_buffers; ++i) {
         auto& blob = content.blobs[i];
-        prepare_blob_buffer (i, blob.size, blob.address);
+        prepare_blob_buffer (i, blob);
     }
 }
 
-void compute_target::prepare_blob_buffer (int blob_idx, uint64_t size, void* data) {
+void compute_target::prepare_blob_buffer (int blob_idx, dataspan data) {
 
-    state.blob_reference[blob_idx].address = data;
-    state.blob_reference[blob_idx].size = size;
+    state.latest_blob_infos[blob_idx].address = data.address;
+    state.latest_blob_infos[blob_idx].size = data.size;
     // copy user data into a staging buffer
     context.create_buffer (
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         &state.blob_staging_buffers[blob_idx],
-        size,
-        data);
+        data.size,
+        data.address);
     // create an empty buffer on the gpu of the same size
     context.create_buffer (
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         &state.blob_storage_buffers[blob_idx],
-        size);
+        data.size);
     // copy the data from staging to gpu storage
     copy_blob_from_staging_to_storage (blob_idx);
 }
 
-void compute_target::update_blob_buffer (int blob_idx, uint64_t size, void* data) {
+void compute_target::update_blob_buffer (int blob_idx, dataspan data) {
     state.blob_staging_buffers[blob_idx].map ();
-    state.blob_staging_buffers[blob_idx].copy (data, size);
+    state.blob_staging_buffers[blob_idx].copy (data.address, data.size);
     state.blob_staging_buffers[blob_idx].unmap ();
     copy_blob_from_staging_to_storage (blob_idx);
 }

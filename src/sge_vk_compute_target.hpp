@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <functional>
+#include <optional>
 
 #include <vulkan/vulkan.h>
 
@@ -35,7 +36,7 @@ public:
     void                                recreate                                ();
     void                                refresh                                 ();
     void                                enqueue                                 ();
-    void                                update                                  (bool&, std::vector<bool>&, std::vector<std::optional<std::variant<std::monostate, sge::app::response::span>>>&);
+    void                                update                                  (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&);
 
     void                                append_pre_render_submissions           (std::vector<VkSemaphore>&, std::vector<VkPipelineStageFlags>&);
 
@@ -58,12 +59,9 @@ private:
         std::vector<device_buffer>      uniform_buffers;
         std::vector<device_buffer>      blob_staging_buffers;
         std::vector<device_buffer>      blob_storage_buffers;
+        std::vector<dataspan>           latest_blob_infos; // keep track of sizes needed for user storage blobs as these can change at runtime.
 
-        struct span { void* address; size_t size; };
-        std::vector <span>              blob_reference;
-
-        struct sbo_to_update { int idx; uint64_t sz; void* addr; };
-        std::vector<sbo_to_update>      todo;
+        std::vector<std::optional<dataspan>> pending_blob_changes;
     };
 
     const context&                      context;
@@ -95,9 +93,9 @@ private:
     void                                destroy_uniform_buffers                 ();
 
     void                                prepare_blob_buffers                    ();
-    void                                prepare_blob_buffer                     (int, uint64_t, void*);
+    void                                prepare_blob_buffer                     (int, dataspan);
     void                                copy_blob_from_staging_to_storage       (int);
-    void                                update_blob_buffer                      (int, uint64_t, void*);
+    void                                update_blob_buffer                      (int, dataspan);
     void                                destroy_blob_buffer                     (int);
     void                                destroy_blob_buffers                    ();
 

@@ -38,10 +38,10 @@ std::unique_ptr<sge::app::content> computation;
 
 void initialise () {
     config = std::make_unique<sge::app::configuration> ();
-    
+
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "vanilla.comp.spv",
-        std::optional<sge::app::content::span>(),
+        std::optional<sge::dataspan>(),
         {}
     });
 }
@@ -49,7 +49,7 @@ void initialise () {
 void terminate () { config.reset (); }
 
 namespace sge::app { // HOOK UP TO SGE
-    
+
 void               initialise          ()                              { ::initialise (); }
 configuration&     get_configuration   ()                              { return *::config; }
 content&           get_content         ()                              { return *::computation; }
