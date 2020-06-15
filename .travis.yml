@@ -13,6 +13,7 @@ before_script:
   - chmod +x vulkansdk/1.2.141.0/setup-env.sh
 script:
   - export VULKAN_SDK=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0/x86_64
+  - export VULKAN_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0/
   - echo $VULKAN_SDK
   - python3 gen.py
   - cd projects; ls -lah; make
