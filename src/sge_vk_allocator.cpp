@@ -10,9 +10,7 @@
 #define aligned_alloc _aligned_malloc
 #define aligned_realloc _aligned_realloc
 #define aligned_free _aligned_free
-#endif
-
-#if TARGET_MACOSX
+#elif TARGET_MACOSX || TARGET_LINUX
 void aligned_free (void *memblock)
 {
     if (!memblock) return;
