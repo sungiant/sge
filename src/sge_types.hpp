@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 #include "sge_math.hpp"
 

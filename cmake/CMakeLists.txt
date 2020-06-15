@@ -58,7 +58,7 @@ elseif (G_DEV_ENV STREQUAL DARWIN)
     add_definitions (-DVK_USE_PLATFORM_MACOS_MVK)
     set (CMAKE_CXX_STANDARD 17)
 elseif (G_DEV_ENV STREQUAL LINUX)
-    add_definitions (-DVK_USE_PLATFORM_WAYLAND_KHR)
+    add_definitions (-DVK_USE_PLATFORM_XCB_KHR)
     set (CMAKE_CXX_STANDARD 17)
 endif ()
 
