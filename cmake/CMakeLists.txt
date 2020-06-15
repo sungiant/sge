@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.10.2)
 
 project (bootstrap)
 
@@ -67,6 +67,11 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message (STATUS "$VULKAN_SDK: " $ENV{VULKAN_SDK})
 message (STATUS "$VK_SDK_PATH: " $ENV{VK_SDK_PATH})
+
+if (G_DEV_ENV STREQUAL LINUX)
+    include ($ENV{VULKAN_SDK}/samples/FindVulkan.cmake)
+endif ()
+
 find_package (vulkan REQUIRED)
 
 message (STATUS ">> Vulkan_FOUND:    ${Vulkan_FOUND}")
