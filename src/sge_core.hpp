@@ -67,6 +67,7 @@ struct platform_state {
     HWND hwnd;
 #elif TARGET_MACOSX
     void* view;
+#elif TARGET_LINUX
 #else
 #error
 #endif
@@ -138,6 +139,7 @@ public:
         HWND
 #elif TARGET_MACOSX
         void*
+#elif TARGET_LINUX
 #else
 #error
 #endif

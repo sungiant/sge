@@ -7,6 +7,10 @@ namespace sge::vk {
 void vk::create (HINSTANCE hi, HWND hw, int w, int h) {
 #elif TARGET_MACOSX
 void vk::create (void* v, int w, int h) {
+#elif TARGET_LINUX
+void vk::create (xcb_connection_t* c, xcb_window_t w, int w, int h) {
+#else
+#error
 #endif
 
     // Create kernal
@@ -19,6 +23,10 @@ void vk::create (void* v, int w, int h) {
         , hi, hw
 #elif TARGET_MACOSX
         , v
+#elif TARGET_LINUX
+        , c, w
+#else
+#error
 #endif
     );
 

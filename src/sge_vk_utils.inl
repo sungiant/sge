@@ -790,7 +790,9 @@ inline VkWin32SurfaceCreateInfoKHR init_VkWin32SurfaceCreateInfoKHR (HINSTANCE h
     return create_info;
 }
 
-#elif TARGET_MACOSX
+#endif
+
+#if TARGET_MAXOSX
 
 inline VkMacOSSurfaceCreateInfoMVK init_VkMacOSSurfaceCreateInfoMVK (void* view) {
     VkMacOSSurfaceCreateInfoMVK create_info = {};
@@ -798,6 +800,20 @@ inline VkMacOSSurfaceCreateInfoMVK init_VkMacOSSurfaceCreateInfoMVK (void* view)
     create_info.pNext = nullptr;
     //create_info.flags;
     create_info.pView = view;
+    return create_info;
+}
+
+#endif
+
+#if TARGET_LINUX
+
+inline VkXcbSurfaceCreateInfoKHR init_VkXcbSurfaceCreateInfoKHR (xcb_connection_t* connection, xcb_visual_id window) {
+    VkWin32SurfaceCreateInfoKHR create_info = {};
+    create_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+    create_info.pNext = nullptr;
+    //create_info.flags;
+    create_info.connection = connection;
+    create_info.window = window;
     return create_info;
 }
 

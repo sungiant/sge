@@ -108,6 +108,7 @@ void engine::setup (
     HWND z_hwnd
 #elif TARGET_MACOSX
     void* z_view
+#elif TARGET_LINUX
 #else
 #error
 #endif
@@ -136,6 +137,8 @@ void engine::setup (
 #elif TARGET_MACOSX
     engine_state->platform.view = z_view;
     engine_state->graphics.create (z_view, engine_state->container.current_width, engine_state->container.current_height);
+#elif TARGET_LINUX
+    engine_state->graphics.create (engine_state->container.current_width, engine_state->container.current_height);
 #else
 #error
 #endif

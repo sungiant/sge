@@ -21,8 +21,10 @@ const std::vector<const char*> required_instance_extensions =
     { "VK_KHR_device_group_creation", "VK_KHR_win32_surface", "VK_KHR_surface" };
 #elif TARGET_MACOSX
     { "VK_EXT_debug_report", "VK_MVK_moltenvk", "VK_MVK_macos_surface", "VK_EXT_metal_surface", "VK_KHR_surface", "VK_KHR_device_group_creation" };
+#elif TARGET_LINUX
+    { "VK_KHR_xcb_surface", "VK_KHR_surface" };
 #else
-    {};
+#error
 #endif
 
 const std::vector<const char*> required_device_layers = { "VK_LAYER_RENDERDOC_Capture" };
@@ -199,18 +201,23 @@ void kernel::get_physical_devices () {
             queue_family.flags = queue_family_properties[i].queueFlags;
             queue_family.index = i;
 
+
+            // todo: move this logic to sge_vk_presentation
             VkBool32 can_present = false;
 #if TARGET_WIN32
             can_present = vkGetPhysicalDeviceWin32PresentationSupportKHR (physical_device, i);
-#endif
-
-#if TARGET_MACOSX
+#elif TARGET_MACOSX
             MVKPhysicalDeviceMetalFeatures metal_features = {};
             size_t sz = sizeof (MVKPhysicalDeviceMetalFeatures);
             vkGetPhysicalDeviceMetalFeaturesMVK (physical_device, &metal_features, &sz);
             // not 100% sure on how to determine if a particular physical device supports presentation with MoltenVK...
             // try this for now:
             can_present = metal_features.minSwapchainImageCount > 0 && metal_features.maxSwapchainImageCount > 0;
+
+#elif TARGET_LINUX
+            can_present = true; // vkGetPhysicalDeviceXcbPresentationSupportKHR (physical_device, i, app_connection, app_window);
+#else
+#error
 #endif
             queue_family.can_present = can_present;
 

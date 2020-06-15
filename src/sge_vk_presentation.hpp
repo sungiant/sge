@@ -32,6 +32,10 @@ public:
         , HINSTANCE, HWND
 #elif TARGET_MACOSX
         , void*
+#elif TARGET_LINUX
+        , xcb_connection_t*, scb_window_t
+#else
+#error
 #endif
         );
     ~presentation () {};
@@ -81,6 +85,11 @@ private:
     const HWND                          app_hwnd;
 #elif TARGET_MACOSX
     const void*                         app_view;
+#elif TARGET_LINUX
+    const xcb_connection_t*             app_connection;
+    const xcb_window_t                  app_window;
+#else
+#error
 #endif
     state                               state;
 

@@ -5,6 +5,10 @@
 // Vulkan graphics backend.
 // -------------------------------------
 
+#if TARGET_WIN32
+#include <windows.h>
+#endif
+
 #include <memory>
 
 #include "sge_vk_kernel.hpp"
@@ -27,6 +31,10 @@ namespace sge::vk {
         void create (HINSTANCE, HWND, int, int);
 #elif TARGET_MACOSX
         void create (void*, int, int);
+#elif TARGET_LINUX
+        void create (xcb_connection_t*, xcb_window_t, int, int);
+#else
+#error
 #endif
 
         void create_systems (std::vector<std::function<void ()>>&);
