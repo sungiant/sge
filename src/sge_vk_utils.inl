@@ -807,7 +807,7 @@ inline VkMacOSSurfaceCreateInfoMVK init_VkMacOSSurfaceCreateInfoMVK (void* view)
 
 #if TARGET_LINUX && !VARIANT_HEADLESS
 
-inline VkXcbSurfaceCreateInfoKHR init_VkXcbSurfaceCreateInfoKHR (xcb_connection_t* connection, xcb_visual_id window) {
+inline VkXcbSurfaceCreateInfoKHR init_VkXcbSurfaceCreateInfoKHR (xcb_connection_t* connection, xcb_window_id window) {
     VkWin32SurfaceCreateInfoKHR create_info = {};
     create_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
     create_info.pNext = nullptr;
