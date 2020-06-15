@@ -13,6 +13,7 @@ before_script:
   - cd vulkansdk/1.2.141.0/
   - chmod ugo+x setup-env.sh
   - ./setup-env.sh
+  - cd ../../
 script:
   - python3 gen.py
   - cd projects; ls -lah; make
