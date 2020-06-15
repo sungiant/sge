@@ -27,9 +27,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL Darwin)
     set (G_DEV_ENV DARWIN)
 endif ()
 
-
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
     set (G_DEV_ENV LINUX)
+endif ()
+
+set (G_CI $ENV{CI})
+if (G_CI STREQUAL true)
+    add_definitions (-DVARIANT_HEADLESS)
+    set (G_VARIANT HEADLESS)
 endif ()
 
 # Pick suitable target platform
@@ -42,7 +47,7 @@ elseif (G_DEV_ENV STREQUAL DARWIN)
     add_definitions (-DTARGET_MACOSX)
     set (G_TARGET MACOSX)
 elseif (G_DEV_ENV STREQUAL LINUX)
-    #add_definitions (-DTARGET_LINUX)
+    add_definitions (-DTARGET_LINUX)
     set (G_TARGET LINUX)
 endif ()
 
@@ -51,15 +56,22 @@ endif ()
 ################################################################################
 
 if (G_DEV_ENV STREQUAL WINDOWS)
-    add_definitions (-DVK_USE_PLATFORM_WIN32_KHR)
     set (CMAKE_CXX_STANDARD 20)
 elseif (G_DEV_ENV STREQUAL DARWIN)
-    add_definitions (-DVK_USE_PLATFORM_MVK_KHR)
-    add_definitions (-DVK_USE_PLATFORM_MACOS_MVK)
     set (CMAKE_CXX_STANDARD 17)
 elseif (G_DEV_ENV STREQUAL LINUX)
-    add_definitions (-DVK_USE_PLATFORM_XCB_KHR)
     set (CMAKE_CXX_STANDARD 17)
+endif ()
+
+if (NOT G_VARIANT STREQUAL HEADLESS)
+    if (G_DEV_ENV STREQUAL WINDOWS)
+        add_definitions (-DVK_USE_PLATFORM_WIN32_KHR)
+    elseif (G_DEV_ENV STREQUAL DARWIN)
+        add_definitions (-DVK_USE_PLATFORM_MVK_KHR)
+        add_definitions (-DVK_USE_PLATFORM_MACOS_MVK)
+    elseif (G_DEV_ENV STREQUAL LINUX)
+        add_definitions (-DVK_USE_PLATFORM_XCB_KHR)
+    endif ()
 endif ()
 
 ################################################################################
@@ -69,15 +81,9 @@ message (STATUS "$VULKAN_SDK: " $ENV{VULKAN_SDK})
 message (STATUS "$VK_SDK_PATH: " $ENV{VK_SDK_PATH})
 
 if (G_DEV_ENV STREQUAL LINUX)
-    #list(APPEND CMAKE_MODULE_PATH $ENV{VK_SDK_PATH}/samples/cmake/)
-    #list (APPEND CMAKE_PREFIX_PATH $ENV{VK_SDK_PATH})
-    #find_package (vulkan REQUIRED)
-
     include ($ENV{VK_SDK_PATH}/samples/cmake/FindVulkan.cmake)
 else ()
-
     find_package (vulkan REQUIRED)
-
 endif ()
 
 message (STATUS ">> Vulkan_FOUND:    ${Vulkan_FOUND}")

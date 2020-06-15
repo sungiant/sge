@@ -20,7 +20,7 @@
 #include <MoltenVK/vk_mvk_moltenvk.h>
 #endif
 
-#if TARGET_LINUX
+#if TARGET_LINUX && !VARIANT_HEADLESS
 #include <xcb/xcb.h>
 #endif
 

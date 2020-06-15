@@ -3,11 +3,11 @@
 
 namespace sge::vk {
 
-#if TARGET_WIN32
+#if TARGET_WIN32 && !VARIANT_HEADLESS
 void vk::create (HINSTANCE hi, HWND hw, int w, int h) {
-#elif TARGET_MACOSX
+#elif TARGET_MACOSX && !VARIANT_HEADLESS
 void vk::create (void* v, int w, int h) {
-#elif TARGET_LINUX
+#elif TARGET_LINUX && !VARIANT_HEADLESS
 void vk::create (xcb_connection_t* c, xcb_window_t w, int w, int h) {
 #else
 void vk::create (int w, int h) {
@@ -19,13 +19,12 @@ void vk::create (int w, int h) {
 
     // Create presentation
     presentation = std::make_unique<class presentation> (kernel->primary_context (), kernel->primary_work_queue ()
-#if TARGET_WIN32
+#if TARGET_WIN32 && !VARIANT_HEADLESS
         , hi, hw
-#elif TARGET_MACOSX
+#elif TARGET_MACOSX && !VARIANT_HEADLESS
         , v
-#elif TARGET_LINUX
+#elif TARGET_LINUX && !VARIANT_HEADLESS
         , c, w
-#else
 #endif
     );
 

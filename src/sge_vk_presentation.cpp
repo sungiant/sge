@@ -23,22 +23,22 @@
 namespace sge::vk {
 
 presentation:: presentation (const struct context& context, const queue_identifier& qid
-#if TARGET_WIN32
+#if TARGET_WIN32 && !VARIANT_HEADLESS
     , HINSTANCE hi, HWND hw
-#elif TARGET_MACOSX
+#elif TARGET_MACOSX && !VARIANT_HEADLESS
     , void* v
-#elif TARGET_LINUX
+#elif TARGET_LINUX && !VARIANT_HEADLESS
     , xcb_connection_t* c, scb_window_t w
 #endif
 )
     : context (context)
     , identifier (qid)
-#if TARGET_WIN32
+#if TARGET_WIN32 && !VARIANT_HEADLESS
     , app_hinst (hi)
     , app_hwnd (hw)
-#elif TARGET_MACOSX
+#elif TARGET_MACOSX && !VARIANT_HEADLESS
     , app_view (v)
-#elif TARGET_LINUX
+#elif TARGET_LINUX && !VARIANT_HEADLESS
     , app_connection (c)
     , app_window (w)
 #endif
@@ -150,10 +150,10 @@ std::variant<VkResult, image_index> presentation::next_image () {
 void presentation::create_surface () {
     auto physical_device = identifier.physical_device;
 
-#if TARGET_WIN32
+#if TARGET_WIN32 && !VARIANT_HEADLESS
     auto surface_create_info = utils::init_VkWin32SurfaceCreateInfoKHR (app_hinst, app_hwnd);
     vk_assert (vkCreateWin32SurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
-#elif TARGET_MACOSX
+#elif TARGET_MACOSX && !VARIANT_HEADLESS
     auto surface_create_info = utils::init_VkMacOSSurfaceCreateInfoMVK (const_cast<void*> (app_view));
     vk_assert (vkCreateMacOSSurfaceMVK (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 
@@ -170,7 +170,7 @@ void presentation::create_surface () {
     //    VkResult vkCreateMetalSurfaceEXT (instance (), &surface_create_info, context.allocation_callbacks, &state.surface);
     //    assert (result == VK_SUCCESS);
     //}
-#elif TARGET_LINUX
+#elif TARGET_LINUX && !VARIANT_HEADLESS
     auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (app_connection, app_window);
     vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 #else
