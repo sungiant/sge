@@ -9,6 +9,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <cstring>
 
 #include <vulkan/vulkan.h>
 
@@ -89,7 +90,7 @@ struct texture {
 
         uint8_t *data;
         vk_assert (vkMapMemory (context.logical_device, staging_memory, 0, memory_requirements.size, 0, (void **)&data));
-        memcpy (data, buffer, buffer_size);
+        std::memcpy (data, buffer, buffer_size);
         vkUnmapMemory (context.logical_device, staging_memory);
 
         VkBufferImageCopy buffer_copy_region = {};

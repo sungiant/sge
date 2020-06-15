@@ -792,7 +792,7 @@ inline VkWin32SurfaceCreateInfoKHR init_VkWin32SurfaceCreateInfoKHR (HINSTANCE h
 
 #endif
 
-#if TARGET_MAXOSX
+#if TARGET_MACOSX
 
 inline VkMacOSSurfaceCreateInfoMVK init_VkMacOSSurfaceCreateInfoMVK (void* view) {
     VkMacOSSurfaceCreateInfoMVK create_info = {};

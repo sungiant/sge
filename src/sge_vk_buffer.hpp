@@ -6,6 +6,7 @@
 // -------------------------------------
 
 #include <cassert>
+#include <cstring>
 
 #include <vulkan/vulkan.h>
 
@@ -48,7 +49,7 @@ struct device_buffer {
 
     void copy (void* data, VkDeviceSize size) {
         assert (mapped);
-        memcpy (mapped, data, size);
+        std::memcpy (mapped, data, size);
     }
 
     void flush (VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) {
