@@ -17,7 +17,7 @@
 #include "sge_vk_types.hpp"
 #include "sge_vk_utils.hpp"
 #include "sge_vk_context.hpp"
-VK_USE_PLATFORM_WAYLAND_KHR
+
 namespace sge::vk {
 
 struct allocator;
