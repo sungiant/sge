@@ -10,7 +10,8 @@ before_script:
   - wget -O vulkansdk.tar.gz "https://sdk.lunarg.com/sdk/download/1.2.141.2/linux/vulkansdk-linux-x86_64-1.2.141.2.tar.gz?Human=true"
   - mkdir vulkansdk
   - tar -xzf vulkansdk.tar.gz --directory vulkansdk
-  - cd vulkansdk/1.2.141.2/
+  - cd vulkansdk/
+  - ls
   - chmod ugo+x setup-env.sh
   - ./setup-env.sh
 script:
