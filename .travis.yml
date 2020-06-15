@@ -12,9 +12,10 @@ before_script:
   - tar -xzf vulkansdk.tar.gz --directory vulkansdk
   - cd vulkansdk/1.2.141.0/
   - chmod ugo+x setup-env.sh
-  - ./setup-env.sh
   - cd ../../
 script:
+  - sh vulkansdk/1.2.141.0/setup-env.sh
+  - echo $VULKAN_SDK
   - python3 gen.py
   - cd projects; ls -lah; make
   - python3 res.py
