@@ -109,8 +109,8 @@ void engine::setup (
 #elif TARGET_MACOSX
     void* z_view
 #elif TARGET_LINUX
-#else
-#error
+    xcb_connection_t* z_connection;
+    xcb_window_t* z_window;
 #endif
 ) {
     std::cout <<
@@ -138,9 +138,9 @@ void engine::setup (
     engine_state->platform.view = z_view;
     engine_state->graphics.create (z_view, engine_state->container.current_width, engine_state->container.current_height);
 #elif TARGET_LINUX
-    engine_state->graphics.create (engine_state->container.current_width, engine_state->container.current_height);
+    engine_state->graphics.create (z_connection, z_window, engine_state->container.current_width, engine_state->container.current_height);
 #else
-#error
+    engine_state->graphics.create (engine_state->container.current_width, engine_state->container.current_height);
 #endif
 
     engine_api = std::make_unique<runtime::api> (*engine_state, *engine_tasks);

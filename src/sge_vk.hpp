@@ -9,6 +9,10 @@
 #include <windows.h>
 #endif
 
+#if TARGET_LINUX
+#include <xcb/xcb.h>
+#endif
+
 #include <memory>
 
 #include "sge_vk_kernel.hpp"
@@ -34,7 +38,7 @@ namespace sge::vk {
 #elif TARGET_LINUX
         void create (xcb_connection_t*, xcb_window_t, int, int);
 #else
-#error
+        void create (int, int);
 #endif
 
         void create_systems (std::vector<std::function<void ()>>&);

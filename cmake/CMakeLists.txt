@@ -42,7 +42,7 @@ elseif (G_DEV_ENV STREQUAL DARWIN)
     add_definitions (-DTARGET_MACOSX)
     set (G_TARGET MACOSX)
 elseif (G_DEV_ENV STREQUAL LINUX)
-    add_definitions (-DTARGET_LINUX)
+    #add_definitions (-DTARGET_LINUX)
     set (G_TARGET LINUX)
 endif ()
 

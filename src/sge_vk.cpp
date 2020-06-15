@@ -10,7 +10,7 @@ void vk::create (void* v, int w, int h) {
 #elif TARGET_LINUX
 void vk::create (xcb_connection_t* c, xcb_window_t w, int w, int h) {
 #else
-#error
+void vk::create (int w, int h) {
 #endif
 
     // Create kernal
@@ -26,7 +26,6 @@ void vk::create (xcb_connection_t* c, xcb_window_t w, int w, int h) {
 #elif TARGET_LINUX
         , c, w
 #else
-#error
 #endif
     );
 

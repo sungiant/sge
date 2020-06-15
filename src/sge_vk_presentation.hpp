@@ -14,6 +14,10 @@
 #include <windows.h>
 #endif
 
+#if TARGET_LINUX
+#include <xcb/xcb.h>
+#endif
+
 #include <vulkan/vulkan.h>
 
 #include "sge_vk_types.hpp"
@@ -34,8 +38,6 @@ public:
         , void*
 #elif TARGET_LINUX
         , xcb_connection_t*, scb_window_t
-#else
-#error
 #endif
         );
     ~presentation () {};
@@ -88,8 +90,6 @@ private:
 #elif TARGET_LINUX
     const xcb_connection_t*             app_connection;
     const xcb_window_t                  app_window;
-#else
-#error
 #endif
     state                               state;
 

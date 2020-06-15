@@ -29,8 +29,6 @@ presentation:: presentation (const struct context& context, const queue_identifi
     , void* v
 #elif TARGET_LINUX
     , xcb_connection_t* c, scb_window_t w
-#else
-#error
 #endif
 )
     : context (context)
@@ -43,8 +41,6 @@ presentation:: presentation (const struct context& context, const queue_identifi
 #elif TARGET_LINUX
     , app_connection (c)
     , app_window (w)
-#else
-#error
 #endif
     , state ()
 {}
@@ -178,7 +174,7 @@ void presentation::create_surface () {
     auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (app_connection, app_window);
     vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 #else
-#error
+    assert (false);
 #endif
 
     uint32_t surface_format_count;

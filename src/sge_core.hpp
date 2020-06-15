@@ -23,6 +23,10 @@
 #include <windows.h>
 #endif
 
+#if TARGET_LINUX
+#include <xcb/xcb.h>
+#endif
+
 #include <imgui/imgui.h>
 
 #include "sge_types.hpp"
@@ -68,8 +72,8 @@ struct platform_state {
 #elif TARGET_MACOSX
     void* view;
 #elif TARGET_LINUX
-#else
-#error
+    xcb_connection_t* connection;
+    xcb_window_t* window;
 #endif
 };
 
@@ -140,8 +144,8 @@ public:
 #elif TARGET_MACOSX
         void*
 #elif TARGET_LINUX
-#else
-#error
+        xcb_connection_t*;
+        xcb_window_t*;
 #endif
     );
 

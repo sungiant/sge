@@ -11,9 +11,17 @@
 
 #include <vulkan/vulkan.h>
 
+#if TARGET_WIN32
+#include <windows.h>
+#endif
+
 #if TARGET_MACOSX
 #include <MoltenVK/mvk_vulkan.h>
 #include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
+
+#if TARGET_LINUX
+#include <xcb/xcb.h>
 #endif
 
 #if CONFIGURATION_FINAL
