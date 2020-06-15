@@ -124,12 +124,12 @@ void kernel::destroy () {
     state.physical_devices.clear ();
     state.device_map.clear ();
     state.device_map_inv.clear ();
+#if TARGET_MACOSX
     if (std::find (required_instance_extensions.begin (), required_instance_extensions.end (), "VK_EXT_debug_report") != required_instance_extensions.end ()) {
-#if !TARGET_WIN32
         vkDestroyDebugReportCallbackEXT (state.instance, state.debug_report_callback, allocation_callbacks ());
-#endif
         state.debug_report_callback = VK_NULL_HANDLE;
     }
+#endif
     vkDestroyInstance (state.instance, allocation_callbacks ());
     state.instance = VK_NULL_HANDLE;
 }
@@ -139,6 +139,7 @@ void kernel::create_instance () {
     const auto instance_create_info = utils::init_VkInstanceCreateInfo (&app_info, required_instance_layers, required_instance_extensions);
     vk_assert (vkCreateInstance (&instance_create_info, allocation_callbacks (), &state.instance));
 
+#if TARGET_MACOSX
     if (std::find (required_instance_extensions.begin (), required_instance_extensions.end (), "VK_EXT_debug_report") != required_instance_extensions.end ()) {
         auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr (state.instance, "vkCreateDebugReportCallbackEXT");
         assert (vkCreateDebugReportCallbackEXT);
@@ -147,7 +148,6 @@ void kernel::create_instance () {
         vk_assert (vkCreateDebugReportCallbackEXT (state.instance, &debug_report_ci, allocation_callbacks (), &state.debug_report_callback));
     }
 
-#if TARGET_MACOSX
     MVKConfiguration config {};
     size_t sz = sizeof (MVKConfiguration);
     vkGetMoltenVKConfigurationMVK (state.instance, &config, &sz);
