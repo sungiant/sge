@@ -69,7 +69,7 @@ message (STATUS "$VULKAN_SDK: " $ENV{VULKAN_SDK})
 message (STATUS "$VK_SDK_PATH: " $ENV{VK_SDK_PATH})
 
 if (G_DEV_ENV STREQUAL LINUX)
-    include ($ENV{VK_SDK_PATH}samples/FindVulkan.cmake)
+    include ($ENV{VK_SDK_PATH}samples/cmake/FindVulkan.cmake)
 endif ()
 
 find_package (vulkan REQUIRED)
