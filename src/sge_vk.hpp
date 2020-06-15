@@ -31,11 +31,11 @@ namespace sge::vk {
         std::unique_ptr<imgui>              imgui;
         bool                                imgui_on = true;
 
-#if TARGET_WIN32
+#if TARGET_WIN32 && !VARIANT_HEADLESS
         void create (HINSTANCE, HWND, int, int);
-#elif TARGET_MACOSX
+#elif TARGET_MACOSX && !VARIANT_HEADLESS
         void create (void*, int, int);
-#elif TARGET_LINUX
+#elif TARGET_LINUX && !VARIANT_HEADLESS
         void create (xcb_connection_t*, xcb_window_t, int, int);
 #else
         void create (int, int);
