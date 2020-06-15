@@ -70,7 +70,7 @@ message (STATUS "$VK_SDK_PATH: " $ENV{VK_SDK_PATH})
 
 if (G_DEV_ENV STREQUAL LINUX)
     #list(APPEND CMAKE_MODULE_PATH $ENV{VK_SDK_PATH}samples/cmake/)
-    set (vulkan_DIR $ENV{VK_SDK_PATH}samples/cmake/)
+    set (vulkan_DIR $ENV{VK_SDK_PATH}/samples/cmake/)
 endif ()
 
 find_package (vulkan REQUIRED)

@@ -11,7 +11,7 @@ before_script:
   - mkdir vulkansdk
   - tar -xzf vulkansdk.tar.gz --directory vulkansdk
   - chmod +x vulkansdk/1.2.141.0/setup-env.sh
-  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0/
+  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0
   - export VULKAN_SDK="$VK_SDK_PATH/x86_64"
   - export PATH="$VULKAN_SDK/bin:$PATH"
 script:

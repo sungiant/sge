@@ -22,7 +22,7 @@ def compile_shader (file):
     else:
         raise NotImplementedError
 
-    subprocess.call (['glslangvalidator', '--define-macro', target_macro, '--target-env', 'vulkan1.0', '-V', file, '-o', file + '.spv'])
+    subprocess.call (['glslangValidator', '--define-macro', target_macro, '--target-env', 'vulkan1.0', '-V', file, '-o', file + '.spv'])
 
     os.makedirs (dest, exist_ok = True)
 
