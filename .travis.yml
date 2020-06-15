@@ -1,10 +1,13 @@
 language: cpp
+os: linux
+arch: amd64
+dist: bionic
 compiler:
   - clang
   - gcc
 before_script:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y vulkan-sdk
+  - sudo apt -qq update
+  - sudo apt install -y vulkan-sdk
 script:
   - python3 gen.py
   - cd projects; ls -lah; make
