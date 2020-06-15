@@ -24,7 +24,7 @@ const std::vector<const char*> required_instance_extensions =
 #elif TARGET_LINUX
     { "VK_KHR_xcb_surface", "VK_KHR_surface" };
 #else
-    {}
+    {};
 #endif
 
 const std::vector<const char*> required_device_layers = { "VK_LAYER_RENDERDOC_Capture" };
