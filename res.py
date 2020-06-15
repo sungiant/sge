@@ -1,8 +1,15 @@
+import sys
+
+if sys.version_info <= (3, 0):
+    sys.stdout.write("Requires Python 3.x\n")
+    sys.exit(1)
+
 import glob
 import os
 import subprocess
 import shutil
 import platform
+
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -10,6 +17,7 @@ def compile_shader (file):
     print ("compile shader: " + file)
 
     system = platform.system()
+    print (system)
     if system == 'Windows':
         dest = script_dir + '/projects/'
         target_macro = 'TARGET_WIN32=1'
@@ -22,7 +30,7 @@ def compile_shader (file):
     else:
         raise NotImplementedError
 
-    subprocess.call (['glslangValidator', '--define-macro', target_macro, '--target-env', 'vulkan1.0', '-V', file, '-o', file + '.spv'])
+    subprocess.call (['glslangValidator', '-D' + target_macro, '-V', '-o', file + '.spv', file])
 
     os.makedirs (dest, exist_ok = True)
 
