@@ -38,6 +38,15 @@ target_link_libraries (${PROJ} "-framework IOSurface")
 target_link_libraries (${PROJ} "-framework Metal")
 target_link_libraries (${PROJ} "-framework MetalKit")
 
+
+elseif (G_TARGET STREQUAL "LINUX")
+
+file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/sge_linux_*.hpp)
+file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/sge_linux_*.cpp)
+set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
+
+add_executable (${PROJ} ${SOURCE_LIST})
+
 endif ()
 
 set_target_properties(${PROJ} PROPERTIES

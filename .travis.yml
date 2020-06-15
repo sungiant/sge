@@ -1,0 +1,8 @@
+language: cpp
+compiler:
+  - gcc
+script:
+  - res.py
+  - gen.py
+  - cd projects
+  - make

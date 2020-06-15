@@ -2,18 +2,23 @@ import glob
 import os
 import subprocess
 import shutil
+import platform
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 def compile_shader (file):
     print ("compile shader: " + file)
 
-    if os.name == 'nt':
+    system = platform.system()
+    if system == 'Windows':
         dest = script_dir + '/projects/'
         target_macro = 'TARGET_WIN32=1'
-    elif os.name == 'posix':
+    elif system == 'Darwin':
         dest = script_dir + '/projects/Debug/'
         target_macro = 'TARGET_MACOSX=1'
+    elif system == 'Linux':
+        dest = script_dir + '/projects/'
+        target_macro = 'TARGET_LINUX=1'
     else:
         raise NotImplementedError
 

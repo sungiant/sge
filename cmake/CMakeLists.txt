@@ -27,6 +27,11 @@ if (CMAKE_SYSTEM_NAME STREQUAL Darwin)
     set (G_DEV_ENV DARWIN)
 endif ()
 
+
+if (CMAKE_SYSTEM_NAME STREQUAL Linux)
+    set (G_DEV_ENV LINUX)
+endif ()
+
 # Pick suitable target platform
 ################################################################################
 if (G_DEV_ENV STREQUAL WINDOWS)
@@ -36,6 +41,9 @@ if (G_DEV_ENV STREQUAL WINDOWS)
 elseif (G_DEV_ENV STREQUAL DARWIN)
     add_definitions (-DTARGET_MACOSX)
     set (G_TARGET MACOSX)
+elseif (G_DEV_ENV STREQUAL LINUX)
+    add_definitions (-DTARGET_LINUX)
+    set (G_TARGET LINUX)
 endif ()
 
 
@@ -49,6 +57,9 @@ elseif (G_DEV_ENV STREQUAL DARWIN)
     add_definitions (-DVK_USE_PLATFORM_MVK_KHR)
     add_definitions (-DVK_USE_PLATFORM_MACOS_MVK)
     set (CMAKE_CXX_STANDARD 17)
+elseif (G_DEV_ENV STREQUAL LINUX)
+    add_definitions (-DVK_USE_PLATFORM_WAYLAND_KHR)
+    set (CMAKE_CXX_STANDARD 20)
 endif ()
 
 ################################################################################
