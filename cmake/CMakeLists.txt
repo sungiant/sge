@@ -32,7 +32,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL Linux)
 endif ()
 
 set (G_CI $ENV{CI})
-message (G_CI)
 if (G_CI STREQUAL true)
     add_definitions (-DVARIANT_HEADLESS)
     set (G_VARIANT HEADLESS)
