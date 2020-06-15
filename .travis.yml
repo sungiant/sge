@@ -14,6 +14,8 @@ before_script:
   - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0
   - export VULKAN_SDK="$VK_SDK_PATH/x86_64"
   - export PATH="$VULKAN_SDK/bin:$PATH"
+  - export LD_LIBRARY_PATH="$VULKAN_SDK/lib:${LD_LIBRARY_PATH:-}"
+  - export VK_LAYER_PATH="$VULKAN_SDK/etc/vulkan/explicit_layer.d"
 script:
   - echo $VULKAN_SDK
   - echo $VK_SDK_PATH
