@@ -24,7 +24,7 @@ const std::vector<const char*> required_instance_extensions =
 #elif TARGET_LINUX
     { "VK_KHR_xcb_surface", "VK_KHR_surface" };
 #else
-#error
+    {}
 #endif
 
 const std::vector<const char*> required_device_layers = { "VK_LAYER_RENDERDOC_Capture" };
@@ -217,7 +217,7 @@ void kernel::get_physical_devices () {
 #elif TARGET_LINUX
             can_present = true; // vkGetPhysicalDeviceXcbPresentationSupportKHR (physical_device, i, app_connection, app_window);
 #else
-#error
+            can_present = false;
 #endif
             queue_family.can_present = can_present;
 
