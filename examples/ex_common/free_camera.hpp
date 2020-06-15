@@ -36,7 +36,7 @@ struct free_camera {
         float rxx = 0.0f;
         if (input.keyboard.is_key_down(sge::input::keyboard_key::left)) { rxx = -1.0f; }
         if (input.keyboard.is_key_down(sge::input::keyboard_key::right)) { rxx = +1.0f; }
-        if (abs(input.gamepad.right_stick().x) > abs (rxx)) { rxx = input.gamepad.right_stick().x; }
+        if (std::abs(input.gamepad.right_stick().x) > std::abs (rxx)) { rxx = input.gamepad.right_stick().x; }
         if (!sge::math::is_zero (rxx)) {
             eulerAngles.x -=dt * look_rate * rxx;
         }
@@ -44,7 +44,7 @@ struct free_camera {
         float rxy = 0.0f;
         if (input.keyboard.is_key_down(sge::input::keyboard_key::down)) { rxy = -1.0f; }
         if (input.keyboard.is_key_down(sge::input::keyboard_key::up)) { rxy = +1.0f; }
-        if (abs(input.gamepad.right_stick().y) > abs (rxy)) { rxy = input.gamepad.right_stick().y; }
+        if (std::abs(input.gamepad.right_stick().y) > std::abs (rxy)) { rxy = input.gamepad.right_stick().y; }
         if (!sge::math::is_zero (rxy)) {
             eulerAngles.y += dt * look_rate * rxy;
         }
@@ -57,7 +57,7 @@ struct free_camera {
         float lxx = 0.0f;
         if (input.keyboard.is_character_down('a')) { lxx = -1.0f; }
         if (input.keyboard.is_character_down('d')) { lxx = +1.0f; }
-        if (abs(input.gamepad.left_stick().x) > abs (lxx)) { lxx = input.gamepad.left_stick().x; }
+        if (std::abs(input.gamepad.left_stick().x) > std::abs (lxx)) { lxx = input.gamepad.left_stick().x; }
         if (!sge::math::is_zero (lxx)) {
             position.x += -z_comp * traverse_rate * lxx * dt;
             position.z += x_comp * traverse_rate * lxx * dt;
@@ -66,7 +66,7 @@ struct free_camera {
         float lxy = 0.0f;
         if (input.keyboard.is_character_down('s')) { lxy = -1.0f; }
         if (input.keyboard.is_character_down('w')) { lxy = +1.0f; }
-        if (abs(input.gamepad.left_stick().y) > abs (lxy)) { lxy = input.gamepad.left_stick().y; }
+        if (std::abs(input.gamepad.left_stick().y) > std::abs (lxy)) { lxy = input.gamepad.left_stick().y; }
         if (!sge::math::is_zero (lxy)) {
             position.x += x_comp * traverse_rate * lxy * dt;
             position.z += z_comp * traverse_rate * lxy * dt;
