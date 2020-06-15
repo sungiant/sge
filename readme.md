@@ -85,7 +85,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Review codebase and simplify where needed, resolve inconsistencies.
-- [ ] CI integration.
+- [x] CI integration.
 
 ### 0.2.0
 
