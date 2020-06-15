@@ -11,13 +11,13 @@ before_script:
   - mkdir vulkansdk
   - tar -xzf vulkansdk.tar.gz --directory vulkansdk
   - chmod +x vulkansdk/1.2.141.0/setup-env.sh
-  - export VULKAN_SDK=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0/x86_64
-  - export PATH="$VULKAN_SDK/bin:$PATH"
   - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0/
-  - echo $VULKAN_SDK
-  - echo $PATH
-  - echo $VK_SDK_PATH
+  - export VULKAN_SDK="$VK_SDK_PATH/x86_64"
+  - export PATH="$VULKAN_SDK/bin:$PATH"
 script:
+  - echo "VULKAN_SDK: $VULKAN_SDK"
+  - echo "VK_SDK_PATH: $VK_SDK_PATH"
+  - echo "PATH: $PATH"
   - python3 res.py
   - python3 gen.py
   - cd projects; ls -lah; make
