@@ -3,6 +3,5 @@ compiler:
   - gcc
 script:
   - python3 gen.py
-  - cd projects
-  - make
-  - res.py
+  - cd projects; ls -lah; make
+  - python3 res.py
