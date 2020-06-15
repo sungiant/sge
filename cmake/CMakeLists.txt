@@ -73,7 +73,7 @@ if (G_DEV_ENV STREQUAL LINUX)
     #list (APPEND CMAKE_PREFIX_PATH $ENV{VK_SDK_PATH})
     #find_package (vulkan REQUIRED)
 
-    inlcude ($ENV{VK_SDK_PATH}/samples/cmake/FindVulkan.cmake)
+    include ($ENV{VK_SDK_PATH}/samples/cmake/FindVulkan.cmake)
 else ()
 
     find_package (vulkan REQUIRED)
