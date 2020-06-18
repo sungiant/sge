@@ -1,8 +1,9 @@
+//
 // SGE-VK-CONTEXT
-// -------------------------------------
+// ---------------------------------- //
 // Useful view of aggregated contexual
 // info about a given Vulkan workgroup.
-// -------------------------------------
+// ---------------------------------- //
 
 #pragma once
 

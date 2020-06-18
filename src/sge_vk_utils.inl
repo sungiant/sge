@@ -1,7 +1,8 @@
+//
 // SGE-VK-UTILS (INLINE)
-// -------------------------------------
+// ---------------------------------- //
 // Helpers for creating Vulkan objects.
-// -------------------------------------
+// ---------------------------------- //
 // - Full types listed here for reference purposes.
 
 #pragma once

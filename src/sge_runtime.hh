@@ -1,10 +1,10 @@
+//
 // SGE-RUNTIME
-// -------------------------------------
+// ---------------------------------- //
 // SGE's low level runtime interface.
-// -------------------------------------
+// ---------------------------------- //
 // * A thin layer over sge::core to avoid the need for direct user access.
 // * SGE systems/views are built on top of this API.
-// -------------------------------------
 
 #pragma once
 

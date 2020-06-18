@@ -1,6 +1,5 @@
 #include "sge_core.hh"
 
-
 #include "sge_extensions.hh" // TODO: core shouldn't know about specific runtime extensions...
 
 namespace sge::core {

@@ -1,8 +1,9 @@
+//
 // SGE-EXTENSIONS
-// -------------------------------------
+// ---------------------------------- //
 // Helper systems built on top of the
 // SGE Runtime API.
-// -------------------------------------
+// ---------------------------------- //
 // * These systems know nothing about the core engine.
 
 #pragma once
