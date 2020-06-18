@@ -42,21 +42,18 @@ target_link_libraries (${PROJ} "-framework MetalKit")
 elseif (G_TARGET STREQUAL "LINUX")
 
 file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/impl_linux*.hh)
-file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/impl_linu_*.cc)
+file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/impl_linux*.cc)
 set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
 
 add_executable (${PROJ} ${SOURCE_LIST})
 
 endif ()
 
-
-
 set_target_properties(${PROJ} PROPERTIES
     FOLDER Examples
     RESOURCE ${RESOURCES})
 
 target_link_libraries (${PROJ} sge imgui)
-
 
 ################################################################################
 
