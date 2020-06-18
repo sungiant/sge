@@ -22,7 +22,7 @@
 #include <windows.h>
 
 // Windows Keyboard (stand alone class - independent of SGE)
-// ---------------------------------- //------------------------------------- //
+// -------------------------------------------------------------------------- //
 class win32_keyboard {
 public:
     enum class key {
@@ -227,7 +227,7 @@ public:
 };
 
 // Windows Mouse (stand alone class - independent of SGE)
-// ---------------------------------- //------------------------------------- //
+// -------------------------------------------------------------------------- //
 class win32_mouse {
 public:
     struct point { short x; short y; };
@@ -264,7 +264,7 @@ public:
 
 
 // XInput Gamepad (stand alone class - independent of SGE)
-// ---------------------------------- //------------------------------------- //
+// -------------------------------------------------------------------------- //
 
 #include <XInput.h>
 #pragma comment(lib, "XInput.lib")
@@ -373,7 +373,7 @@ private:
 };
 
 // Windows utils
-// ---------------------------------- //------------------------------------- //
+// -------------------------------------------------------------------------- //
 
 bool enter_fullscreen (HWND hwnd, int fullscreen_width, int fullscreen_height, int colour_bits, int refresh_rate) {
     DEVMODE fullscreen_settings = {};
@@ -407,7 +407,7 @@ int height (RECT r) { return r.bottom - r.top; }
 
 
 // Windows SGE implementation
-// ---------------------------------- //------------------------------------- //
+// -------------------------------------------------------------------------- //
 
 // constant info
 const char*                             g_default_title = "SGE";
