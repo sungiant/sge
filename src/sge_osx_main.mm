@@ -44,11 +44,11 @@ public:
         left_thumb, right_thumb, left_shoulder, right_shoulder
     };
     
-    vector                  get_left_stick      ()                  const { return get_left_stick (index::one).value_or (vector { 0.0f, 0.0f }); }
-    vector                  get_right_stick     ()                  const { return get_right_stick (index::one).value_or (vector { 0.0f, 0.0f }); }
-    float                   get_left_trigger    ()                  const { return get_left_trigger (index::one).value_or (0.0f); }
-    float                   get_right_trigger   ()                  const { return get_right_trigger (index::one).value_or (0.0f);}
-    bool                    is_button_pressed   (button z)          const { return is_button_pressed (index::one, z).value_or (false);}
+    vector                  get_left_stick      ()                  const { return get_left_stick (default_connection ().value_or(index::one)).value_or (vector { 0.0f, 0.0f }); }
+    vector                  get_right_stick     ()                  const { return get_right_stick (default_connection ().value_or(index::one)).value_or (vector { 0.0f, 0.0f }); }
+    float                   get_left_trigger    ()                  const { return get_left_trigger (default_connection ().value_or(index::one)).value_or (0.0f); }
+    float                   get_right_trigger   ()                  const { return get_right_trigger (default_connection ().value_or(index::one)).value_or (0.0f);}
+    bool                    is_button_pressed   (button z)          const { return is_button_pressed (default_connection ().value_or(index::one), z).value_or (false);}
 
     std::optional<vector>   get_left_stick      (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.left_stick; } return std::nullopt; }
     std::optional<vector>   get_right_stick     (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_stick; } return std::nullopt; }
@@ -59,6 +59,7 @@ public:
                             iokit_gamepad       ()                        { start (); }
                             ~iokit_gamepad      ()                        { stop (); }
     void                    update              ()                        { process (); }
+    std::optional<index>    default_connection  ()                  const { for (int i = 0; i < CONNECTION_LIMIT; ++i) { if (connections[i].has_value()) return (index) i; } return std::nullopt; }
 
 private:
     static constexpr int CONNECTION_LIMIT = 4;
@@ -362,14 +363,14 @@ private:
     
     int convert (index z) const { switch (z) { case index::one: return 0; case index::two: return 1; case index::three: return 2; case index::four: return 3; } }
     
-    std::optional<int> get_next_connection_index () {
+    std::optional<int> get_next_connection_index () const {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
             if (!connections[i].has_value())
                 return i;
         }
         return std::nullopt;
     }
-    std::optional<int> get_connection_index (IOHIDDeviceRef device) {
+    std::optional<int> get_connection_index (IOHIDDeviceRef device) const {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
             if (connections[i].has_value() && connections[i].value().first == device)
                 return i;
