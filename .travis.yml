@@ -11,7 +11,7 @@ before_script:
   - mkdir vulkansdk
   - tar -xzf vulkansdk.tar.gz --directory vulkansdk
   - ls vulkansdk/
-  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0
+  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.2
   - export VULKAN_SDK="$VK_SDK_PATH/x86_64"
   - export PATH="$VULKAN_SDK/bin:$PATH"
   - export LD_LIBRARY_PATH="$VULKAN_SDK/lib:${LD_LIBRARY_PATH:-}"
