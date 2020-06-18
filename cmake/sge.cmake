@@ -1,33 +1,21 @@
 project (sge)
 
-file (GLOB_RECURSE INCLUDES ${G_ROOT_DIR}/src/*.hpp ${G_ROOT_DIR}/src/*.h ${G_ROOT_DIR}/src/*.inl)
-file (GLOB_RECURSE SOURCES ${G_ROOT_DIR}/src/*.cpp ${G_ROOT_DIR}/src/*.c)
+file (GLOB_RECURSE INCLUDES ${G_ROOT_DIR}/src/*.hh ${G_ROOT_DIR}/src/*.h ${G_ROOT_DIR}/src/*.inl)
+file (GLOB_RECURSE SOURCES ${G_ROOT_DIR}/src/*.cc ${G_ROOT_DIR}/src/*.c)
 
 set (SOURCE_LIST ${INCLUDES} ${SOURCES})
 
-# remove platform specific code
-filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/sge_win_.*")
-filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/sge_osx_.*")
+filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/impl_*") # remove platform specific code
 
 ################################################################################
 
 if (G_TARGET STREQUAL "WIN32")
-
-# add relevant platform specific code
-#file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/sge_win32_*.hpp)
-#file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/sge_win32_*.cpp)
-#set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
 
 add_library (sge ${SOURCE_LIST})
 
 target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/)
 
 elseif (G_TARGET STREQUAL "MACOSX")
-
-# add relevant platform specific code
-#file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/sge_osx_*.hpp)
-#file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/sge_osx_*.cpp ${G_ROOT_DIR}/src/sge_osx_*.mm)
-#set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
 
 set (MVK_FRAMEWORK $ENV{MOLTEN_VK}/macOS/framework/MoltenVK.framework)
 
