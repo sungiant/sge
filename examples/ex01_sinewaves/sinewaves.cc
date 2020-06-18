@@ -3,7 +3,7 @@
 #include <string>
 
 #include <imgui/imgui.h>
-#include <sge.h>
+#include <sge.hh>
 
 namespace sinewaves {
 

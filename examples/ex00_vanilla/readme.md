@@ -31,7 +31,7 @@ and this:
 #include <string>
 
 #include <imgui/imgui.h>
-#include <sge.h>
+#include <sge.hh>
 
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
