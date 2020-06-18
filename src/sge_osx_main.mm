@@ -31,7 +31,7 @@
 // * N30 Pro
 // * Wired PS4 DualShock
 // -------------------------------------------------------------------------- //
-class iokit_gamepad_v2 {
+class iokit_gamepad {
 
 public:
     
@@ -56,9 +56,9 @@ public:
     std::optional<float>   get_right_trigger   (index i)               const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_trigger; } return std::nullopt; }
     std::optional<bool>    is_button_pressed   (index i, button z)     const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.pressed_buttons.find(z) != connections[idx].value().second.pressed_buttons.end(); } return std::nullopt; }
     
-    iokit_gamepad_v2 () { start (); }
+    iokit_gamepad () { start (); }
     
-    ~iokit_gamepad_v2 () { stop (); }
+    ~iokit_gamepad () { stop (); }
     
     void update () { process (); }
 
@@ -94,17 +94,8 @@ private:
     struct detached_event { IOHIDDeviceRef device; };
     
     struct input_event { IOHIDDeviceRef device; IOHIDElementCookie identifier; IOHIDElementType type; int value; };
-    
-    struct device_info {
-        std::string product;
-        std::string manufacturer;
-        int vendor_id;
-        int product_id;
-        std::unordered_map<IOHIDElementCookie, int> button_indicies;
-        std::unordered_map<IOHIDElementCookie, int> axis_indicies;
-    };
-    
-    struct device_state{
+
+    struct device_state {
         std::unordered_set<button> pressed_buttons;
         vector left_stick;
         vector right_stick;
@@ -113,13 +104,9 @@ private:
     };
     
     struct input_reference {
-        input_reference (iokit_gamepad_v2& zp, IOHIDDeviceRef zd)
-            : parent (zp)
-            , device (zd)
-        {}
-        
-        iokit_gamepad_v2& parent;
-        IOHIDDeviceRef device;
+        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd) : parent (zp), device (zd) {}
+        iokit_gamepad& parent;
+        const IOHIDDeviceRef device;
     };
     
     typedef std::variant<attached_event, detached_event, input_event> event;
@@ -148,9 +135,7 @@ private:
         pthread_mutex_init (&mutex, nullptr);
         assert (pthread_create (&event_thread, nullptr, thread_start, this) == 0);
         
-        while (event_thread_loop == nullptr) {
-            ;
-        }
+        while (event_thread_loop == nullptr) { ; }
         
         hid_manager = IOHIDManagerCreate (kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         assert (hid_manager);
@@ -173,7 +158,7 @@ private:
                 CFDictionaryCreate (kCFAllocatorDefault, (const void **)keys, (const void **)desktop_gamepad.data(), desktop_gamepad.size(), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
                 CFDictionaryCreate (kCFAllocatorDefault, (const void **)keys, (const void **)desktop_controller.data(), desktop_controller.size(), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks) };
             CFRelease (controller); CFRelease (gamepad); CFRelease (joystick); CFRelease (desktop);
-            CFArrayRef multiple = CFArrayCreate (kCFAllocatorDefault, (const void **) devices.data(), devices.size(), &kCFTypeArrayCallBacks);
+            const CFArrayRef multiple = CFArrayCreate (kCFAllocatorDefault, (const void **) devices.data(), devices.size(), &kCFTypeArrayCallBacks);
             std::for_each (devices.begin(), devices.end(), [](CFDictionaryRef r){ CFRelease (r); });
             IOHIDManagerSetDeviceMatchingMultiple (hid_manager, multiple);
             CFRelease (multiple);
@@ -183,7 +168,9 @@ private:
         IOHIDManagerRegisterDeviceRemovalCallback (hid_manager, iohid_detached_callback, this);
         IOReturn r = IOHIDManagerOpen (hid_manager, kIOHIDOptionsTypeNone);
         if (r != kIOReturnSuccess) {
+#if SGE_OSX_INPUT_DEBUG
             std::cout << "Unexpected return code [" << r << "] from IOHIDManagerOpen (" << hid_manager << ")" << '\n';
+#endif
             assert (false);
         }
         IOHIDManagerScheduleWithRunLoop (hid_manager, CFRunLoopGetCurrent (), CFSTR ("RunLoopModeDiscovery"));
@@ -191,19 +178,14 @@ private:
     
     void stop () {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
-            if (connections[i].has_value()) {
-                remove_connection(connections[i].value().first);
-            }
+            if (connections[i].has_value()) remove_connection(connections[i].value().first);
         }
 
         pthread_mutex_lock (&mutex);
-        while (event_queue.size()) {
-            event_queue.pop();
-        }
+        while (event_queue.size()) event_queue.pop();
         
         input_callback_data.clear();
         pthread_mutex_unlock (&mutex);
-        
         
         if (event_thread_loop != nullptr) {
           pthread_cancel (event_thread);
@@ -215,7 +197,9 @@ private:
 
         IOReturn r = IOHIDManagerClose (hid_manager, kIOHIDOptionsTypeNone);
         if (r != kIOReturnSuccess) {
+#if SGE_OSX_INPUT_DEBUG
             std::cout << "Unexpected return code [" << r << "] from IOHIDManagerClose (" << hid_manager << ")" << '\n';
+#endif
             assert (false);
         }
         CFRelease (hid_manager);
@@ -225,31 +209,19 @@ private:
     void process () {
         auto now = std::chrono::high_resolution_clock::now ();
 
-        // scan
-        if (now - last_gamepad_scan >= std::chrono::seconds (1)) {
+        if (now - last_gamepad_scan >= std::chrono::seconds (1)) { // scan
             CFRunLoopRunInMode (CFSTR ("RunLoopModeDiscovery"), 0, true);
             last_gamepad_scan = now;
         }
         
-        // update
-        if (now - last_gamepad_update >= std::chrono::milliseconds (5)) {
-
+        if (now - last_gamepad_update >= std::chrono::milliseconds (5)) { // update
             pthread_mutex_lock (&mutex);
             while (event_queue.size ()) {
                 event event = event_queue.front ();
                 event_queue.pop ();
-                
-                if (attached_event* attached = std::get_if<attached_event> (&event)) {
-                    add_connection (attached->device);
-                }
-                
-                if (detached_event* detached = std::get_if<detached_event> (&event)) {
-                    remove_connection (detached->device);
-                }
-                
-                if (input_event* input = std::get_if<input_event> (&event)) {
-                    handle_input_event (input->device, input->identifier, input->value);
-                }
+                if (attached_event* attached = std::get_if<attached_event> (&event)) { add_connection (attached->device); }
+                if (detached_event* detached = std::get_if<detached_event> (&event)) { remove_connection (detached->device); }
+                if (input_event* input = std::get_if<input_event> (&event)) { handle_input_event (input->device, input->identifier, input->value); }
             }
             pthread_mutex_unlock (&mutex);
             last_gamepad_update = now;
@@ -259,18 +231,24 @@ private:
     void add_connection (IOHIDDeviceRef device) {
         auto idx = get_next_connection_index ();
         if (idx.has_value ()) {
+#if SGE_OSX_INPUT_DEBUG
             std::cout << "Adding device [" << idx.value () << "] (" << device << ")." << '\n';
+#endif
             connections[idx.value ()] = { device, device_state {} };
         }
         else {
+#if SGE_OSX_INPUT_DEBUG
             std::cout << "Ignoring device: " << device << ", connection limit exceeded." << '\n';
+#endif
         }
     }
     
     void remove_connection (IOHIDDeviceRef device) {
         auto idx = get_connection_index (device);
         if (idx.has_value ()) {
+#if SGE_OSX_INPUT_DEBUG
             std::cout << "Removing device [" << idx.value () << "] (" << device << ")." << '\n';
+#endif
             connections[idx.value ()].reset();
         }
     }
@@ -316,42 +294,23 @@ private:
             }
             // dpad
             case AXIS_DPAD: {
+                #define FN(x) { state.pressed_buttons.insert (x); }
                 switch (value) {
-                    case 0:
-                        state.pressed_buttons.insert (button::dpad_up);
-                        break;
-                    case 1:
-                        state.pressed_buttons.insert (button::dpad_up);
-                        state.pressed_buttons.insert (button::dpad_right);
-                        break;
-                    case 2:
-                        state.pressed_buttons.insert (button::dpad_right);
-                        break;
-                    case 3:
-                        state.pressed_buttons.insert (button::dpad_right);
-                        state.pressed_buttons.insert (button::dpad_down);
-                        break;
-                    case 4:
-                        state.pressed_buttons.insert (button::dpad_down);
-                        break;
-                    case 5:
-                        state.pressed_buttons.insert (button::dpad_left);
-                        state.pressed_buttons.insert (button::dpad_down);
-                        break;
-                    case 6:
-                        state.pressed_buttons.insert (button::dpad_left);
-                        break;
-                    case 7:
-                        state.pressed_buttons.insert (button::dpad_left);
-                        state.pressed_buttons.insert (button::dpad_up);
-                        break;
+                    case 0: FN (button::dpad_up);                                   break;
+                    case 1: FN (button::dpad_up);       FN (button::dpad_right);    break;
+                    case 2: FN (button::dpad_right);                                break;
+                    case 3: FN (button::dpad_right);    FN (button::dpad_down);     break;
+                    case 4: FN (button::dpad_down);                                 break;
+                    case 5: FN (button::dpad_left);     FN (button::dpad_down);     break;
+                    case 6: FN (button::dpad_left);                                 break;
+                    case 7: FN (button::dpad_left);     FN (button::dpad_up);       break;
                     case 8:
                         state.pressed_buttons.erase (button::dpad_up);
                         state.pressed_buttons.erase (button::dpad_right);
                         state.pressed_buttons.erase (button::dpad_down);
-                        state.pressed_buttons.erase (button::dpad_left);
-                        break;
+                        state.pressed_buttons.erase (button::dpad_left);            break;
                 }
+                #undef FN
                 // triggers
                 case AXIS_LEFT_TRIGGER: case AXIS_RIGHT_TRIGGER: {
                     float v = (float) value / 255.0f;
@@ -372,7 +331,7 @@ private:
     // --------------
     
     static void* thread_start (void* context) {
-        iokit_gamepad_v2* system = static_cast<iokit_gamepad_v2*>(context);
+        iokit_gamepad* system = static_cast<iokit_gamepad*>(context);
         system->event_thread_loop = CFRunLoopGetCurrent ();
         while (true) {
             CFRunLoopRun ();
@@ -383,7 +342,7 @@ private:
     
     static void iohid_attached_callback (void* context, IOReturn result, void* sender, IOHIDDeviceRef device) {
 
-        iokit_gamepad_v2* gp = static_cast<iokit_gamepad_v2*>(context);
+        iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
         pthread_mutex_lock (&gp->mutex);
         
         gp->input_callback_data[device] = std::make_unique<input_reference> (*gp, device);
@@ -395,7 +354,7 @@ private:
     }
     
     static void iohid_detached_callback (void* context, IOReturn result, void* sender, IOHIDDeviceRef device) {
-        iokit_gamepad_v2* gp = static_cast<iokit_gamepad_v2*>(context);
+        iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
         pthread_mutex_lock (&gp->mutex);
         gp->input_callback_data.erase (device);
         gp->event_queue.push (detached_event { device });
@@ -453,31 +412,23 @@ private:
 
 
 
-
-
-
+// PROGRAM
+//################################################################################################//
 
 std::unordered_set<wchar_t>             g_keyboard_pressed_characters;
 std::unordered_set<int>                 g_keyboard_pressed_fns;
-
 bool                                    g_mouse_left;
 bool                                    g_mouse_middle;
 bool                                    g_mouse_right;
 float                                   g_mouse_position_x;
 float                                   g_mouse_position_y;
 int                                     g_mouse_scrollwheel;
-
-//iokit_gamepad                           g_gamepad;
-iokit_gamepad_v2                        g_gamepad_v2;
-
+iokit_gamepad                           g_gamepad;
 bool                                    g_fullscreen;
 bool                                    g_is_resizing;
 int                                     g_container_width;
 int                                     g_container_height;
-
-
 std::optional<sge::math::point2>        g_target_window_size;
-
 std::unique_ptr<sge::core::engine>      g_sge;
 
 //################################################################################################//
@@ -500,96 +451,38 @@ void calculate_sge_input_state (sge::input_state& input) {
     }
     
     
-#define SGE_OSX_TRANSLATE_KEY_PRESS_EX(x, y) { if (g_keyboard_pressed_fns.find (x) != g_keyboard_pressed_fns.end()) input[sge::input_control_identifier::kb_ ## y] = true; }
-
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (27, escape);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (13, enter);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (32, spacebar);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSEventModifierFlagShift, shift);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSEventModifierFlagControl, control);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSEventModifierFlagOption, alt);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (127, backspace);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (9, tab);
+    #define FN(x, y) { if (g_keyboard_pressed_fns.find (x) != g_keyboard_pressed_fns.end()) input[sge::input_control_identifier::kb_ ## y] = true; }
+    FN (27, escape); FN (13, enter); FN (32, spacebar);
+    FN (NSEventModifierFlagShift, shift); FN (NSEventModifierFlagControl, control); FN (NSEventModifierFlagOption, alt);
+    FN (127, backspace); FN (9, tab);
+    FN (NSInsertFunctionKey, ins); FN (NSDeleteFunctionKey, del);
+    FN (NSHomeFunctionKey, home); FN (NSEndFunctionKey, end);
+    FN (NSPageUpFunctionKey, page_up); FN (NSPageDownFunctionKey, page_down);
+    FN (NSMenuFunctionKey, right_click); FN (NSPrintScreenFunctionKey, prt_sc); FN (NSPauseFunctionKey, pause);
+    FN (NSUpArrowFunctionKey, up); FN (NSDownArrowFunctionKey, down);
+    FN (NSLeftArrowFunctionKey, left); FN (NSRightArrowFunctionKey, right);
+    FN (NSEventModifierFlagCommand, cmd); FN (3, numpad_enter);
+    FN (NSF1FunctionKey, f1); FN (NSF2FunctionKey, f2); FN (NSF3FunctionKey, f3);
+    FN (NSF4FunctionKey, f4); FN (NSF5FunctionKey, f5); FN (NSF6FunctionKey, f6);
+    FN (NSF7FunctionKey, f7); FN (NSF8FunctionKey, f8); FN (NSF9FunctionKey, f9);
+    FN (NSF10FunctionKey, f10); FN (NSF11FunctionKey, f11); FN (NSF12FunctionKey, f12);
+    #undef FN
     
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSInsertFunctionKey, ins);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSDeleteFunctionKey, del);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSHomeFunctionKey, home);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSEndFunctionKey, end);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSPageUpFunctionKey, page_up);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSPageDownFunctionKey, page_down);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSMenuFunctionKey, right_click);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSPrintScreenFunctionKey, prt_sc);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSPauseFunctionKey, pause);
-    
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSUpArrowFunctionKey, up);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSDownArrowFunctionKey, down);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSLeftArrowFunctionKey, left);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSRightArrowFunctionKey, right);
-    
-#define SGE_OSX_CHARACTER_KEY_PRESS_EX(x, y) { case x: input[sge::input_control_identifier::kb_ ## y] = true; break; }
-
     for (wchar_t character : g_keyboard_pressed_characters) {
         switch (toupper (character)) {
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('A', a);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('B', b);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('C', c);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('D', d);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('E', e);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('F', f);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('G', g);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('H', h);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('I', i);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('J', j);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('K', k);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('L', l);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('M', m);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('N', n);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('O', o);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('P', p);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('Q', q);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('R', r);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('S', s);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('T', t);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('U', u);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('V', v);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('W', w);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('X', x);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('Y', y);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('Z', z);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('0', 0);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('1', 1);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('2', 2);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('3', 3);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('4', 4);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('5', 5);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('6', 6);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('7', 7);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('8', 8);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('9', 9);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('+', plus);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('-', minus);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX (',', comma);
-            SGE_OSX_CHARACTER_KEY_PRESS_EX ('.', period);
+            #define CASE(x, y) { case x: input[sge::input_control_identifier::kb_ ## y] = true; break; }
+            CASE ('A', a); CASE ('B', b); CASE ('C', c); CASE ('D', d); CASE ('E', e);
+            CASE ('F', f); CASE ('G', g); CASE ('H', h); CASE ('I', i); CASE ('J', j);
+            CASE ('K', k); CASE ('L', l); CASE ('M', m); CASE ('N', n); CASE ('O', o);
+            CASE ('P', p); CASE ('Q', q); CASE ('R', r); CASE ('S', s); CASE ('T', t);
+            CASE ('U', u); CASE ('V', v); CASE ('W', w); CASE ('X', x); CASE ('Y', y);
+            CASE ('Z', z); CASE ('0', 0); CASE ('1', 1); CASE ('2', 2); CASE ('3', 3);
+            CASE ('4', 4); CASE ('5', 5); CASE ('6', 6); CASE ('7', 7); CASE ('8', 8);
+            CASE ('9', 9); CASE ('+', plus); CASE ('-', minus); CASE (',', comma); CASE ('.', period);
+            #undef CASE
             default: break;
         }
     }
-   
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSEventModifierFlagCommand, cmd);
-    
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF1FunctionKey, f1);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF2FunctionKey, f2);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF3FunctionKey, f3);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF4FunctionKey, f4);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF5FunctionKey, f5);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF6FunctionKey, f6);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF7FunctionKey, f7);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF8FunctionKey, f8);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF9FunctionKey, f9);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF10FunctionKey, f10);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF11FunctionKey, f11);
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (NSF12FunctionKey, f12);
-    
-    SGE_OSX_TRANSLATE_KEY_PRESS_EX (3, numpad_enter);
     
     for (wchar_t character : g_keyboard_pressed_characters) { // not sure how to get this to work
         if (g_keyboard_pressed_fns.find (NSEventModifierFlagNumericPad) != g_keyboard_pressed_fns.end()) {
@@ -641,29 +534,29 @@ void calculate_sge_input_state (sge::input_state& input) {
     
     // gamepad
     
-    input[sge::input_control_identifier::ga_left_trigger] = g_gamepad_v2.get_left_trigger ();
-    input[sge::input_control_identifier::ga_right_trigger] = g_gamepad_v2.get_right_trigger ();
-    auto gamepad_left_stick = g_gamepad_v2.get_left_stick ();
+    input[sge::input_control_identifier::ga_left_trigger] = g_gamepad.get_left_trigger ();
+    input[sge::input_control_identifier::ga_right_trigger] = g_gamepad.get_right_trigger ();
+    auto gamepad_left_stick = g_gamepad.get_left_stick ();
     input[sge::input_control_identifier::ga_left_stick_x] = gamepad_left_stick.x;
     input[sge::input_control_identifier::ga_left_stick_y] = gamepad_left_stick.y;
-    auto gamepad_right_stick = g_gamepad_v2.get_right_stick ();
+    auto gamepad_right_stick = g_gamepad.get_right_stick ();
     input[sge::input_control_identifier::ga_right_stick_x] = gamepad_right_stick.x;
     input[sge::input_control_identifier::ga_right_stick_y] = gamepad_right_stick.y;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::dpad_up)) input[sge::input_control_identifier::gb_dpad_up] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::dpad_down)) input[sge::input_control_identifier::gb_dpad_down] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::dpad_left)) input[sge::input_control_identifier::gb_dpad_left] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::dpad_right)) input[sge::input_control_identifier::gb_dpad_right] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::option_left)) input[sge::input_control_identifier::gb_back] = true;
-    //if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::option_middle).value_or (false)) input[sge::input_control_identifier::gb_center] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::option_right)) input[sge::input_control_identifier::gb_start] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::left_thumb)) input[sge::input_control_identifier::gb_left_thumb] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::right_thumb)) input[sge::input_control_identifier::gb_right_thumb] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::left_shoulder)) input[sge::input_control_identifier::gb_left_shoulder] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::right_shoulder)) input[sge::input_control_identifier::gb_right_shoulder] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::action_south)) input[sge::input_control_identifier::gb_a] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::action_east)) input[sge::input_control_identifier::gb_b] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::action_west)) input[sge::input_control_identifier::gb_x] = true;
-    if (g_gamepad_v2.is_button_pressed (iokit_gamepad_v2::button::action_north)) input[sge::input_control_identifier::gb_y] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_up)) input[sge::input_control_identifier::gb_dpad_up] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_down)) input[sge::input_control_identifier::gb_dpad_down] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_left)) input[sge::input_control_identifier::gb_dpad_left] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_right)) input[sge::input_control_identifier::gb_dpad_right] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::option_left)) input[sge::input_control_identifier::gb_back] = true;
+    //if (g_gamepad.is_button_pressed (iokit_gamepad::button::option_middle)) input[sge::input_control_identifier::gb_center] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::option_right)) input[sge::input_control_identifier::gb_start] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::left_thumb)) input[sge::input_control_identifier::gb_left_thumb] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::right_thumb)) input[sge::input_control_identifier::gb_right_thumb] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::left_shoulder)) input[sge::input_control_identifier::gb_left_shoulder] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::right_shoulder)) input[sge::input_control_identifier::gb_right_shoulder] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_south)) input[sge::input_control_identifier::gb_a] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_east)) input[sge::input_control_identifier::gb_b] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_west)) input[sge::input_control_identifier::gb_x] = true;
+    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_north)) input[sge::input_control_identifier::gb_y] = true;
     
 }
 
@@ -769,7 +662,7 @@ void calculate_sge_input_state (sge::input_state& input) {
     g_mouse_position_y = g_container_height - std::clamp<int> (point.y, 0, g_container_height);
     
     //g_gamepad.update();
-    g_gamepad_v2.update();
+    g_gamepad.update();
 
     // update the engine
     sge::core::container_state container_state;
