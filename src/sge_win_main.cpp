@@ -20,11 +20,8 @@
 #include "sge_app.hpp"
 
 #include <windows.h>
-#include <XInput.h>
 
-#pragma comment(lib, "XInput.lib")
-
-// Windows Keyboard (stand alone class)
+// Windows Keyboard (stand alone class - independent of SGE)
 // -------------------------------------------------------------------------- //
 class win32_keyboard {
 public:
@@ -229,7 +226,7 @@ public:
     }
 };
 
-// Windows Mouse (stand alone class)
+// Windows Mouse (stand alone class - independent of SGE)
 // -------------------------------------------------------------------------- //
 class win32_mouse {
 public:
@@ -266,8 +263,12 @@ public:
 };
 
 
-// XInput Gamepad (stand alone class)
+// XInput Gamepad (stand alone class - independent of SGE)
 // -------------------------------------------------------------------------- //
+
+#include <XInput.h>
+#pragma comment(lib, "XInput.lib")
+
 class xinput_gamepad
 {
 public:
