@@ -600,15 +600,17 @@ vec4 run(vec2 uv) {
         const float softShadowMultiplier = (1.0 - shadows.y) * shadowFactor;
 
         if (ubo_settings.mode == 1) { return vec4 (depth / 4.0, depth / 20.0, depth / 100.0, 1); }
-        if (ubo_settings.mode == 2) { return vec4 (0, 0, marchResult.stepCount / float(ubo_settings.iterations), 1); }
-        if (ubo_settings.mode == 3) { return vec4 (surfaceNormal, 1); }
+        if (ubo_settings.mode == 2) { return vec4 (0, 0, marchResult.stepCount / float (ubo_settings.iterations), 1); }
+        if (ubo_settings.mode == 3) { return vec4 ((surfaceNormal + vec3 (1)) / 2, 1); }
         if (ubo_settings.mode == 4) { return vec4 (marchResult.minimumConeRatio * 100, marchResult.minimumConeRatio * 1000, marchResult.minimumConeRatio * 10000, 1); }
         if (ubo_settings.mode == 5) { return vec4 (hardShadowMultiplier, hardShadowMultiplier, hardShadowMultiplier, 1); }
         if (ubo_settings.mode == 6) { return vec4 (softShadowMultiplier, softShadowMultiplier, softShadowMultiplier, 1); }
         if (ubo_settings.mode == 7) { return vec4 (aoMultiplier, aoMultiplier, aoMultiplier, 1); }
         if (ubo_settings.mode == 8) { return vec4 (lighting, 1); }
 
-        return vec4 (lighting * aoMultiplier * softShadowMultiplier, 1);
+        const vec3 composite = lighting * aoMultiplier * softShadowMultiplier;
+        const vec3 gamma  = pow (composite, vec3 (1.0 / ubo_settings.gamma));
+        return vec4 (gamma, 1);
 
     }
 
@@ -618,9 +620,7 @@ vec4 run(vec2 uv) {
 //-------------------------------------------------------------------------------------------------------------------//
 
 void main() {
-
     const ivec2 dim = imageSize (img);
-
     const vec2 uv = vec2 (float (gl_GlobalInvocationID.x) / float (dim.x), 1.0 - (float (gl_GlobalInvocationID.y) / float (dim.y)));
 
     if (push.no_change && (((ubo_settings.flags >> 3) & 1u) > 0)) {
@@ -631,16 +631,10 @@ void main() {
         if (dim.x - gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 1, 1)); }
     }
     else {
-
-        const vec3 bg = vec3 (.2) * (1. - (length(uv - vec2(0.5)) - .2));
-
+        const vec3 bg = vec3 (.4) * (1. - (length(uv - vec2(0.5)) - .2));
         const vec4 result = run (uv);
-
         const vec3 composite = (result.rgb * result.a) + (bg.rgb * (1.0 - result.a));
-
-        const vec3 gamma  = pow (composite, vec3 (1.0 / ubo_settings.gamma)); // gamma correction.
-
-        const vec4 final = vec4 (gamma, 1);
+        const vec4 final = vec4 (composite, 1);
 
         imageStore (img, ivec2 (gl_GlobalInvocationID.xy), final);
     }

@@ -455,25 +455,24 @@ vec4 run(vec2 uv) {
         }
 
         // COMPOSITE
-        float aoFactor = 0.8;
-        float shadowFactor = 0.9;
-        float aoMultiplier = (1.0 - (1.0 - ao) * aoFactor);
-        float hardShadowMultiplier = (1.0 - shadows.x) * shadowFactor;
-        float softShadowMultiplier = (1.0 - shadows.y) * shadowFactor;
+        const float aoFactor = 0.8;
+        const float shadowFactor = 0.9;
+        const float aoMultiplier = (1.0 - (1.0 - ao) * aoFactor);
+        const float hardShadowMultiplier = (1.0 - shadows.x) * shadowFactor;
+        const float softShadowMultiplier = (1.0 - shadows.y) * shadowFactor;
 
         if (ubo_settings.mode == 1) { return vec4 (depth / 4.0, depth / 20.0, depth / 100.0, 1); }
-        if (ubo_settings.mode == 2) { return vec4 (0, 0, marchResult.stepCount / float(ubo_settings.iterations), 1); }
-        if (ubo_settings.mode == 3) { return vec4 (surfaceNormal, 1); }
+        if (ubo_settings.mode == 2) { return vec4 (0, 0, marchResult.stepCount / float (ubo_settings.iterations), 1); }
+        if (ubo_settings.mode == 3) { return vec4 ((surfaceNormal + vec3(1)) / 2, 1); }
         if (ubo_settings.mode == 4) { return vec4 (marchResult.minimumConeRatio * 100, marchResult.minimumConeRatio * 1000, marchResult.minimumConeRatio * 10000, 1); }
         if (ubo_settings.mode == 5) { return vec4 (hardShadowMultiplier, hardShadowMultiplier, hardShadowMultiplier, 1); }
         if (ubo_settings.mode == 6) { return vec4 (softShadowMultiplier, softShadowMultiplier, softShadowMultiplier, 1); }
         if (ubo_settings.mode == 7) { return vec4 (aoMultiplier, aoMultiplier, aoMultiplier, 1); }
         if (ubo_settings.mode == 8) { return vec4 (lighting, 1); }
 
-        vec3 c = lighting * aoMultiplier * softShadowMultiplier;
-        c = pow (c.xyz, vec3 (1.0 / ubo_settings.gamma)); // gamma correction.
-        return vec4 (c, 1);
-        
+        const vec3 composite = lighting * aoMultiplier * softShadowMultiplier;
+        const vec3 gamma  = pow (composite, vec3 (1.0 / ubo_settings.gamma));
+        return vec4 (gamma, 1);
     }
 
     return vec4 (0); // not a sausage
@@ -482,10 +481,8 @@ vec4 run(vec2 uv) {
 //-------------------------------------------------------------------------------------------------------------------//
 
 void main() {
-
-    ivec2 dim = imageSize (img);
-
-    vec2 uv = vec2 (gl_GlobalInvocationID.xy) / dim; uv.y = 1.0 - uv.y;
+    const ivec2 dim = imageSize (img);
+    const vec2 uv = vec2 (float (gl_GlobalInvocationID.x) / float (dim.x), 1.0 - (float (gl_GlobalInvocationID.y) / float (dim.y)));
 
     if (push.no_change && (((ubo_settings.flags >> 3) & 1u) > 0)) {
         // nothing changed, don't bother
@@ -495,12 +492,10 @@ void main() {
         if (dim.x - gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 1, 1)); }
     }
     else {
-
-        vec3 bg = vec3 (.5) * (1. - (length(uv - vec2(0.5)) - .2));
-
-        vec4 result = run (uv);
-
-        vec4 final = vec4 ((result.rgb * result.a) + (bg.rgb * (1.0 - result.a)), 1);
+        const vec3 bg = vec3 (.4) * (1. - (length(uv - vec2(0.5)) - .2));
+        const vec4 result = run (uv);
+        const vec3 composite = (result.rgb * result.a) + (bg.rgb * (1.0 - result.a));
+        const vec4 final = vec4 (composite, 1);
 
         imageStore (img, ivec2 (gl_GlobalInvocationID.xy), final);
     }
