@@ -44,87 +44,70 @@ public:
         left_thumb, right_thumb, left_shoulder, right_shoulder
     };
     
-    vector  get_left_stick      ()                      const { return get_left_stick (index::one).value_or (vector { 0.0f, 0.0f }); }
-    vector  get_right_stick     ()                      const { return get_right_stick (index::one).value_or (vector { 0.0f, 0.0f }); }
-    float   get_left_trigger    ()                      const { return get_left_trigger (index::one).value_or (0.0f); }
-    float   get_right_trigger   ()                      const { return get_right_trigger (index::one).value_or (0.0f);}
-    bool    is_button_pressed   (button z)              const { return is_button_pressed (index::one, z).value_or (false);}
+    vector                  get_left_stick      ()                  const { return get_left_stick (index::one).value_or (vector { 0.0f, 0.0f }); }
+    vector                  get_right_stick     ()                  const { return get_right_stick (index::one).value_or (vector { 0.0f, 0.0f }); }
+    float                   get_left_trigger    ()                  const { return get_left_trigger (index::one).value_or (0.0f); }
+    float                   get_right_trigger   ()                  const { return get_right_trigger (index::one).value_or (0.0f);}
+    bool                    is_button_pressed   (button z)          const { return is_button_pressed (index::one, z).value_or (false);}
 
-    std::optional<vector>  get_left_stick      (index i)               const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.left_stick; } return std::nullopt; }
-    std::optional<vector>  get_right_stick     (index i)               const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_stick; } return std::nullopt; }
-    std::optional<float>   get_left_trigger    (index i)               const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.left_trigger; } return std::nullopt; }
-    std::optional<float>   get_right_trigger   (index i)               const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_trigger; } return std::nullopt; }
-    std::optional<bool>    is_button_pressed   (index i, button z)     const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.pressed_buttons.find(z) != connections[idx].value().second.pressed_buttons.end(); } return std::nullopt; }
+    std::optional<vector>   get_left_stick      (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.left_stick; } return std::nullopt; }
+    std::optional<vector>   get_right_stick     (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_stick; } return std::nullopt; }
+    std::optional<float>    get_left_trigger    (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.left_trigger; } return std::nullopt; }
+    std::optional<float>    get_right_trigger   (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_trigger; } return std::nullopt; }
+    std::optional<bool>     is_button_pressed   (index i, button z) const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.pressed_buttons.find(z) != connections[idx].value().second.pressed_buttons.end(); } return std::nullopt; }
     
-    iokit_gamepad () { start (); }
-    
-    ~iokit_gamepad () { stop (); }
-    
-    void update () { process (); }
+                            iokit_gamepad       ()                        { start (); }
+                            ~iokit_gamepad      ()                        { stop (); }
+    void                    update              ()                        { process (); }
 
 private:
     static constexpr int CONNECTION_LIMIT = 4;
     
     enum Cookie {
-        BUTTON_ACTION_SOUTH = 2,
-        BUTTON_ACTION_EAST = 3,
-        BUTTON_ACTION_WEST = 4,
-        BUTTON_ACTION_NORTH = 5,
-        BUTTON_LEFT_SHOULDER = 6,
-        BUTTON_RIGHT_SHOULDER = 7,
-        BUTTON_LEFT_TRIGGER = 8,
-        BUTTON_RIGHT_TRIGGER = 9,
-        BUTTON_OPTION_LEFT = 10,
-        BUTTON_OPTION_RIGHT = 11,
-        BUTTON_LEFT_THUMB = 12,
-        BUTTON_RIGHT_THUMB = 13,
-        BUTTON_OPTION_EXTRA = 14,
-        BUTTON_OPTION_MIDDLE = 15,
-        AXIS_LEFT_X = 16,
-        AXIS_LEFT_Y = 17,
-        AXIS_RIGHT_X = 18,
-        AXIS_RIGHT_Y = 19,
-        AXIS_DPAD = 20,
-        AXIS_LEFT_TRIGGER = 22,
-        AXIS_RIGHT_TRIGGER = 23,
+        BUTTON_ACTION_SOUTH = 2, BUTTON_ACTION_EAST = 3, BUTTON_ACTION_WEST = 4, BUTTON_ACTION_NORTH = 5,
+        BUTTON_LEFT_SHOULDER = 6, BUTTON_RIGHT_SHOULDER = 7, BUTTON_LEFT_TRIGGER = 8, BUTTON_RIGHT_TRIGGER = 9,
+        BUTTON_OPTION_LEFT = 10, BUTTON_OPTION_RIGHT = 11, BUTTON_LEFT_THUMB = 12, BUTTON_RIGHT_THUMB = 13,
+        BUTTON_OPTION_EXTRA = 14, BUTTON_OPTION_MIDDLE = 15,
+        AXIS_LEFT_X = 16, AXIS_LEFT_Y = 17, AXIS_RIGHT_X = 18, AXIS_RIGHT_Y = 19,
+        AXIS_DPAD = 20, AXIS_LEFT_TRIGGER = 22, AXIS_RIGHT_TRIGGER = 23,
     };
     
-    struct attached_event { IOHIDDeviceRef device; };
-    
-    struct detached_event { IOHIDDeviceRef device; };
-    
-    struct input_event { IOHIDDeviceRef device; IOHIDElementCookie identifier; IOHIDElementType type; int value; };
+    struct attached_event   { IOHIDDeviceRef device; };
+    struct detached_event   { IOHIDDeviceRef device; };
+    struct input_event      { IOHIDDeviceRef device; IOHIDElementCookie identifier; IOHIDElementType type; int value; };
 
     struct device_state {
-        std::unordered_set<button> pressed_buttons;
-        vector left_stick;
-        vector right_stick;
-        float left_trigger;
-        float right_trigger;
+        std::unordered_set<button>  pressed_buttons;
+        vector                      left_stick;
+        vector                      right_stick;
+        float                       left_trigger;
+        float                       right_trigger;
     };
     
     struct input_reference {
-        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd) : parent (zp), device (zd) {}
-        iokit_gamepad& parent;
-        const IOHIDDeviceRef device;
+        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd)
+            : parent (zp), device (zd)
+        {}
+        iokit_gamepad&              parent;
+        const IOHIDDeviceRef        device;
     };
     
-    typedef std::variant<attached_event, detached_event, input_event> event;
-    typedef std::chrono::high_resolution_clock::time_point timestamp;
-    typedef std::optional<std::pair<IOHIDDeviceRef, device_state>> connection;
+    typedef std::variant<attached_event, detached_event, input_event>       event;
+    typedef std::chrono::high_resolution_clock::time_point                  timestamp;
+    typedef std::optional<std::pair<IOHIDDeviceRef, device_state>>          connection;
     
     // accessed on hid thread
-    std::queue<event> event_queue;
-    std::unordered_map<IOHIDDeviceRef, std::unique_ptr<input_reference>> input_callback_data; // crap needed by the input callback
+    std::queue<event>                                                       event_queue;
+    std::unordered_map<IOHIDDeviceRef, std::unique_ptr<input_reference>>    input_callback_data; // crap needed by the input callback
     
     // local only
-    IOHIDManagerRef hid_manager = nullptr;
-    CFRunLoopRef event_thread_loop = nullptr;
-    pthread_t event_thread;
-    pthread_mutex_t mutex;
-    timestamp last_gamepad_update;
-    timestamp last_gamepad_scan;
-    std::array <connection, CONNECTION_LIMIT> connections;
+    IOHIDManagerRef                                                         hid_manager = nullptr;
+    CFRunLoopRef                                                            event_thread_loop = nullptr;
+    pthread_t                                                               event_thread;
+    pthread_mutex_t                                                         mutex;
+    timestamp                                                               last_gamepad_update;
+    timestamp                                                               last_gamepad_scan;
+    std::array <connection, CONNECTION_LIMIT>                               connections;
 
     
     //
@@ -134,12 +117,10 @@ private:
     void start () {
         pthread_mutex_init (&mutex, nullptr);
         assert (pthread_create (&event_thread, nullptr, thread_start, this) == 0);
-        
-        while (event_thread_loop == nullptr) { ; }
-        
+        while (event_thread_loop == nullptr)
+            { ; }
         hid_manager = IOHIDManagerCreate (kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         assert (hid_manager);
-        
         {
             constexpr int page_desktop = kHIDPage_GenericDesktop;
             constexpr int usage_joystick = kHIDUsage_GD_Joystick;
@@ -163,7 +144,6 @@ private:
             IOHIDManagerSetDeviceMatchingMultiple (hid_manager, multiple);
             CFRelease (multiple);
         }
-
         IOHIDManagerRegisterDeviceMatchingCallback (hid_manager, iohid_attached_callback, this);
         IOHIDManagerRegisterDeviceRemovalCallback (hid_manager, iohid_detached_callback, this);
         IOReturn r = IOHIDManagerOpen (hid_manager, kIOHIDOptionsTypeNone);
@@ -178,15 +158,14 @@ private:
     
     void stop () {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
-            if (connections[i].has_value()) remove_connection(connections[i].value().first);
+            if (connections[i].has_value())
+                remove_connection(connections[i].value().first);
         }
-
         pthread_mutex_lock (&mutex);
-        while (event_queue.size()) event_queue.pop();
-        
+        while (event_queue.size())
+            event_queue.pop();
         input_callback_data.clear();
         pthread_mutex_unlock (&mutex);
-        
         if (event_thread_loop != nullptr) {
           pthread_cancel (event_thread);
           event_thread_loop = nullptr;
@@ -207,13 +186,11 @@ private:
     }
     
     void process () {
-        auto now = std::chrono::high_resolution_clock::now ();
-
+        const auto now = std::chrono::high_resolution_clock::now ();
         if (now - last_gamepad_scan >= std::chrono::seconds (1)) { // scan
             CFRunLoopRunInMode (CFSTR ("RunLoopModeDiscovery"), 0, true);
             last_gamepad_scan = now;
         }
-        
         if (now - last_gamepad_update >= std::chrono::milliseconds (5)) { // update
             pthread_mutex_lock (&mutex);
             while (event_queue.size ()) {
@@ -244,7 +221,7 @@ private:
     }
     
     void remove_connection (IOHIDDeviceRef device) {
-        auto idx = get_connection_index (device);
+        const auto idx = get_connection_index (device);
         if (idx.has_value ()) {
 #if SGE_OSX_INPUT_DEBUG
             std::cout << "Removing device [" << idx.value () << "] (" << device << ")." << '\n';
@@ -253,17 +230,11 @@ private:
         }
     }
     void handle_input_event (IOHIDDeviceRef device, IOHIDElementCookie identifier, int value) {
-        
-        auto idx = get_connection_index (device);
+        const auto idx = get_connection_index (device);
         assert (idx.has_value());
-        int index = idx.value();
+        const int index = idx.value();
         assert (connections[index].has_value());
-        
         auto& state = connections[index].value ().second;
-
-        const float THUMBSTICK_DEADZONE = 0.1f;
-        const float TRIGGER_DEADZONE = 0.01f;
-        
         switch (identifier) {
             // buttons
             #define CASE(x, y) { case x: { if (value > 0) state.pressed_buttons.insert (y); else state.pressed_buttons.erase (y); break; } }
@@ -279,10 +250,10 @@ private:
             CASE (BUTTON_LEFT_THUMB, button::left_thumb);
             CASE (BUTTON_RIGHT_THUMB, button::right_thumb);
             #undef CASE
-            
             // sticks
             case AXIS_LEFT_X: case AXIS_LEFT_Y: case AXIS_RIGHT_X: case AXIS_RIGHT_Y: {
                 float v = (((float) value / 255.0f) * 2.0f) - 1.0f;
+                const float THUMBSTICK_DEADZONE = 0.1f;
                 if (v < THUMBSTICK_DEADZONE && v > -THUMBSTICK_DEADZONE) { v = 0.0f; }
 
                 if (identifier == AXIS_LEFT_X)      state.left_stick.x = v;
@@ -314,6 +285,7 @@ private:
                 // triggers
                 case AXIS_LEFT_TRIGGER: case AXIS_RIGHT_TRIGGER: {
                     float v = (float) value / 255.0f;
+                    const float TRIGGER_DEADZONE = 0.01f;
                     if (value < TRIGGER_DEADZONE) { v = 0.0f; }
                     if (identifier == 22)      state.left_trigger = v;
                     else if (identifier == 23) state.right_trigger = v;
@@ -341,13 +313,10 @@ private:
     }
     
     static void iohid_attached_callback (void* context, IOReturn result, void* sender, IOHIDDeviceRef device) {
-
         iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
         pthread_mutex_lock (&gp->mutex);
-        
         gp->input_callback_data[device] = std::make_unique<input_reference> (*gp, device);
         gp->event_queue.push (attached_event { device });
-        
         IOHIDDeviceRegisterInputValueCallback (device, iohid_input_callback, gp->input_callback_data[device].get());
         IOHIDDeviceScheduleWithRunLoop (device, gp->event_thread_loop, kCFRunLoopDefaultMode);
         pthread_mutex_unlock (&gp->mutex);
@@ -378,7 +347,6 @@ private:
         const int int_value = IOHIDValueGetIntegerValue (value);
         
         pthread_mutex_lock (&ir->parent.mutex);
-        
         if (interesting_cookies.find (cookie) != interesting_cookies.end()) {
             if (ir->parent.event_queue.size () < 512) {
                 ir->parent.event_queue.push (input_event { ir->device, cookie, type, int_value });
