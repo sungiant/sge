@@ -10,7 +10,7 @@ before_script:
   - wget -O vulkansdk.tar.gz "https://sdk.lunarg.com/sdk/download/1.2.141.2/linux/vulkansdk-linux-x86_64-1.2.141.2.tar.gz?Human=true"
   - mkdir vulkansdk
   - tar -xzf vulkansdk.tar.gz --directory vulkansdk
-  - chmod +x vulkansdk/1.2.141.0/setup-env.sh
+  - ls vulkansdk/
   - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/vulkansdk/1.2.141.0
   - export VULKAN_SDK="$VK_SDK_PATH/x86_64"
   - export PATH="$VULKAN_SDK/bin:$PATH"
