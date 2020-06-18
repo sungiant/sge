@@ -80,7 +80,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [ ] Intelligent Vulkan queue selection.
 - [x] Configurable storage buffers.
 - [ ] API stabilisation - `sge::runtime` to be independent from `sge::core`.
-- [ ] OSX gamepad rewrite.
+- [x] OSX gamepad rewrite.
 - [ ] Improve and make configurable SGE built-in ImGui windows.
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
