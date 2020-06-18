@@ -1,10 +1,10 @@
-#pragma once
-
 // SGE-APP
 // -------------------------------------
 // The user interface into the engine.
 // -------------------------------------
 // ! Contains unimplemented functions which must be implemented by the user's application.
+
+#pragma once
 
 #include <string>
 #include <optional>

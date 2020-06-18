@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-TEXTURE
 // -------------------------------------
 // Vulkan texture helper type.
 // -------------------------------------
+
+#pragma once
 
 #include <stdlib.h>
 #include <string>

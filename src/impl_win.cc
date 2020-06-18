@@ -1,8 +1,8 @@
-#if TARGET_WIN32
-
 // SGE-WIN
 // Reference SGE host implementation.
 // -------------------------------------
+
+#if TARGET_WIN32
 
 #include <windows.h>
 

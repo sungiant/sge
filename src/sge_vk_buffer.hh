@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-BUFFER
 // -------------------------------------
 // Vulkan buffer helper type.
 // -------------------------------------
+
+#pragma once
 
 #include <cassert>
 #include <cstring>

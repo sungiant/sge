@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-TYPES
 // -------------------------------------
 // Common graphics types / helpers.
 // -------------------------------------
+
+#pragma once
 
 #include <vector>
 #include <unordered_map>

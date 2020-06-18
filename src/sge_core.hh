@@ -1,10 +1,10 @@
-#pragma once
-
 // SGE-CORE
 // -------------------------------------
 // The internals of the engine, not
 // intended for broad direct access.
 // -------------------------------------
+
+#pragma once
 
 #include <memory>
 #include <vector>

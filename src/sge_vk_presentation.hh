@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-PRESENTATION
 // -------------------------------------
 // Vulkan presentation logic.
 // -------------------------------------
+
+#pragma once
 
 #include <vector>
 #include <functional>

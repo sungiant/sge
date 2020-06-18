@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-KERNAL
 // -------------------------------------
 // Logic for setting up Vulkan.
 // -------------------------------------
+
+#pragma once
 
 #include <string>
 #include <memory>

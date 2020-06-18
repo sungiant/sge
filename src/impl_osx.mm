@@ -1,5 +1,8 @@
-#if TARGET_MACOSX
+// SGE-OSX
+// Reference SGE host implementation.
+// -------------------------------------
 
+#if TARGET_MACOSX
 
 #include <pthread.h>
 

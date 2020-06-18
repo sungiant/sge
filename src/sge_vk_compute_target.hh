@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-COMPUTE-TARGET
 // -------------------------------------
 // Pipeline for processing user code.
 // -------------------------------------
+
+#pragma once
 
 #include <vector>
 #include <functional>

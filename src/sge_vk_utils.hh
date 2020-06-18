@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-UTILS
 // -------------------------------------
 // Helpers for working with Vulkan.
 // -------------------------------------
+
+#pragma once
 
 #include <cassert>
 #include <vector>

@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-ALLOCATOR
 // -------------------------------------
 // Custom Vulkan allocator (placeholder)
 // -------------------------------------
+
+#pragma once
 
 #include <vulkan/vulkan.h>
 

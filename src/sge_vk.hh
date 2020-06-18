@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK
 // -------------------------------------
 // Vulkan graphics backend.
 // -------------------------------------
+
+#pragma once
 
 #if TARGET_WIN32
 #include <windows.h>

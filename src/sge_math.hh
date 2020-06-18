@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-MATH
 // -------------------------------------
 // Stand alone mathematics library.
 // -------------------------------------
+
+#pragma once
 
 #include <cmath>
 

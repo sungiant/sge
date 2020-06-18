@@ -1,5 +1,3 @@
-#pragma once
-
 // SGE-TYPES
 // -------------------------------------
 // Common types accessible to all areas
@@ -7,6 +5,8 @@
 // runtime, core.
 // -------------------------------------
 // todo: Review need for this - perhaps it'd be better to avoid having concrete types spanning areas of the engine.
+
+#pragma once
 
 #include <variant>
 #include <unordered_map>

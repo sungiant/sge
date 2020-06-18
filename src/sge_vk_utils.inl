@@ -1,10 +1,10 @@
-#pragma once
-
 // SGE-VK-UTILS (INLINE)
 // -------------------------------------
 // Helpers for creating Vulkan objects.
 // -------------------------------------
 // - Full types listed here for reference purposes.
+
+#pragma once
 
 inline VkViewport init_VkViewport (float width, float height, float min_depth, float max_depth) {
     VkViewport viewport{};

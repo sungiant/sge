@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-IMGUI
 // -------------------------------------
 // ImGui rendering pipeline.
 // -------------------------------------
+
+#pragma once
 
 #include <cassert>
 #include <array>

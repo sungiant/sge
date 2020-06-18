@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-UTILS
 // -------------------------------------
 // Stand alone utilities.
 // -------------------------------------
+
+#pragma once
 
 #include <cassert>
 #include <iostream>

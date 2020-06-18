@@ -1,9 +1,9 @@
-#pragma once
-
 // SGE-VK-FULLSCREEN-RENDER
 // -------------------------------------
 // Noddy pipeline for quad rendering.
 // -------------------------------------
+
+#pragma once
 
 #include <vector>
 
