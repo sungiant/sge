@@ -1,4 +1,3 @@
-//
 // SGE-APP
 // ---------------------------------- //
 // The user interface into the engine.
@@ -12,7 +11,6 @@
 #include <vector>
 
 #include "sge_runtime.hh"
-
 #include "sge_extensions.hh"
 
 // Indicates that the function, implemented in user application space, will be called from SGE code.

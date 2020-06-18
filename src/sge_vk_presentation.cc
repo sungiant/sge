@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <cassert>
 
 #if TARGET_MACOSX
 #include <MoltenVK/mvk_vulkan.h>
@@ -18,7 +19,6 @@
 
 #include "sge_vk_context.hh"
 #include "sge_vk_utils.hh"
-#include <cassert>
 
 namespace sge::vk {
 

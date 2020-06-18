@@ -1,4 +1,3 @@
-//
 // SGE-VK-CONTEXT
 // ---------------------------------- //
 // Useful view of aggregated contexual

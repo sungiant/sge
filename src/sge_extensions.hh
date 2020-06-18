@@ -1,4 +1,3 @@
-//
 // SGE-EXTENSIONS
 // ---------------------------------- //
 // Helper systems built on top of the

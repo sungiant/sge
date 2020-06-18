@@ -1,4 +1,3 @@
-//
 // SGE-LINUX
 // Reference SGE host implementation.
 // ---------------------------------- //

@@ -1,4 +1,3 @@
-//
 // SGE-VK-TEXTURE
 // ---------------------------------- //
 // Vulkan texture helper type.

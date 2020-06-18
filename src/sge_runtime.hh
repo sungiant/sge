@@ -1,4 +1,3 @@
-//
 // SGE-RUNTIME
 // ---------------------------------- //
 // SGE's low level runtime interface.

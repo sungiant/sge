@@ -3,9 +3,8 @@
 #include <cassert>
 #include <array>
 
-#include "sge_vk_presentation.hh"
-
 #include "sge_utils.hh"
+#include "sge_vk_presentation.hh"
 
 namespace sge::vk {
 

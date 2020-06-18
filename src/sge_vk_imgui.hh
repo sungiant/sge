@@ -1,4 +1,3 @@
-//
 // SGE-VK-IMGUI
 // ---------------------------------- //
 // ImGui rendering pipeline.

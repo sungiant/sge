@@ -1,4 +1,3 @@
-//
 // SGE-VK-PRESENTATION
 // ---------------------------------- //
 // Vulkan presentation logic.

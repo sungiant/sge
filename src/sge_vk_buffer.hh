@@ -1,4 +1,3 @@
-//
 // SGE-VK-BUFFER
 // ---------------------------------- //
 // Vulkan buffer helper type.

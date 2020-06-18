@@ -1,4 +1,3 @@
-//
 // SGE-OSX
 // Reference SGE host implementation.
 // ---------------------------------- //

@@ -1,4 +1,3 @@
-//
 // SGE-CORE
 // ---------------------------------- //
 // The internals of the engine, not

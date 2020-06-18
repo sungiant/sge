@@ -1,4 +1,3 @@
-//
 // SGE-VK-FULLSCREEN-RENDER
 // ---------------------------------- //
 // Noddy pipeline for quad rendering.

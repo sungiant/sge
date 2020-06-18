@@ -1,4 +1,3 @@
-//
 // SGE-VK-ALLOCATOR
 // ---------------------------------- //
 // Custom Vulkan allocator (placeholder)

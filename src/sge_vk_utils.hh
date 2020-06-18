@@ -1,4 +1,3 @@
-//
 // SGE-VK-UTILS
 // ---------------------------------- //
 // Helpers for working with Vulkan.

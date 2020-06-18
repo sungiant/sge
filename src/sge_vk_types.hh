@@ -1,4 +1,3 @@
-//
 // SGE-VK-TYPES
 // ---------------------------------- //
 // Common graphics types / helpers.

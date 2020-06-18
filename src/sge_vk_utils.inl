@@ -1,4 +1,3 @@
-//
 // SGE-VK-UTILS (INLINE)
 // ---------------------------------- //
 // Helpers for creating Vulkan objects.

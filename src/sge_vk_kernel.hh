@@ -1,4 +1,3 @@
-//
 // SGE-VK-KERNAL
 // ---------------------------------- //
 // Logic for setting up Vulkan.

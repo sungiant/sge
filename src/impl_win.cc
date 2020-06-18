@@ -1,4 +1,3 @@
-//
 // SGE-WIN
 // Reference SGE host implementation.
 // ---------------------------------- //

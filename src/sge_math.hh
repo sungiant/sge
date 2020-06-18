@@ -1,4 +1,3 @@
-//
 // SGE-MATH
 // ---------------------------------- //
 // Stand alone mathematics library.

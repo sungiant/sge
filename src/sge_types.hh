@@ -1,4 +1,3 @@
-//
 // SGE-TYPES
 // ---------------------------------- //
 // Common types accessible to all areas

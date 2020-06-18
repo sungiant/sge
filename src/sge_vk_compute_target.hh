@@ -1,4 +1,3 @@
-//
 // SGE-VK-COMPUTE-TARGET
 // ---------------------------------- //
 // Pipeline for processing user code.
@@ -15,7 +14,6 @@
 #include "sge_utils.hh"
 #include "sge_math.hh"
 #include "sge_app.hh"
-
 #include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"

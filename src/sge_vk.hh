@@ -1,4 +1,3 @@
-//
 // SGE-VK
 // ---------------------------------- //
 // Vulkan graphics backend.
