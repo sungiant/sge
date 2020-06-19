@@ -4,7 +4,8 @@ list (APPEND EXAMPLES
     ex02_juliaset
     ex03_raymarching
     ex04_mandlebulb
-    ex05_csg)
+    ex05_csg
+    ex06_raytracing)
 
 foreach(PROJ IN LISTS EXAMPLES)
 

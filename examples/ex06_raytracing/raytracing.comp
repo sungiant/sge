@@ -1,0 +1,298 @@
+#version 450
+
+#define PI 3.1415926538
+#define TAU 2.0 * 3.1415962
+#define EPSILON 0.000001
+
+#define MINIMUM_STEP 0.00001
+#define TOLERANCE 0.0001
+
+#define CAM_NEAR 0.01
+#define CAM_FAR 100
+#define CAM_FOV 57.5
+
+#define MAXLEN 1000.0
+#define SHADOW 0.5
+#define RAYBOUNCES 2
+#define REFLECTIONS true
+#define REFLECTIONSTRENGTH 0.4
+#define REFLECTIONFALLOFF 0.5
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+bool is_zero (float f) { return (f >= -EPSILON) && (f <= EPSILON); }
+
+vec3 qtransform (vec3 vector, vec4 q) {
+  float ii = q.x * q.x; float jj = q.y * q.y; float kk = q.z * q.z;
+  float ui = q.w * q.x; float uj = q.w * q.y; float uk = q.w * q.z;
+  float ij = q.x * q.y; float ik = q.x * q.z; float jk = q.y * q.z;
+  return vec3 (
+    + vector.x - (2.0 * vector.x * (jj + kk)) + (2.0 * vector.y * (ij - uk)) + (2.0 * vector.z * (ik + uj)),
+    + vector.y + (2.0 * vector.x * (ij + uk)) - (2.0 * vector.y * (ii + kk)) + (2.0 * vector.z * (jk - ui)),
+    + vector.z + (2.0 * vector.x * (ik - uj)) + (2.0 * vector.y * (jk + ui)) - (2.0 * vector.z * (ii + jj)));
+}
+
+struct Ray { vec3 position; vec3 direction; };
+
+struct Sphere 
+{
+	vec3 pos;
+	float radius;
+	vec3 diffuse;
+	float specular;
+	int id;
+};
+
+struct Plane
+{
+	vec3 normal;
+	float distance;
+	vec3 diffuse;
+	float specular;
+	int id;
+};
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+layout (local_size_x = 16, local_size_y = 16) in;
+layout (binding = 0, rgba8) uniform writeonly image2D img;
+
+layout (push_constant) uniform PUSH {
+    float time;
+} push;
+
+layout (binding = 1) uniform UBO {
+    // 4
+    vec3 position;
+    float gamma;
+    // 4
+    vec4 orientation;
+    // 4
+    vec3 fog_colour;
+    float fog_depth;
+} ubo;
+
+layout (std140, binding = 2) buffer Spheres
+{
+	Sphere sbo_spheres[];
+};
+
+layout (std140, binding = 3) buffer Planes
+{
+	Plane sbo_planes[];
+};
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+float lightDiffuse(vec3 normal, vec3 lightDir) 
+{
+	return clamp(dot(normal, lightDir), 0.1, 1.0);
+}
+
+float lightSpecular(vec3 normal, vec3 lightDir, float specularFactor)
+{
+	vec3 viewVec = normalize(ubo.position);
+	vec3 halfVec = normalize(lightDir + viewVec);
+	return pow(clamp(dot(normal, halfVec), 0.0, 1.0), specularFactor);
+}
+
+float planeIntersect(vec3 rayO, vec3 rayD, Plane plane)
+{
+	float d = dot(rayD, plane.normal);
+
+	if (d == 0.0)
+		return 0.0;
+
+	float t = -(plane.distance + dot(rayO, plane.normal)) / d;
+
+	if (t < 0.0)
+		return 0.0;
+
+	return t;
+}
+
+float sphereIntersect(in vec3 rayO, in vec3 rayD, in Sphere sphere)
+{
+	vec3 oc = rayO - sphere.pos;
+	float b = 2.0 * dot(oc, rayD);
+	float c = dot(oc, oc) - sphere.radius*sphere.radius;
+	float h = b*b - 4.0*c;
+	if (h < 0.0) 
+	{
+		return -1.0;
+	}
+	float t = (-b - sqrt(h)) / 2.0;
+
+	return t;
+}
+
+vec3 sphereNormal(in vec3 pos, in Sphere sphere)
+{
+	return (pos - sphere.pos) / sphere.radius;
+}
+
+int intersect(in vec3 rayO, in vec3 rayD, inout float resT)
+{
+	int id = -1;
+
+	for (int i = 0; i < sbo_spheres.length(); i++)
+	{
+		float tSphere = sphereIntersect(rayO, rayD, sbo_spheres[i]);
+		if ((tSphere > EPSILON) && (tSphere < resT))
+		{
+			id = sbo_spheres[i].id;
+			resT = tSphere;
+		}
+	}	
+
+	for (int i = 0; i < sbo_planes.length(); i++)
+	{
+		float tplane = planeIntersect(rayO, rayD, sbo_planes[i]);
+		if ((tplane > EPSILON) && (tplane < resT))
+		{
+			id = sbo_planes[i].id;
+			resT = tplane;
+		}	
+	}
+	
+	return id;
+}
+
+float calcShadow(in vec3 rayO, in vec3 rayD, in int objectId, inout float t)
+{
+	for (int i = 0; i < sbo_spheres.length(); i++)
+	{
+		if (sbo_spheres[i].id == objectId)
+			continue;
+		float tSphere = sphereIntersect(rayO, rayD, sbo_spheres[i]);
+		if ((tSphere > EPSILON) && (tSphere < t))
+		{
+			t = tSphere;
+			return SHADOW;
+		}
+	}		
+	return 1.0;
+}
+
+vec3 fog(in float t, in vec3 color)
+{
+	return mix(color, ubo.fog_colour, clamp(sqrt(t*t)/20.0, 0.0, 1.0));
+}
+
+void reflectRay(inout vec3 rayD, in vec3 mormal)
+{
+	rayD = rayD + 2.0 * -dot(mormal, rayD) * mormal;
+}
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int id)
+{
+	vec3 color = vec3(0.0);
+	float t = MAXLEN;
+
+	// Get intersected object ID
+	int objectID = intersect(rayO, rayD, t);
+	
+	if (objectID == -1)
+	{
+		return color;
+	}
+	
+	vec3 pos = rayO + t * rayD;
+	vec3 lightVec = normalize(lightPos - pos);				
+	vec3 normal;
+
+	// Planes
+
+	// Spheres
+
+	for (int i = 0; i < sbo_planes.length(); i++)
+	{
+		if (objectID == sbo_planes[i].id)
+		{
+			normal = sbo_planes[i].normal;
+			float diffuse = lightDiffuse(normal, lightVec);
+			float specular = lightSpecular(normal, lightVec, sbo_planes[i].specular);
+			color = diffuse * sbo_planes[i].diffuse + specular;	
+		}
+	}
+
+	for (int i = 0; i < sbo_spheres.length(); i++)
+	{
+		if (objectID == sbo_spheres[i].id)
+		{
+			normal = sphereNormal(pos, sbo_spheres[i]);	
+			float diffuse = lightDiffuse(normal, lightVec);
+			float specular = lightSpecular(normal, lightVec, sbo_spheres[i].specular);
+			color = diffuse * sbo_spheres[i].diffuse + specular;	
+		}
+	}
+
+	if (id == -1)
+		return color;
+
+	id = objectID;
+
+	// Shadows
+	t = length(lightPos - pos);
+	color *= calcShadow(pos, lightVec, id, t);
+	
+	// Fog
+	color = fog(t, color);	
+	
+	// Reflect ray for next render pass
+	reflectRay(rayD, normal);
+	rayO = pos;	
+	
+	return color;
+}
+
+vec4 run (vec2 uv, float aspect) {
+    const float sh = sin (radians (CAM_FOV)  / 2.0);
+    const vec3 nnw = vec3 ( CAM_NEAR * sh * aspect,  CAM_NEAR * sh, CAM_NEAR);
+    const vec3 nse = vec3 (-CAM_NEAR * sh * aspect, -CAM_NEAR * sh, CAM_NEAR);
+    const vec3 fnw = vec3 (  CAM_FAR * sh * aspect,   CAM_FAR * sh, CAM_FAR);
+    const vec3 fsw = vec3 (- CAM_FAR * sh * aspect, - CAM_FAR * sh, CAM_FAR);
+    const Ray ray = Ray (
+        ubo.position + qtransform (mix (nnw, nse, vec3 (uv, 0.0)), ubo.orientation),
+        normalize (qtransform (mix (fnw - nnw, fsw - nse, vec3 (uv, 0.0)), ubo.orientation)));
+
+    const float frustumDepth = CAM_FAR - CAM_NEAR;
+
+    const vec3 lightPos = vec3 (
+    	sin(push.time) * cos(push.time) * 2.0f,
+    	sin(push.time) * 2.0f,
+    	cos(push.time) * 2.0f);
+
+	int id = 0;
+
+	vec3 rayO = ray.position;
+	vec3 rayD = ray.direction;
+	vec3 finalColor = renderScene(rayO, rayD, lightPos, id);
+
+	if (REFLECTIONS)
+	{
+		float reflectionStrength = REFLECTIONSTRENGTH;
+		for (int i = 0; i < RAYBOUNCES; i++)
+		{
+			vec3 reflectionColor = renderScene(rayO, rayD, lightPos, id);
+			finalColor = (1.0 - reflectionStrength) * finalColor + reflectionStrength * mix(reflectionColor, finalColor, 1.0 - reflectionStrength);			
+			reflectionStrength *= REFLECTIONFALLOFF;
+		}
+	}
+
+
+    return vec4 (finalColor, 1.0f);
+}
+
+void main () {
+    ivec2 dim = imageSize (img);
+    vec2 uv = vec2 (gl_GlobalInvocationID.xy) / dim; uv.y = 1.0 - uv.y;
+    const vec3 bg = vec3 (.5) * (1. - (length (uv - vec2 (0.5)) - .2));
+    const float aspect = float (dim.x) / float (dim.y);
+    const vec4 result = run (uv, aspect);
+    vec4 final = vec4 ((result.rgb * result.a) + (bg.rgb * (1.0 - result.a)), 1);
+    final = vec4 (pow (final.xyz, vec3 (1.0 / ubo.gamma)), final.w);
+    imageStore (img, ivec2 (gl_GlobalInvocationID.xy), final);
+}
