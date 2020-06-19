@@ -16,15 +16,15 @@ struct UBO {
     sge::math::vector3          position        = { 0.0f, 0.0f, 4.0f };
     float                       gamma           = 1.2f;
     sge::math::quaternion       orientation     = { 0.0f, 1.0f, 0.0f, 0.0f };
-    sge::math::vector3          fog_colour      = { 0.0f, 0.7f, 0.2f };
-    float                       fog_depth       = 100.0f;
+    sge::math::vector3          fog_colour      = { 0.3f, 0.1f, 0.3f };
+    float                       fov             = 100.0f;
 
     bool operator == (const UBO& ubo) const {
         return position == ubo.position
             && gamma == ubo.gamma
             && orientation == ubo.orientation
             && fog_colour == ubo.fog_colour
-            && fog_depth == ubo.fog_depth;
+            && fov == ubo.fov;
     }
     bool operator != (const UBO& ubo) const { return !(*this == ubo); }
 } ubo;
@@ -123,6 +123,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
 
     u.position = camera.position;
     u.orientation = camera.orientation;
+    u.fov = camera.fov;
     if (u != ubo) {
         ubo = u;
         r.uniform_changes[0] = true;
@@ -138,10 +139,10 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     {
         ImGui::Text("camera position (x:%.2f, y:%.2f, z:%.2f)", camera.position.x, camera.position.y, camera.position.z);
         ImGui::Text("camera orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera.orientation.i, camera.orientation.j, camera.orientation.k, camera.orientation.u);
+        ImGui::SliderFloat ("camera fov", &camera.fov, 0.0, 90.0f);
         ImGui::SliderFloat("gamma", &u.gamma, 0, 4.0f);
 
         ImGui::ColorEdit3("fog colour", &u.fog_colour.x);
-        ImGui::SliderFloat("fog depth", &u.fog_depth, 0.0, 2.0f);
     }
     ImGui::End();
 

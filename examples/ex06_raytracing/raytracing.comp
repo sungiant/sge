@@ -9,7 +9,6 @@
 
 #define CAM_NEAR 0.01
 #define CAM_FAR 100
-#define CAM_FOV 57.5
 
 #define MAXLEN 1000.0
 #define SHADOW 0.5
@@ -69,7 +68,7 @@ layout (binding = 1) uniform UBO {
     vec4 orientation;
     // 4
     vec3 fog_colour;
-    float fog_depth;
+    float fov;
 } ubo;
 
 layout (std140, binding = 2) buffer Spheres
@@ -249,7 +248,7 @@ vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int i
 }
 
 vec4 run (vec2 uv, float aspect) {
-    const float sh = sin (radians (CAM_FOV)  / 2.0);
+    const float sh = sin (radians (ubo.fov)  / 2.0);
     const vec3 nnw = vec3 ( CAM_NEAR * sh * aspect,  CAM_NEAR * sh, CAM_NEAR);
     const vec3 nse = vec3 (-CAM_NEAR * sh * aspect, -CAM_NEAR * sh, CAM_NEAR);
     const vec3 fnw = vec3 (  CAM_FAR * sh * aspect,   CAM_FAR * sh, CAM_FAR);
