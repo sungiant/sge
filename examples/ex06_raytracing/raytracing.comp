@@ -9,7 +9,7 @@
 
 #define CAM_NEAR 0.01
 #define CAM_FAR 100
-#define CAM_FOV 10
+#define CAM_FOV 57.5
 
 #define MAXLEN 1000.0
 #define SHADOW 0.5
