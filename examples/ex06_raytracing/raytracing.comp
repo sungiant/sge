@@ -9,12 +9,12 @@
 
 #define CAM_NEAR 0.01
 #define CAM_FAR 100
-#define CAM_FOV 57.5
+#define CAM_FOV 10
 
 #define MAXLEN 1000.0
 #define SHADOW 0.5
 #define RAYBOUNCES 2
-#define REFLECTIONS true
+#define REFLECTIONS false
 #define REFLECTIONSTRENGTH 0.4
 #define REFLECTIONFALLOFF 0.5
 
@@ -34,7 +34,7 @@ vec3 qtransform (vec3 vector, vec4 q) {
 
 struct Ray { vec3 position; vec3 direction; };
 
-struct Sphere 
+struct Sphere
 {
 	vec3 pos;
 	float radius;
@@ -84,7 +84,7 @@ layout (std140, binding = 3) buffer Planes
 
 //-------------------------------------------------------------------------------------------------------------------//
 
-float lightDiffuse(vec3 normal, vec3 lightDir) 
+float lightDiffuse(vec3 normal, vec3 lightDir)
 {
 	return clamp(dot(normal, lightDir), 0.1, 1.0);
 }
@@ -117,7 +117,7 @@ float sphereIntersect(in vec3 rayO, in vec3 rayD, in Sphere sphere)
 	float b = 2.0 * dot(oc, rayD);
 	float c = dot(oc, oc) - sphere.radius*sphere.radius;
 	float h = b*b - 4.0*c;
-	if (h < 0.0) 
+	if (h < 0.0)
 	{
 		return -1.0;
 	}
@@ -143,7 +143,7 @@ int intersect(in vec3 rayO, in vec3 rayD, inout float resT)
 			id = sbo_spheres[i].id;
 			resT = tSphere;
 		}
-	}	
+	}
 
 	for (int i = 0; i < sbo_planes.length(); i++)
 	{
@@ -152,9 +152,9 @@ int intersect(in vec3 rayO, in vec3 rayD, inout float resT)
 		{
 			id = sbo_planes[i].id;
 			resT = tplane;
-		}	
+		}
 	}
-	
+
 	return id;
 }
 
@@ -170,7 +170,7 @@ float calcShadow(in vec3 rayO, in vec3 rayD, in int objectId, inout float t)
 			t = tSphere;
 			return SHADOW;
 		}
-	}		
+	}
 	return 1.0;
 }
 
@@ -193,14 +193,14 @@ vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int i
 
 	// Get intersected object ID
 	int objectID = intersect(rayO, rayD, t);
-	
+
 	if (objectID == -1)
 	{
 		return color;
 	}
-	
+
 	vec3 pos = rayO + t * rayD;
-	vec3 lightVec = normalize(lightPos - pos);				
+	vec3 lightVec = normalize(lightPos - pos);
 	vec3 normal;
 
 	// Planes
@@ -214,7 +214,7 @@ vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int i
 			normal = sbo_planes[i].normal;
 			float diffuse = lightDiffuse(normal, lightVec);
 			float specular = lightSpecular(normal, lightVec, sbo_planes[i].specular);
-			color = diffuse * sbo_planes[i].diffuse + specular;	
+			color = diffuse * sbo_planes[i].diffuse + specular;
 		}
 	}
 
@@ -222,10 +222,10 @@ vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int i
 	{
 		if (objectID == sbo_spheres[i].id)
 		{
-			normal = sphereNormal(pos, sbo_spheres[i]);	
+			normal = sphereNormal(pos, sbo_spheres[i]);
 			float diffuse = lightDiffuse(normal, lightVec);
 			float specular = lightSpecular(normal, lightVec, sbo_spheres[i].specular);
-			color = diffuse * sbo_spheres[i].diffuse + specular;	
+			color = diffuse * sbo_spheres[i].diffuse + specular;
 		}
 	}
 
@@ -237,14 +237,14 @@ vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int i
 	// Shadows
 	t = length(lightPos - pos);
 	color *= calcShadow(pos, lightVec, id, t);
-	
+
 	// Fog
-	color = fog(t, color);	
-	
+	color = fog(t, color);
+
 	// Reflect ray for next render pass
 	reflectRay(rayD, normal);
-	rayO = pos;	
-	
+	rayO = pos;
+
 	return color;
 }
 
@@ -277,7 +277,7 @@ vec4 run (vec2 uv, float aspect) {
 		for (int i = 0; i < RAYBOUNCES; i++)
 		{
 			vec3 reflectionColor = renderScene(rayO, rayD, lightPos, id);
-			finalColor = (1.0 - reflectionStrength) * finalColor + reflectionStrength * mix(reflectionColor, finalColor, 1.0 - reflectionStrength);			
+			finalColor = (1.0 - reflectionStrength) * finalColor + reflectionStrength * mix(reflectionColor, finalColor, 1.0 - reflectionStrength);
 			reflectionStrength *= REFLECTIONFALLOFF;
 		}
 	}

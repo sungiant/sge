@@ -13,10 +13,10 @@ std::unique_ptr<sge::app::content> computation;
 struct PUSH { float time = 0.0f; } push;
 
 struct UBO {
-    sge::math::vector3          position        = sge::math::vector3 { 0.62f, 0.53f, -2.65f };
+    sge::math::vector3          position        = { 0.0f, 0.0f, 4.0f };
     float                       gamma           = 1.2f;
-    sge::math::quaternion       orientation     = sge::math::quaternion { 0.09f, -0.10f, -0.01f, 0.99f };
-    sge::math::vector3          fog_colour      = sge::math::vector3 { 0.0f, 0.7f, 0.2f };
+    sge::math::quaternion       orientation     = { 0.0f, 1.0f, 0.0f, 0.0f };
+    sge::math::vector3          fog_colour      = { 0.0f, 0.7f, 0.2f };
     float                       fog_depth       = 100.0f;
 
     bool operator == (const UBO& ubo) const {
@@ -30,7 +30,7 @@ struct UBO {
 } ubo;
 
 struct Sphere {
-    sge::math::vector3 pos;                              
+    sge::math::vector3 pos;
     float radius;
     sge::math::vector3 diffuse;
     float specular;
@@ -94,6 +94,9 @@ void initialise () {
     sbo_planes.push_back(newPlane(sge::math::vector3 { -1.0f, 0.0f, 0.0f}, roomDim, sge::math::vector3 { 1.0f, 0.0f, 0.0f }, 32.0f));
     sbo_planes.push_back(newPlane(sge::math::vector3 { 1.0f, 0.0f, 0.0f }, roomDim, sge::math::vector3 { 0.0f, 1.0f, 0.0f }, 32.0f));
 
+    camera.position = ubo.position;
+    camera.orientation = ubo.orientation;
+
     computation = std::make_unique<sge::app::content>(sge::app::content {
         "raytracing.comp.spv",
         std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
@@ -101,8 +104,8 @@ void initialise () {
             sge::dataspan { &ubo, sizeof (UBO) },
         },
         {
-            sge::dataspan { &sbo_spheres, sbo_spheres.size() * sizeof(Sphere) },
-            sge::dataspan { &sbo_planes, sbo_planes.size() * sizeof(Plane) },
+            sge::dataspan { sbo_spheres.data(), sbo_spheres.size() * sizeof(Sphere) },
+            sge::dataspan { sbo_planes.data(), sbo_planes.size() * sizeof(Plane) },
         }
     });
 }
