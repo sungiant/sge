@@ -55,11 +55,11 @@ SGE has a minimal feature set - you could think of it as being something like [S
   </tr>
   <tr>
     <td><a href="/examples/ex02_juliaset"><img src="/docs/ex02.jpg" width="420px"/></a></td>
-    <td><a href="/examples/ex03_staticsdf"><img src="/docs/ex03.jpg" width="420px"/></a></td>
+    <td><a href="/examples/ex03_raymarching"><img src="/docs/ex03.jpg" width="420px"/></a></td>
   </tr>
   <tr>
     <td><a href="/examples/ex04_mandlebulb"><img src="/docs/ex04.jpg" width="420px"/></a></td>
-    <td><a href="/examples/ex05_dynamicsdf"><img src="/docs/ex05.jpg" width="420px"/></a></td>
+    <td><a href="/examples/ex05_csg"><img src="/docs/ex05.jpg" width="420px"/></a></td>
   </tr>
 </table>
 

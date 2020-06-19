@@ -2,7 +2,7 @@
 
 #define PI 3.1415926538
 #define TAU 2.0 * 3.1415962
-#define EPISILON 0.000001
+#define EPSILON 0.000001
 
 #define MINIMUM_STEP 0.00001
 #define TOLERANCE 0.0001
@@ -13,7 +13,7 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
 
-bool is_zero (float f) { return (f >= -EPISILON) && (f <= EPISILON); }
+bool is_zero (float f) { return (f >= -EPSILON) && (f <= EPSILON); }
 
 vec3 qtransform (vec3 vector, vec4 q) {
   float ii = q.x * q.x; float jj = q.y * q.y; float kk = q.z * q.z;

@@ -1,5 +1,34 @@
 #version 450
 
+#ifdef TARGET_MACOSX
+#define USE_SBO_MATERIALS 1
+#define USE_SBO_LIGHTS 0
+#define USE_SBO_SCENE 0
+#else
+#define USE_SBO_MATERIALS 1
+#define USE_SBO_LIGHTS 1
+#define USE_SBO_SCENE 1
+#endif
+
+#define SBO_MATERIALS_BINDING 3
+
+#if (USE_SBO_MATERIALS == 1)
+    #define SBO_LIGHTS_BINDING 4
+#else
+    #define SBO_LIGHTS_BINDING 3
+#endif
+
+#if ((USE_SBO_MATERIALS == 1) && (USE_SBO_LIGHTS == 1))
+    #define SBO_SHAPES_BINDING 5
+    #define SBO_TREE_BINDING 6
+#elif ((USE_SBO_MATERIALS == 1) || (USE_SBO_LIGHTS == 1))
+    #define SBO_SHAPES_BINDING 4
+    #define SBO_TREE_BINDING 5
+#else
+    #define SBO_SHAPES_BINDING 3
+    #define SBO_TREE_BINDING 4
+#endif
+
 #define TREE_NODE 0
 #define TREE_LEAF 1
 
@@ -11,13 +40,13 @@
 #define SDF_CUBE 1
 #define SDF_CUBOID 2
 
-#define INFINITY 1.0 / 0.0
-#define MINIMUM_STEP 0.00001
-#define TOLERANCE 0.0001
-#define NORM_SAMPLE 0.001
-#define AMBIENT_COLOUR vec3 (0.2, 0.2, 0.2)
-#define SPECULAR_COLOUR vec3 (1, 1, 1)
-#define EPISILON 0.000001
+const float INFINITY = 1.0 / 0.0;
+const float MINIMUM_STEP = 0.00001;
+const float TOLERANCE = 0.0001;
+const float NORM_SAMPLE = 0.001;
+const vec3 AMBIENT_COLOUR = vec3 (0.2, 0.2, 0.2);
+const vec3 SPECULAR_COLOUR = vec3 (1, 1, 1);
+const float EPSILON = 0.000001;
 
 //-------------------------------------------------------------------------------------------------------------------//
 
@@ -26,7 +55,7 @@ struct Ray {
     vec3 direction;
 };
 
-bool is_zero (float f) { return (f >= -EPISILON) && (f <= EPISILON); }
+bool is_zero (float f) { return (f >= -EPSILON) && (f <= EPSILON); }
 
 vec3 qtransform (vec3 vector, vec4 quaternion) {
   float ii = quaternion.x * quaternion.x;
@@ -137,6 +166,15 @@ layout (binding = 2) uniform UBO_SETTINGS
 
 } ubo_settings;
 
+#if (USE_SBO_MATERIALS == 1)
+
+layout (binding = SBO_MATERIALS_BINDING) buffer Materials
+{
+    Material sbo_materials[];
+};
+
+#else
+
 vec3 white      = vec3 (1.00, 1.00, 1.00);
 vec3 black      = vec3 (0.00, 0.00, 0.00);
 vec3 magenta    = vec3 (1.00, 0.00, 1.00);
@@ -146,7 +184,7 @@ vec3 persimmon  = vec3 (0.93, 0.35, 0.00);
 vec3 vermillion = vec3 (0.35, 0.10, 0.08);
 vec3 jade       = vec3 (0.00, 0.66, 0.42);
 
-Material[] materials = {
+Material[] sbo_materials = {
     Material (magenta, 0),
     Material (warmBlack, 1),
     Material (coolBlack, 10.0),
@@ -156,18 +194,117 @@ Material[] materials = {
     Material (vermillion, 20.0),
 };
 
-PointLight[] lights = {
+#endif
+
+
+#if (USE_SBO_LIGHTS == 1)
+
+layout (binding = SBO_LIGHTS_BINDING) buffer Lights
+{
+    PointLight sbo_lights[];
+};
+
+#else
+
+PointLight[] sbo_lights = {
     PointLight (vec3 (6, 8, 2), 18.0f, vec3 (1.0, 0.71, 0.0), 1.0),
     PointLight (vec3 (-5.7, 1.2, 5), 16.0f, vec3 (0.28, 0.12, 0.40), 1 ),
     PointLight (vec3 (0, 0, 0), 2.3f, vec3 (0.32, 0.32, 0.32), 0.7f ),
     PointLight (vec3 (3, 3, 0), 12.0f, vec3 (1, 1, 1), 1.0f),
 };
 
+#endif
 
+
+#if (USE_SBO_SCENE == 1)
+
+layout (binding = SBO_SHAPES_BINDING) buffer Shapes
+{
+    Shape sbo_scene_shapes[];
+};
+
+layout (binding = SBO_TREE_BINDING) buffer Tree
+{
+    SceneTreeElement sbo_scene_tree[];
+};
+
+Z sdf_m (vec3 position) {
+    Z HACK[16];
+
+    for (int i = 0; i < HACK.length(); ++i)
+    {
+        HACK[i] = Z (INFINITY, 0);
+    }
+
+    int numCachedResults = 0;
+
+    for (int i = 0; i < sbo_scene_tree.length(); ++i)
+    {
+        if (sbo_scene_tree[i].type == TREE_LEAF)
+        {
+            int idx = sbo_scene_tree[i].data & 0xfff;
+            int material = (sbo_scene_tree[i].data >> 24) & 0xf;
+
+            if (sbo_scene_shapes[idx].type == SDF_SPHERE) {
+                vec3 offset = sbo_scene_shapes[idx].position;
+                float radius = sbo_scene_shapes[idx].data.x;
+                HACK[numCachedResults].d = sdf_sphere (position, offset, radius);
+                HACK[numCachedResults].m = material;
+                numCachedResults++;
+                continue;
+            }
+
+            if (sbo_scene_shapes[idx].type == SDF_CUBE) {
+                vec3 offset = sbo_scene_shapes[idx].position;
+                float size = sbo_scene_shapes[idx].data.x;
+                HACK[numCachedResults].d = sdf_cube (position, offset, size);
+                HACK[numCachedResults].m = material;
+                numCachedResults++;
+                continue;
+            }
+
+            if (sbo_scene_shapes[idx].type == SDF_CUBOID) {
+                vec3 offset = sbo_scene_shapes[idx].position;
+                vec3 size = sbo_scene_shapes[idx].data.xyz;
+                HACK[numCachedResults].d = sdf_cuboid (position, offset, size);
+                HACK[numCachedResults].m = material;
+                numCachedResults++;
+                continue;
+            }
+        }
+
+        if (sbo_scene_tree[i].type == TREE_NODE)
+        {
+            int op = sbo_scene_tree[i].data;
+
+            if (op == CSG_UNION) {
+                HACK[numCachedResults - 2] = sdf_union_m (HACK[numCachedResults - 2], HACK[numCachedResults - 1]);
+                numCachedResults -= 1;
+                continue;
+            }
+
+            if (op == CSG_INTERSECTION) {
+                HACK[numCachedResults - 2] = sdf_intersection_m (HACK[numCachedResults - 2], HACK[numCachedResults - 1]);
+                numCachedResults -= 1;
+                continue;
+            }
+
+            if (op == CSG_DIFFERENCE) {
+                HACK[numCachedResults - 2] = sdf_difference_m (HACK[numCachedResults - 2], HACK[numCachedResults - 1]);
+                numCachedResults -= 1;
+                continue;
+            }
+        }
+    }
+
+    return HACK[0];
+}
+
+#else
 Z sdf_m (vec3 position) {
     Z ground = Z (sdf_cube (position, vec3 (0.0, -5.8, 0.0), 10.0), 1);
 
-    Z boxes = 
+    Z boxes =
         sdf_union_m (
             Z (sdf_cube (position, vec3 (-3.5, 0.7, -3.5), 3.0), 1),
             sdf_union_m (
@@ -218,6 +355,7 @@ Z sdf_m (vec3 position) {
     return sdf_union_m (sdf_union_m (sdf_union_m (boxes, ground), debris), shape);
 }
 
+#endif
 
 //-------------------------------------------------------------------------------------------------------------------//
 
@@ -263,7 +401,7 @@ MarchResult march (Ray ray, float start, float end) {
     }
 
     // We've run out of marching steps and not found a sausage.  If a material has not been assigned assume we
-    // have not hit something - normally when we run out of iteration steps we are close to something.
+    // have hit something, as normally when we run out of iteration steps we are close to something.
     if (material == -1)
         return MarchResult (false, distanceCovered, minimumConeRatio, stepsTaken, material);
     else
@@ -306,36 +444,36 @@ vec2 estimateShadows (vec3 surfacePosition) {
     float totalIntensity = 0.0;
     int numShadowCastingLights = 0;
 
-    for (int i = 0; i < lights.length(); ++i)
+    for (int i = 0; i < sbo_lights.length(); ++i)
     {
-        if (is_zero (lights[i].shadow_factor))
+        if (is_zero (sbo_lights[i].shadow_factor))
             continue;
 
         numShadowCastingLights++;
 
-        vec3 surfaceToLight = lights[i].position - surfacePosition;
-        float attenuation = lights[i].range / (1.0 + pow (length (surfaceToLight), 2));
+        vec3 surfaceToLight = sbo_lights[i].position - surfacePosition;
+        float attenuation = sbo_lights[i].range / (1.0 + pow (length (surfaceToLight), 2));
 
         if (is_zero (attenuation))
             continue;
 
-        totalIntensity += length(lights[i].colour) * attenuation * lights[i].shadow_factor;
+        totalIntensity += length(sbo_lights[i].colour) * attenuation * sbo_lights[i].shadow_factor;
     }
 
-    for (int i = 0; i < lights.length(); ++i)
+    for (int i = 0; i < sbo_lights.length(); ++i)
     {
-        if (is_zero (lights[i].shadow_factor))
+        if (is_zero (sbo_lights[i].shadow_factor))
             continue;
 
-        vec3 surfaceToLight = lights[i].position - surfacePosition;
-        float attenuation = lights[i].range / (1.0 + pow (length (surfaceToLight), 2)); // https://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
+        vec3 surfaceToLight = sbo_lights[i].position - surfacePosition;
+        float attenuation = sbo_lights[i].range / (1.0 + pow (length (surfaceToLight), 2)); // https://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
 
-        float intensity = length (lights[i].colour);
-        float shadowResult = intensity * attenuation * lights[i].shadow_factor / totalIntensity;
+        float intensity = length (sbo_lights[i].colour);
+        float shadowResult = intensity * attenuation * sbo_lights[i].shadow_factor / totalIntensity;
 
-        Ray surfaceToLightRay = Ray (surfacePosition,  normalize(lights[i].position - surfacePosition));
+        Ray surfaceToLightRay = Ray (surfacePosition,  normalize(sbo_lights[i].position - surfacePosition));
         float start = 10.0 * TOLERANCE;
-        float distanceToEnd = length (lights[i].position - surfacePosition) - start;
+        float distanceToEnd = length (sbo_lights[i].position - surfacePosition) - start;
 
         MarchResult smr = march (surfaceToLightRay, start, distanceToEnd);
 
@@ -361,20 +499,20 @@ vec2 estimateShadows (vec3 surfacePosition) {
 
 
 vec3 calculateLighting (vec3 surfacePosition, vec3 surfaceNormal, int materialID) {
-    const vec3 material_albedo = materials[materialID].colour;
-    const float material_shininess = materials[materialID].shininess;
+    const vec3 material_albedo = sbo_materials[materialID].colour;
+    const float material_shininess = sbo_materials[materialID].shininess;
 
     vec3 total_diffuse = vec3 (0);
     vec3 total_specular = vec3 (0);
 
-    for (int i = 0; i < lights.length(); ++i)
+    for (int i = 0; i < sbo_lights.length(); ++i)
     {
-        vec3 surfaceToLight = lights[i].position - surfacePosition;
-        float attenuation = lights[i].range / (1.0 + pow (length (surfaceToLight), 2)); // https://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
+        vec3 surfaceToLight = sbo_lights[i].position - surfacePosition;
+        float attenuation = sbo_lights[i].range / (1.0 + pow (length (surfaceToLight), 2)); // https://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
 
         //if (is_zero (attenuation)) continue;
 
-        vec3 lightColour = lights[i].colour;
+        vec3 lightColour = sbo_lights[i].colour;
         float intensity = length (lightColour);
         vec3 N = surfaceNormal;
         vec3 L = normalize (surfaceToLight);
@@ -413,28 +551,28 @@ vec3 calculateLighting (vec3 surfacePosition, vec3 surfaceNormal, int materialID
 
 vec4 run(vec2 uv) {
 
-    float sh = sin (radians (ubo_camera.fov)  / 2.0);
-    vec3 nnw = vec3 ( ubo_camera.near * sh * ubo_camera.aspect,  ubo_camera.near * sh, ubo_camera.near);
-    vec3 nse = vec3 (-ubo_camera.near * sh * ubo_camera.aspect, -ubo_camera.near * sh, ubo_camera.near);
-    vec3 fnw = vec3 (  ubo_camera.far * sh * ubo_camera.aspect,   ubo_camera.far * sh, ubo_camera.far);
-    vec3 fsw = vec3 (- ubo_camera.far * sh * ubo_camera.aspect, - ubo_camera.far * sh, ubo_camera.far);
-    Ray ray = Ray (
+    const float sh = sin (radians (ubo_camera.fov)  / 2.0);
+    const vec3 nnw = vec3 ( ubo_camera.near * sh * ubo_camera.aspect,  ubo_camera.near * sh, ubo_camera.near);
+    const vec3 nse = vec3 (-ubo_camera.near * sh * ubo_camera.aspect, -ubo_camera.near * sh, ubo_camera.near);
+    const vec3 fnw = vec3 (  ubo_camera.far * sh * ubo_camera.aspect,   ubo_camera.far * sh, ubo_camera.far);
+    const vec3 fsw = vec3 (- ubo_camera.far * sh * ubo_camera.aspect, - ubo_camera.far * sh, ubo_camera.far);
+    const Ray ray = Ray (
         ubo_camera.position + qtransform (mix (nnw, nse, vec3 (uv, 0.0)), ubo_camera.orientation),
         normalize(qtransform (mix (fnw - nnw, fsw - nse, vec3 (uv, 0.0)), ubo_camera.orientation)));
 
     // DEPTH
-    float frustumDepth = ubo_camera.far - ubo_camera.near;
-    MarchResult marchResult = march (ray, 0.0, frustumDepth);
-    float depth = marchResult.distance;
+    const float frustumDepth = ubo_camera.far - ubo_camera.near;
+    const MarchResult marchResult = march (ray, 0.0, frustumDepth);
+    const float depth = marchResult.distance;
 
     // Got one!
     if (marchResult.has_value == true)
     {
         // POSITION
-        vec3 surfacePosition = ray.position + (ray.direction * depth);
+        const vec3 surfacePosition = ray.position + (ray.direction * depth);
 
         // NORMAL
-        vec3 surfaceNormal = estimateNormal (surfacePosition);
+        const vec3 surfaceNormal = estimateNormal (surfacePosition);
 
         // AO
         float ao = 1.0;
@@ -463,7 +601,7 @@ vec4 run(vec2 uv) {
 
         if (ubo_settings.mode == 1) { return vec4 (depth / 4.0, depth / 20.0, depth / 100.0, 1); }
         if (ubo_settings.mode == 2) { return vec4 (0, 0, marchResult.stepCount / float (ubo_settings.iterations), 1); }
-        if (ubo_settings.mode == 3) { return vec4 ((surfaceNormal + vec3(1)) / 2, 1); }
+        if (ubo_settings.mode == 3) { return vec4 ((surfaceNormal + vec3 (1)) / 2, 1); }
         if (ubo_settings.mode == 4) { return vec4 (marchResult.minimumConeRatio * 100, marchResult.minimumConeRatio * 1000, marchResult.minimumConeRatio * 10000, 1); }
         if (ubo_settings.mode == 5) { return vec4 (hardShadowMultiplier, hardShadowMultiplier, hardShadowMultiplier, 1); }
         if (ubo_settings.mode == 6) { return vec4 (softShadowMultiplier, softShadowMultiplier, softShadowMultiplier, 1); }
@@ -473,6 +611,7 @@ vec4 run(vec2 uv) {
         const vec3 composite = lighting * aoMultiplier * softShadowMultiplier;
         const vec3 gamma  = pow (composite, vec3 (1.0 / ubo_settings.gamma));
         return vec4 (gamma, 1);
+
     }
 
     return vec4 (0); // not a sausage

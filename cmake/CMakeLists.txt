@@ -86,9 +86,9 @@ else ()
     find_package (vulkan REQUIRED)
 endif ()
 
-message (STATUS ">> Vulkan_FOUND:    ${Vulkan_FOUND}")
-message (STATUS ">> Vulkan_INCLUDE_DIRS:    ${Vulkan_INCLUDE_DIRS}")
-message (STATUS ">> Vulkan_LIBRARIES      :    ${Vulkan_LIBRARIES}")
+message (STATUS ">> Vulkan_FOUND: ${Vulkan_FOUND}")
+message (STATUS ">> Vulkan_INCLUDE_DIRS: ${Vulkan_INCLUDE_DIRS}")
+message (STATUS ">> Vulkan_LIBRARIES: ${Vulkan_LIBRARIES}")
 
 ################################################################################
 

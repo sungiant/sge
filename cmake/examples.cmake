@@ -2,9 +2,9 @@ list (APPEND EXAMPLES
     ex00_vanilla
     ex01_sinewaves
     ex02_juliaset
-    ex03_staticsdf
+    ex03_raymarching
     ex04_mandlebulb
-    ex05_dynamicsdf)
+    ex05_csg)
 
 foreach(PROJ IN LISTS EXAMPLES)
 

@@ -126,7 +126,7 @@ sge::dataspan current_tree_dataspan () { return sge::dataspan{ sbo_tree.data (),
 
 void initialise () {
     config = std::make_unique<sge::app::configuration> ();
-    config->app_name = "SDF (dynamic)";
+    config->app_name = "Dynamic CSG evaluation";
     config->app_width = 960;
     config->app_height = 540;
     config->enable_console = true;
@@ -236,7 +236,7 @@ void initialise () {
 #endif
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
-        "dynamicsdf.comp.spv",
+        "csg.comp.spv",
         std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {
             sge::dataspan { &ubo_camera,              sizeof (UBO_CAMERA) },

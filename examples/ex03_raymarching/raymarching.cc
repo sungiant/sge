@@ -72,7 +72,7 @@ free_camera camera;
 
 void initialise () {
     config = std::make_unique<sge::app::configuration> ();
-    config->app_name = "SDF (static)";
+    config->app_name = "Raymarching (static SDF)";
     config->app_width = 960;
     config->app_height = 540;
     config->enable_console = true;
@@ -83,7 +83,7 @@ void initialise () {
     ubo_settings.display_mode = 0;
 
     computation = std::make_unique<sge::app::content>(sge::app::content {
-        "staticsdf.comp.spv",
+        "raymarching.comp.spv",
         std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
         {
             sge::dataspan { &ubo_camera, sizeof (UBO_CAMERA) },
