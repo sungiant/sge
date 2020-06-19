@@ -14,7 +14,7 @@
 #define MAXLEN 1000.0
 #define SHADOW 0.5
 #define RAYBOUNCES 2
-#define REFLECTIONS false
+#define REFLECTIONS true
 #define REFLECTIONSTRENGTH 0.4
 #define REFLECTIONFALLOFF 0.5
 
