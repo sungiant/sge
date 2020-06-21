@@ -73,7 +73,7 @@ struct platform_state {
     void* view;
 #elif TARGET_LINUX
     xcb_connection_t* connection;
-    xcb_window_t* window;
+    xcb_window_t window;
 #endif
 };
 
@@ -145,7 +145,7 @@ public:
         void*
 #elif TARGET_LINUX
         xcb_connection_t*,
-        xcb_window_t*
+        xcb_window_t
 #endif
     );
 

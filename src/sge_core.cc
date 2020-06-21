@@ -55,7 +55,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
 
         io.MousePos = ImVec2 (p.x, p.y);
         io.MouseDown[0] = input.find (input_control_identifier::mb_left) != input.end () && std::get<input_binary_control>(input.at(input_control_identifier::mb_left));
-        io.MouseDown[1] = input.find (input_control_identifier::mb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
+        io.MouseDown[1] = input.find (input_control_identifier::mfb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
         io.MouseDown[2] = input.find (input_control_identifier::mb_right) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_right));
         io.DeltaTime = engine_state.instrumentation.frameTimer;
         io.MouseWheel = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
@@ -109,7 +109,7 @@ void engine::setup (
     void* z_view
 #elif TARGET_LINUX
     xcb_connection_t* z_connection,
-    xcb_window_t* z_window
+    xcb_window_t z_window
 #else
 #error
 #endif
