@@ -109,8 +109,8 @@ void engine::setup (
 #elif TARGET_MACOSX
     void* z_view
 #elif TARGET_LINUX
-    xcb_connection_t* z_connection;
-    xcb_window_t* z_window;
+    xcb_connection_t* z_connection,
+    xcb_window_t* z_window
 #endif
 ) {
     std::cout <<

@@ -61,6 +61,7 @@ elseif (G_DEV_ENV STREQUAL DARWIN)
     set (CMAKE_CXX_STANDARD 17)
 elseif (G_DEV_ENV STREQUAL LINUX)
     set (CMAKE_CXX_STANDARD 17)
+    set (CMAKE_CXX_FLAGS "-fpermissive -std=c++17")
 endif ()
 
 if (NOT G_VARIANT STREQUAL HEADLESS)
@@ -82,6 +83,8 @@ message (STATUS "$VK_SDK_PATH: " $ENV{VK_SDK_PATH})
 
 if (G_DEV_ENV STREQUAL LINUX)
     include ($ENV{VK_SDK_PATH}/samples/cmake/FindVulkan.cmake)
+
+
 else ()
     find_package (vulkan REQUIRED)
 endif ()

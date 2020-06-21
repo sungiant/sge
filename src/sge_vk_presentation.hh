@@ -37,7 +37,7 @@ public:
 #elif TARGET_MACOSX && !VARIANT_HEADLESS
         , void*
 #elif TARGET_LINUX && !VARIANT_HEADLESS
-        , xcb_connection_t*, scb_window_t
+        , xcb_connection_t*, xcb_window_t
 #endif
         );
     ~presentation () {};

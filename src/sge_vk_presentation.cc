@@ -28,7 +28,7 @@ presentation:: presentation (const struct context& context, const queue_identifi
 #elif TARGET_MACOSX && !VARIANT_HEADLESS
     , void* v
 #elif TARGET_LINUX && !VARIANT_HEADLESS
-    , xcb_connection_t* c, scb_window_t w
+    , xcb_connection_t* c, xcb_window_t w
 #endif
 )
     : context (context)
@@ -64,6 +64,7 @@ void presentation::configure (const std::vector<queue_identifier>& external_queu
 }
 
 void presentation::create () {
+
     // semaphore
     auto semaphore_create_info = utils::init_VkSemaphoreCreateInfo ();
     vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_create_info, context.allocation_callbacks, &state.image_available));

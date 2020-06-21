@@ -148,8 +148,8 @@ public:
 #elif TARGET_MACOSX
         void*
 #elif TARGET_LINUX
-        xcb_connection_t*;
-        xcb_window_t*;
+        xcb_connection_t*,
+        xcb_window_t*
 #endif
     );
 

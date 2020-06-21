@@ -139,6 +139,7 @@ void kernel::create_instance () {
     const auto instance_create_info = utils::init_VkInstanceCreateInfo (&app_info, required_instance_layers, required_instance_extensions);
     vk_assert (vkCreateInstance (&instance_create_info, allocation_callbacks (), &state.instance));
 
+
 #if TARGET_MACOSX
     if (std::find (required_instance_extensions.begin (), required_instance_extensions.end (), "VK_EXT_debug_report") != required_instance_extensions.end ()) {
         auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr (state.instance, "vkCreateDebugReportCallbackEXT");
@@ -223,12 +224,8 @@ void kernel::get_physical_devices () {
 
         }
 
-
-
-
         std::cout << "vulkan api version: " << VK_VERSION_MAJOR (physical_device_properties.apiVersion) << "." << VK_VERSION_MINOR (physical_device_properties.apiVersion) << "." << VK_VERSION_PATCH (physical_device_properties.apiVersion) << "\n";
         std::cout << "vulkan driver version: " << VK_VERSION_MAJOR (physical_device_properties.driverVersion) << "." << VK_VERSION_MINOR (physical_device_properties.driverVersion) << "." << VK_VERSION_PATCH (physical_device_properties.driverVersion) << "\n";
-
     }
 }
 

@@ -8,7 +8,7 @@ void vk::create (HINSTANCE hi, HWND hw, int w, int h) {
 #elif TARGET_MACOSX && !VARIANT_HEADLESS
 void vk::create (void* v, int w, int h) {
 #elif TARGET_LINUX && !VARIANT_HEADLESS
-void vk::create (xcb_connection_t* c, xcb_window_t w, int w, int h) {
+void vk::create (xcb_connection_t* xc, xcb_window_t xw, int w, int h) {
 #else
 void vk::create (int w, int h) {
 #endif
@@ -24,7 +24,7 @@ void vk::create (int w, int h) {
 #elif TARGET_MACOSX && !VARIANT_HEADLESS
         , v
 #elif TARGET_LINUX && !VARIANT_HEADLESS
-        , c, w
+        , xc, xw
 #endif
     );
 
