@@ -33,8 +33,7 @@ endif ()
 
 set (G_CI $ENV{CI})
 if (G_CI STREQUAL true)
-    add_definitions (-DVARIANT_HEADLESS)
-    set (G_VARIANT HEADLESS)
+    message ("CI RUN")
 endif ()
 
 # Pick suitable target platform
@@ -64,15 +63,13 @@ elseif (G_DEV_ENV STREQUAL LINUX)
     set (CMAKE_CXX_FLAGS "-fpermissive -std=c++17")
 endif ()
 
-if (NOT G_VARIANT STREQUAL HEADLESS)
-    if (G_DEV_ENV STREQUAL WINDOWS)
-        add_definitions (-DVK_USE_PLATFORM_WIN32_KHR)
-    elseif (G_DEV_ENV STREQUAL DARWIN)
-        add_definitions (-DVK_USE_PLATFORM_MVK_KHR)
-        add_definitions (-DVK_USE_PLATFORM_MACOS_MVK)
-    elseif (G_DEV_ENV STREQUAL LINUX)
-        add_definitions (-DVK_USE_PLATFORM_XCB_KHR)
-    endif ()
+if (G_DEV_ENV STREQUAL WINDOWS)
+    add_definitions (-DVK_USE_PLATFORM_WIN32_KHR)
+elseif (G_DEV_ENV STREQUAL DARWIN)
+    add_definitions (-DVK_USE_PLATFORM_MVK_KHR)
+    add_definitions (-DVK_USE_PLATFORM_MACOS_MVK)
+elseif (G_DEV_ENV STREQUAL LINUX)
+    add_definitions (-DVK_USE_PLATFORM_XCB_KHR)
 endif ()
 
 ################################################################################

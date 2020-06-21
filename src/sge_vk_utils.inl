@@ -778,7 +778,7 @@ inline VkDeviceCreateInfo init_VkDeviceCreateInfo (const std::vector<VkDeviceQue
     return create_info;
 }
 
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
 
 inline VkWin32SurfaceCreateInfoKHR init_VkWin32SurfaceCreateInfoKHR (HINSTANCE hinstance, HWND hwnd) {
     VkWin32SurfaceCreateInfoKHR create_info = {};
@@ -792,7 +792,7 @@ inline VkWin32SurfaceCreateInfoKHR init_VkWin32SurfaceCreateInfoKHR (HINSTANCE h
 
 #endif
 
-#if TARGET_MACOSX && !VARIANT_HEADLESS
+#if TARGET_MACOSX
 
 inline VkMacOSSurfaceCreateInfoMVK init_VkMacOSSurfaceCreateInfoMVK (void* view) {
     VkMacOSSurfaceCreateInfoMVK create_info = {};
@@ -805,7 +805,7 @@ inline VkMacOSSurfaceCreateInfoMVK init_VkMacOSSurfaceCreateInfoMVK (void* view)
 
 #endif
 
-#if TARGET_LINUX && !VARIANT_HEADLESS
+#if TARGET_LINUX
 
 inline VkXcbSurfaceCreateInfoKHR init_VkXcbSurfaceCreateInfoKHR (xcb_connection_t* connection, xcb_window_t window) {
     VkXcbSurfaceCreateInfoKHR create_info = {};

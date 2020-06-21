@@ -102,8 +102,7 @@ engine::~engine () {
 }
 
 void engine::setup (
-#if VARIANT_HEADLESS
-#elif TARGET_WIN32
+#if TARGET_WIN32
     HINSTANCE z_hinst,
     HWND z_hwnd
 #elif TARGET_MACOSX
@@ -111,6 +110,8 @@ void engine::setup (
 #elif TARGET_LINUX
     xcb_connection_t* z_connection,
     xcb_window_t* z_window
+#else
+#error
 #endif
 ) {
     std::cout <<
@@ -130,9 +131,7 @@ void engine::setup (
 
     engine_tasks->change_window_title = configuration.app_name;
 
-#if VARIANT_HEADLESS
-    engine_state->graphics.create (engine_state->container.current_width, engine_state->container.current_height);
-#elif TARGET_WIN32
+#if TARGET_WIN32
     engine_state->platform.hinst = z_hinst;
     engine_state->platform.hwnd = z_hwnd;
     engine_state->graphics.create (z_hinst, z_hwnd, engine_state->container.current_width, engine_state->container.current_height);
@@ -142,6 +141,7 @@ void engine::setup (
 #elif TARGET_LINUX
     engine_state->graphics.create (z_connection, z_window, engine_state->container.current_width, engine_state->container.current_height);
 #else
+#error
 #endif
 
     engine_api = std::make_unique<runtime::api> (*engine_state, *engine_tasks);

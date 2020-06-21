@@ -5,13 +5,6 @@
 
 #if TARGET_LINUX
 
-
-#if HEADLESS
-
-int main () { return 0; }
-
-#else
-
 #include <unistd.h>      /* pause() */
 #include <stdlib.h>
 #include <xcb/xcb.h>
@@ -102,7 +95,5 @@ int main ()
 
     return 0;
 }
-
-#endif
 
 #endif

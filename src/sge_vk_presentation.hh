@@ -14,7 +14,7 @@
 #include <windows.h>
 #endif
 
-#if TARGET_LINUX && !VARIANT_HEADLESS
+#if TARGET_LINUX
 #include <xcb/xcb.h>
 #endif
 
@@ -32,11 +32,11 @@ class presentation {
 public:
 
     presentation (const struct context&, const queue_identifier& qid
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
         , HINSTANCE, HWND
-#elif TARGET_MACOSX && !VARIANT_HEADLESS
+#elif TARGET_MACOSX
         , void*
-#elif TARGET_LINUX && !VARIANT_HEADLESS
+#elif TARGET_LINUX
         , xcb_connection_t*, xcb_window_t
 #endif
         );
@@ -82,12 +82,12 @@ private:
 
     const context&                      context;
     const queue_identifier              identifier;
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
     const HINSTANCE                     app_hinst;
     const HWND                          app_hwnd;
-#elif TARGET_MACOSX && !VARIANT_HEADLESS
+#elif TARGET_MACOSX
     const void*                         app_view;
-#elif TARGET_LINUX && !VARIANT_HEADLESS
+#elif TARGET_LINUX
     const xcb_connection_t*             app_connection;
     const xcb_window_t                  app_window;
 #endif
