@@ -172,7 +172,7 @@ void presentation::create_surface () {
     //    assert (result == VK_SUCCESS);
     //}
 #elif TARGET_LINUX  
-    auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (app_connection, app_window);
+    auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (const_cast<xcb_connection_t*>(app_connection), app_window);
     vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 #else
 #error
