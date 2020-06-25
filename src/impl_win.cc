@@ -17,7 +17,6 @@
 #include <algorithm>
 
 #include "sge_core.hh"
-#include "sge_app.hh"
 
 #include <windows.h>
 

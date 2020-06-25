@@ -10,7 +10,6 @@
 #include <xcb/xcb.h>
 
 #include "sge_core.hh"
-#include "sge_app.hh"
 
 auto g_sge = std::make_unique<sge::core::engine>();
 
@@ -86,7 +85,7 @@ int main ()
     }
 
     g_sge->stop ();
-    
+
     g_sge->shutdown();
 
     xcb_disconnect (connection);
