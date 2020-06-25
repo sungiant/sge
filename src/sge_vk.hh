@@ -9,7 +9,7 @@
 #include <windows.h>
 #endif
 
-#if TARGET_LINUX && !VARIANT_HEADLESS
+#if TARGET_LINUX
 #include <xcb/xcb.h>
 #endif
 
@@ -30,11 +30,11 @@ namespace sge::vk {
         std::unique_ptr<imgui>              imgui;
         bool                                imgui_on = true;
 
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
         void create (HINSTANCE, HWND, int, int);
-#elif TARGET_MACOSX && !VARIANT_HEADLESS
+#elif TARGET_MACOSX
         void create (void*, int, int);
-#elif TARGET_LINUX && !VARIANT_HEADLESS
+#elif TARGET_LINUX
         void create (xcb_connection_t*, xcb_window_t, int, int);
 #else
         void create (int, int);

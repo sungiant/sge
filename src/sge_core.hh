@@ -24,7 +24,7 @@
 #include <windows.h>
 #endif
 
-#if TARGET_LINUX && !VARIANT_HEADLESS
+#if TARGET_LINUX
 #include <xcb/xcb.h>
 #endif
 
@@ -65,16 +65,14 @@ struct configuration_state {
 };
 
 struct platform_state {
-#if VARIANT_HEADLESS
-// n/a
-#elif TARGET_WIN32
+#if TARGET_WIN32
     HINSTANCE hinst;
     HWND hwnd;
 #elif TARGET_MACOSX
     void* view;
 #elif TARGET_LINUX
     xcb_connection_t* connection;
-    xcb_window_t* window;
+    xcb_window_t window;
 #endif
 };
 
@@ -176,16 +174,14 @@ public:
     void register_shutdown_request_callback (const void_fn& z) { engine_state->host.shutdown_request_fn = z; }
 
     void setup (
-#if VARIANT_HEADLESS
-// n/a
-#elif TARGET_WIN32
+#if TARGET_WIN32
         HINSTANCE,
         HWND
 #elif TARGET_MACOSX
         void*
 #elif TARGET_LINUX
-        xcb_connection_t*;
-        xcb_window_t*;
+        xcb_connection_t*,
+        xcb_window_t
 #endif
     );
 

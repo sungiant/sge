@@ -23,22 +23,22 @@
 namespace sge::vk {
 
 presentation:: presentation (const struct context& context, const queue_identifier& qid
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
     , HINSTANCE hi, HWND hw
-#elif TARGET_MACOSX && !VARIANT_HEADLESS
+#elif TARGET_MACOSX
     , void* v
-#elif TARGET_LINUX && !VARIANT_HEADLESS
-    , xcb_connection_t* c, scb_window_t w
+#elif TARGET_LINUX
+    , xcb_connection_t* c, xcb_window_t w
 #endif
 )
     : context (context)
     , identifier (qid)
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
     , app_hinst (hi)
     , app_hwnd (hw)
-#elif TARGET_MACOSX && !VARIANT_HEADLESS
+#elif TARGET_MACOSX
     , app_view (v)
-#elif TARGET_LINUX && !VARIANT_HEADLESS
+#elif TARGET_LINUX
     , app_connection (c)
     , app_window (w)
 #endif
@@ -64,6 +64,7 @@ void presentation::configure (const std::vector<queue_identifier>& external_queu
 }
 
 void presentation::create () {
+
     // semaphore
     auto semaphore_create_info = utils::init_VkSemaphoreCreateInfo ();
     vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_create_info, context.allocation_callbacks, &state.image_available));
@@ -150,10 +151,10 @@ std::variant<VkResult, image_index> presentation::next_image () {
 void presentation::create_surface () {
     auto physical_device = identifier.physical_device;
 
-#if TARGET_WIN32 && !VARIANT_HEADLESS
+#if TARGET_WIN32
     auto surface_create_info = utils::init_VkWin32SurfaceCreateInfoKHR (app_hinst, app_hwnd);
     vk_assert (vkCreateWin32SurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
-#elif TARGET_MACOSX && !VARIANT_HEADLESS
+#elif TARGET_MACOSX
     auto surface_create_info = utils::init_VkMacOSSurfaceCreateInfoMVK (const_cast<void*> (app_view));
     vk_assert (vkCreateMacOSSurfaceMVK (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 
@@ -170,11 +171,11 @@ void presentation::create_surface () {
     //    VkResult vkCreateMetalSurfaceEXT (instance (), &surface_create_info, context.allocation_callbacks, &state.surface);
     //    assert (result == VK_SUCCESS);
     //}
-#elif TARGET_LINUX && !VARIANT_HEADLESS
-    auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (app_connection, app_window);
+#elif TARGET_LINUX  
+    auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (const_cast<xcb_connection_t*>(app_connection), app_window);
     vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 #else
-    assert (false);
+#error
 #endif
 
     uint32_t surface_format_count;

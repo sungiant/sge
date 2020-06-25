@@ -26,17 +26,22 @@ target_include_directories (sge PUBLIC $ENV{MOLTEN_VK}/include)
 
 target_link_libraries (sge ${MVK_FRAMEWORK})
 
-
 elseif (G_TARGET STREQUAL "LINUX")
 	
 add_library (sge ${SOURCE_LIST})
 
 target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/)
 
+target_link_libraries (sge xcb)
+
 endif ()
 
+
+if (G_TARGET STREQUAL "WIN32")
 add_definitions (-DSGE_VK_USE_CUSTOM_ALLOCATOR)
-add_definitions (-DSGE_DEBUG_MODE)
+endif ()
+
+#add_definitions (-DSGE_DEBUG_MODE)
 #add_definitions (-DSGE_PROFILING_MODE)
 
 ################################################################################
@@ -48,6 +53,5 @@ foreach (_source IN ITEMS ${SOURCE_LIST})
     string (REPLACE "..\\src" "" _group_path "${_group_path}")
     source_group ("${_group_path}" FILES "${_source}")
 endforeach ()
-
 
 target_link_libraries (sge Vulkan::Vulkan imgui)
