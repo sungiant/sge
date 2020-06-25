@@ -78,15 +78,15 @@ SGE has a minimal feature set - you could think of it as being something like [S
 ### 0.1.0 - Remaining tasks
 
 - [x] Configurable storage buffers.
-- [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
 - [x] OSX gamepad rewrite.
 - [x] CI integration.
+- [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
 - [ ] Review codebase abstractions and type naming and simplify where needed, resolve inconsistencies.
+- [ ] Replace ray tracing example (right now there is a familar placeholder to help explain the issue with SBOs).
 - [ ] Intelligent Vulkan queue selection.
 - [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
-- [ ] Replace ray tracing example (right now there is a familar placeholder to help explain the issue with SBOs).
 - [ ] Complete dynamic csg tree SBO implementation.
 - [ ] Resolve/query issue with having more than one SBO with Molten VK.
 - [ ] Linux host implementation.
@@ -138,6 +138,10 @@ set -x MVK_ALLOW_METAL_EVENTS 1
 set -gx DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH $VULKAN_SDK/lib
 set -gx PATH $PATH $VULKAN_SDK/bin
 ```
+
+### Environment setup: Linux
+
+Work in progress!
 
 #### Notes
 
