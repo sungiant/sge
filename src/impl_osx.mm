@@ -7,14 +7,12 @@
 #include <pthread.h>
 
 #include <chrono>
-#include <iomanip>
 #include <unordered_set>
 #include <algorithm>
 #include <optional>
 #include <vector>
 #include <queue>
 #include <functional>
-#include <chrono>
 #include <string>
 #include <thread>
 
@@ -89,9 +87,7 @@ private:
     };
     
     struct input_reference {
-        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd)
-            : parent (zp), device (zd)
-        {}
+        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd) : parent (zp), device (zd) {}
         iokit_gamepad&              parent;
         const IOHIDDeviceRef        device;
     };
@@ -117,7 +113,6 @@ private:
     //
     // Implementation
     // --------------
-
     void start () {
         pthread_mutex_init (&mutex, nullptr);
         assert (pthread_create (&event_thread, nullptr, thread_start, this) == 0);
@@ -126,22 +121,22 @@ private:
         hid_manager = IOHIDManagerCreate (kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         assert (hid_manager);
         {
-            constexpr int page_desktop = kHIDPage_GenericDesktop;
-            constexpr int usage_joystick = kHIDUsage_GD_Joystick;
-            constexpr int usage_gamepad = kHIDUsage_GD_GamePad;
+            constexpr int page_desktop     = kHIDPage_GenericDesktop;
+            constexpr int usage_joystick   = kHIDUsage_GD_Joystick;
+            constexpr int usage_gamepad    = kHIDUsage_GD_GamePad;
             constexpr int usage_controller = kHIDUsage_GD_MultiAxisController;
             CFStringRef keys[] { CFSTR (kIOHIDDeviceUsagePageKey), CFSTR (kIOHIDDeviceUsageKey) };
-            const auto desktop = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &page_desktop);
-            const auto joystick = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &usage_joystick);
-            const auto gamepad = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &usage_gamepad);
+            const auto desktop    = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &page_desktop);
+            const auto joystick   = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &usage_joystick);
+            const auto gamepad    = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &usage_gamepad);
             const auto controller = CFNumberCreate (kCFAllocatorDefault, kCFNumberSInt32Type, &usage_controller);
-            const std::vector<CFNumberRef> desktop_joystick { desktop, joystick };
-            const std::vector<CFNumberRef> desktop_gamepad { desktop, gamepad };
+            const std::vector<CFNumberRef> desktop_joystick   { desktop, joystick };
+            const std::vector<CFNumberRef> desktop_gamepad    { desktop, gamepad };
             const std::vector<CFNumberRef> desktop_controller { desktop, controller };
             const std::vector<CFDictionaryRef> devices {
-                CFDictionaryCreate (kCFAllocatorDefault, (const void **)keys, (const void **)desktop_joystick.data(), desktop_joystick.size(), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
-                CFDictionaryCreate (kCFAllocatorDefault, (const void **)keys, (const void **)desktop_gamepad.data(), desktop_gamepad.size(), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
-                CFDictionaryCreate (kCFAllocatorDefault, (const void **)keys, (const void **)desktop_controller.data(), desktop_controller.size(), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks) };
+                CFDictionaryCreate (kCFAllocatorDefault, (const void **) keys, (const void **) desktop_joystick.data(),   desktop_joystick.size(),   &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
+                CFDictionaryCreate (kCFAllocatorDefault, (const void **) keys, (const void **) desktop_gamepad.data(),    desktop_gamepad.size(),    &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
+                CFDictionaryCreate (kCFAllocatorDefault, (const void **) keys, (const void **) desktop_controller.data(), desktop_controller.size(), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks) };
             CFRelease (controller); CFRelease (gamepad); CFRelease (joystick); CFRelease (desktop);
             const CFArrayRef multiple = CFArrayCreate (kCFAllocatorDefault, (const void **) devices.data(), devices.size(), &kCFTypeArrayCallBacks);
             std::for_each (devices.begin(), devices.end(), [](CFDictionaryRef r){ CFRelease (r); });
@@ -149,7 +144,7 @@ private:
             CFRelease (multiple);
         }
         IOHIDManagerRegisterDeviceMatchingCallback (hid_manager, iohid_attached_callback, this);
-        IOHIDManagerRegisterDeviceRemovalCallback (hid_manager, iohid_detached_callback, this);
+        IOHIDManagerRegisterDeviceRemovalCallback  (hid_manager, iohid_detached_callback, this);
         IOReturn r = IOHIDManagerOpen (hid_manager, kIOHIDOptionsTypeNone);
         if (r != kIOReturnSuccess) {
 #if SGE_OSX_INPUT_DEBUG
@@ -162,13 +157,13 @@ private:
     
     void stop () {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
-            if (connections[i].has_value())
-                remove_connection(connections[i].value().first);
+            if (connections[i].has_value ())
+                remove_connection (connections[i].value().first);
         }
         pthread_mutex_lock (&mutex);
-        while (event_queue.size())
+        while (event_queue.size ())
             event_queue.pop();
-        input_callback_data.clear();
+        input_callback_data.clear ();
         pthread_mutex_unlock (&mutex);
         if (event_thread_loop != nullptr) {
           pthread_cancel (event_thread);
@@ -242,17 +237,17 @@ private:
         switch (identifier) {
             // buttons
             #define CASE(x, y) { case x: { if (value > 0) state.pressed_buttons.insert (y); else state.pressed_buttons.erase (y); break; } }
-            CASE (BUTTON_ACTION_SOUTH, button::action_south);
-            CASE (BUTTON_ACTION_EAST, button::action_east);
-            CASE (BUTTON_ACTION_WEST, button::action_west);
-            CASE (BUTTON_ACTION_NORTH, button::action_north);
-            CASE (BUTTON_LEFT_SHOULDER, button::left_shoulder);
+            CASE (BUTTON_ACTION_SOUTH,   button::action_south);
+            CASE (BUTTON_ACTION_EAST,    button::action_east);
+            CASE (BUTTON_ACTION_WEST,    button::action_west);
+            CASE (BUTTON_ACTION_NORTH,   button::action_north);
+            CASE (BUTTON_LEFT_SHOULDER,  button::left_shoulder);
             CASE (BUTTON_RIGHT_SHOULDER, button::right_shoulder);
-            CASE (BUTTON_OPTION_LEFT, button::option_left);
-            CASE (BUTTON_OPTION_MIDDLE, button::option_middle);
-            CASE (BUTTON_OPTION_RIGHT, button::option_right);
-            CASE (BUTTON_LEFT_THUMB, button::left_thumb);
-            CASE (BUTTON_RIGHT_THUMB, button::right_thumb);
+            CASE (BUTTON_OPTION_LEFT,    button::option_left);
+            CASE (BUTTON_OPTION_MIDDLE,  button::option_middle);
+            CASE (BUTTON_OPTION_RIGHT,   button::option_right);
+            CASE (BUTTON_LEFT_THUMB,     button::left_thumb);
+            CASE (BUTTON_RIGHT_THUMB,    button::right_thumb);
             #undef CASE
             // sticks
             case AXIS_LEFT_X: case AXIS_LEFT_Y: case AXIS_RIGHT_X: case AXIS_RIGHT_Y: {
@@ -505,7 +500,6 @@ void calculate_sge_input_state (sge::input_state& input) {
     if (g_mouse_right) input[sge::input_control_identifier::mb_right] = true;
     
     // gamepad
-    
     input[sge::input_control_identifier::ga_left_trigger] = g_gamepad.get_left_trigger ();
     input[sge::input_control_identifier::ga_right_trigger] = g_gamepad.get_right_trigger ();
     auto gamepad_left_stick = g_gamepad.get_left_stick ();
@@ -514,21 +508,23 @@ void calculate_sge_input_state (sge::input_state& input) {
     auto gamepad_right_stick = g_gamepad.get_right_stick ();
     input[sge::input_control_identifier::ga_right_stick_x] = gamepad_right_stick.x;
     input[sge::input_control_identifier::ga_right_stick_y] = gamepad_right_stick.y;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_up)) input[sge::input_control_identifier::gb_dpad_up] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_down)) input[sge::input_control_identifier::gb_dpad_down] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_left)) input[sge::input_control_identifier::gb_dpad_left] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::dpad_right)) input[sge::input_control_identifier::gb_dpad_right] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::option_left)) input[sge::input_control_identifier::gb_back] = true;
-    //if (g_gamepad.is_button_pressed (iokit_gamepad::button::option_middle)) input[sge::input_control_identifier::gb_center] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::option_right)) input[sge::input_control_identifier::gb_start] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::left_thumb)) input[sge::input_control_identifier::gb_left_thumb] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::right_thumb)) input[sge::input_control_identifier::gb_right_thumb] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::left_shoulder)) input[sge::input_control_identifier::gb_left_shoulder] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::right_shoulder)) input[sge::input_control_identifier::gb_right_shoulder] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_south)) input[sge::input_control_identifier::gb_a] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_east)) input[sge::input_control_identifier::gb_b] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_west)) input[sge::input_control_identifier::gb_x] = true;
-    if (g_gamepad.is_button_pressed (iokit_gamepad::button::action_north)) input[sge::input_control_identifier::gb_y] = true;
+    #define IF(x, y) { if (g_gamepad.is_button_pressed (x)) input[y] = true; }
+    IF (iokit_gamepad::button::dpad_up,         sge::input_control_identifier::gb_dpad_up);
+    IF (iokit_gamepad::button::dpad_down,       sge::input_control_identifier::gb_dpad_down);
+    IF (iokit_gamepad::button::dpad_left,       sge::input_control_identifier::gb_dpad_left);
+    IF (iokit_gamepad::button::dpad_right,      sge::input_control_identifier::gb_dpad_right);
+    IF (iokit_gamepad::button::option_left,     sge::input_control_identifier::gb_back);
+    //IF (iokit_gamepad::button::option_middle, sge::input_control_identifier::gb_center);
+    IF (iokit_gamepad::button::option_right,    sge::input_control_identifier::gb_start);
+    IF (iokit_gamepad::button::left_thumb,      sge::input_control_identifier::gb_left_thumb);
+    IF (iokit_gamepad::button::right_thumb,     sge::input_control_identifier::gb_right_thumb);
+    IF (iokit_gamepad::button::left_shoulder,   sge::input_control_identifier::gb_left_shoulder);
+    IF (iokit_gamepad::button::right_shoulder,  sge::input_control_identifier::gb_right_shoulder);
+    IF (iokit_gamepad::button::action_south,    sge::input_control_identifier::gb_a);
+    IF (iokit_gamepad::button::action_east,     sge::input_control_identifier::gb_b);
+    IF (iokit_gamepad::button::action_west,     sge::input_control_identifier::gb_x);
+    IF (iokit_gamepad::button::action_north,    sge::input_control_identifier::gb_y);
+    #undef IF
     
 }
 
@@ -616,7 +612,6 @@ void calculate_sge_input_state (sge::input_state& input) {
         [NSApp terminate:self];
     });
     
-
     g_sge->start ();
 }
 
@@ -633,7 +628,6 @@ void calculate_sge_input_state (sge::input_state& input) {
     g_mouse_position_x = std::clamp <int>(point.x, 0, g_container_width);
     g_mouse_position_y = g_container_height - std::clamp<int> (point.y, 0, g_container_height);
     
-    //g_gamepad.update();
     g_gamepad.update();
 
     // update the engine
@@ -644,7 +638,7 @@ void calculate_sge_input_state (sge::input_state& input) {
     calculate_sge_input_state (input_state);
 
     g_sge->update (container_state, input_state);
-    
+
     g_is_resizing = false;
 }
 
@@ -791,13 +785,12 @@ void calculate_sge_input_state (sge::input_state& input) {
     [[_window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
 }
 
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
-	return YES;
-}
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender { return YES; }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     g_sge->stop ();
     g_sge->shutdown();
+    g_sge.reset();
 }
 @end
 
@@ -823,6 +816,8 @@ int main ()
     [NSApp activateIgnoringOtherApps:YES];
     g_sge = std::make_unique<sge::core::engine>();
     [NSApp run];
+    // we never get here.
+    assert (false);
     g_sge.reset();
     return 0;
 
