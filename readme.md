@@ -77,28 +77,31 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 ### 0.1.0 - Remaining tasks
 
-- [ ] Intelligent Vulkan queue selection.
 - [x] Configurable storage buffers.
-- [ ] API stabilisation - `sge::runtime` to be independent from `sge::core`.
+- [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
 - [x] OSX gamepad rewrite.
-- [ ] Improve and make configurable SGE built-in ImGui windows.
+- [x] CI integration.
+- [ ] Review codebase abstractions and type naming and simplify where needed, resolve inconsistencies.
+- [ ] Intelligent Vulkan queue selection.
+- [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
-- [ ] Review codebase and simplify where needed, resolve inconsistencies.
-- [x] CI integration.
+- [ ] Replace ray tracing example (right now there is a familar placeholder to help explain the issue with SBOs).
+- [ ] Complete dynamic csg tree SBO implementation.
+- [ ] Resolve/query issue with having more than one SBO with Molten VK.
+- [ ] Linux host implementation.
 
 ### 0.2.0
 
 - [ ] Compute shader input/output textures to be user configurable (formats selection, depth write option).
 - [ ] User shape/model rendering support (allow amalgamation of 3D primitives into compute generated scenes).
 - [ ] User control over multiple parallel compute pipelines.
-- [ ] Multi-threaded renderer.
+- [ ] Engine update and render loops on their own threads.
 
 ### 0.X.0
 
 - [ ] Runtime shader compilation via glslang runtime integration.
 - [ ] Qt host implementation.
-- [ ] Linux host implementation.
 
 ## Getting started
 

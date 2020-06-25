@@ -10,6 +10,12 @@
 
 #include "../ex_common/free_camera.hh"
 
+//todo: this demo is placeholder and is almost entirely a clone of sascha's compute raytracer.
+//      i've added it for now to try and help illustrate and debug a molten vk issue relating to
+//      more than a single SBO in a compute shader.
+
+
+
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
 std::unique_ptr<sge::app::extensions> extensions;
