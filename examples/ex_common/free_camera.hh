@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include <sge_math.hh>
-#include <sge_extensions.hh>
+#include <ext_input.hh>
 
 struct free_camera {
     free_camera () {

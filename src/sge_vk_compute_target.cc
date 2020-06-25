@@ -1,6 +1,9 @@
 #include "sge_vk_compute_target.hh"
 
+#include "sge.hh"
+
 #include "sge_vk_presentation.hh"
+
 
 #include <cassert>
 
@@ -16,7 +19,7 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
 void compute_target::end_of_frame () {
     const int num_blobs = content.blobs.size ();
 
-    if (contains_value (state.pending_blob_changes)) {
+    if (sge::utils::contains_value (state.pending_blob_changes)) {
 
         destroy_rl ();
 

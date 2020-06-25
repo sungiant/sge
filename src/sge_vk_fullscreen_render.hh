@@ -10,7 +10,7 @@
 #include <vulkan/vulkan.h>
 #include <functional>
 
-#include "sge_math.hh"
+#include "sge.hh"
 #include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"

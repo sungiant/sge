@@ -11,9 +11,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include "sge_utils.hh"
-#include "sge_math.hh"
-#include "sge_app.hh"
+#include "sge.hh"
 #include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"

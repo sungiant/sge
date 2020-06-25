@@ -13,7 +13,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include "sge_math.hh"
+#include "sge.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_context.hh"
 #include "sge_vk_types.hh"

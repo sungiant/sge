@@ -4,11 +4,15 @@
 
 #include <imgui/imgui.h>
 #include <sge.hh>
+#include <ext_overlay.hh>
+#include <ext_input.hh>
+#include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
 
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
+std::unique_ptr<sge::app::extensions> extensions;
 
 struct PUSH {
     float time;
@@ -90,7 +94,14 @@ void initialise () {
             sge::dataspan { &ubo_settings, sizeof (UBO_SETTINGS) },
         }
     });
-
+    
+    extensions = std::make_unique<sge::app::extensions>();
+    
+    extensions->views = {
+        { sge::type_id<sge::overlay::view>(), [] (const sge::runtime::api& x) { return new sge::overlay::view (x); }},
+        { sge::type_id<sge::input::view>(), [] (const sge::runtime::api& x) { return new sge::input::view (x); }},
+        { sge::type_id<sge::instrumentation::view>(), [] (const sge::runtime::api& x) { return new sge::instrumentation::view (x); }},
+    };
 
     push.time = 0.0f;
     push.no_change = false;
@@ -101,11 +112,11 @@ void terminate () { config.reset (); }
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
-    if (sge.input.keyboard.key_just_pressed (sge::input::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.input.keyboard.key_just_pressed (sge::input::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.input.keyboard.key_just_pressed (sge::input::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
-    camera.update (sge.instrumentation.dt(), sge.input);
+    camera.update (sge.ext<sge::instrumentation::view>().dt(), sge.ext<sge::input::view>());
     int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
 
@@ -189,6 +200,7 @@ namespace sge::app { // HOOK UP TO SGE
 void               initialise          ()                              { ::initialise (); }
 configuration&     get_configuration   ()                              { return *::config; }
 content&           get_content         ()                              { return *::computation; }
+extensions&        get_extensions      ()                              { return *::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }

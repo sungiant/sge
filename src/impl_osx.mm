@@ -22,8 +22,8 @@
 #include <MetalKit/MTKView.h>
 #include <IOKit/hid/IOHIDManager.h>
 
+#include "sge.hh"
 #include "sge_core.hh"
-#include "sge_app.hh"
 
 #define SGE_OSX_INPUT_DEBUG 0
 

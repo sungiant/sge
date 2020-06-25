@@ -20,7 +20,6 @@
 #include "sge_vk_compute_target.hh"
 #include "sge_vk_fullscreen_render.hh"
 #include "sge_vk_imgui.hh"
-#include "sge_app.hh"
 
 namespace sge::vk {
     struct vk {

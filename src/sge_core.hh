@@ -18,6 +18,7 @@
 #include <functional>
 #include <chrono>
 #include <cassert>
+#include <string>
 
 #if TARGET_WIN32
 #include <windows.h>
@@ -29,10 +30,8 @@
 
 #include <imgui/imgui.h>
 
-#include "sge_types.hh"
+#include "sge.hh"
 #include "sge_vk.hh"
-#include "sge_runtime.hh"
-#include "sge_app.hh"
 
 namespace sge::core {
 
@@ -92,6 +91,8 @@ typedef struct vk::vk graphics_state;
 
 struct engine_state {
 
+    std::string version;
+    
     // engine input - replaced each frame by copied provided by the platform layer
     container_state container;
     input_state input;
@@ -118,14 +119,49 @@ struct engine_tasks {
     std::optional<std::monostate>       shutdown_request;
 };
 
+
+//----------------------------------------------------------------------------------------------------------------//
+    
+
+// the runtime api is a low level interface for interacting with SGE at runtime.
+class api_impl : public runtime::api {
+    const core::engine_state& engine_state;
+    core::engine_tasks& engine_tasks;
+    std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& engine_extensions;
+public:
+
+    api_impl (const core::engine_state&, core::engine_tasks&, std::unordered_map<size_t, std::unique_ptr<runtime::extension>>&);
+
+    bool                    system__get_state_bool              (runtime::system_bool_state) const;
+    int                     system__get_state_int               (runtime::system_int_state) const;
+    const char*             system__get_state_string            (runtime::system_string_state) const;
+    bool                    system__did_container_just_change   () const;
+
+    uint32_t                timer__get_fps                      () const;
+    float                   timer__get_delta                    () const;
+    float                   timer__get_time                     () const;
+
+    void                    input__get_state                    (input_state&) const;
+
+    // The intention is that every non-const function call to this api will be captured
+    // and enqueued for later processing.
+    void                    system__request_shutdown            ();
+    void                    system__toggle_state_bool           (runtime::system_bool_state);
+    void                    system__set_state_bool              (runtime::system_bool_state, bool);
+    void                    system__set_state_int               (runtime::system_int_state, int);
+    void                    system__set_state_string            (runtime::system_string_state, const char*);
+    
+    runtime::extension*     extension_get                       (size_t) const;
+};
+    
 //----------------------------------------------------------------------------------------------------------------//
 
 class engine {
 
     std::unique_ptr<engine_state>                       engine_state;
     std::unique_ptr<engine_tasks>                       engine_tasks;
-    std::unique_ptr<runtime::api>                       engine_api;
-    std::vector<std::unique_ptr<runtime::extension>>    engine_extensions = {}; // TODO: support typed extension access.
+    std::unique_ptr<api_impl>                           engine_api;
+    std::unordered_map<size_t, std::unique_ptr<runtime::extension>> engine_extensions = {};
     std::unique_ptr<app::response>                      user_response;
     std::unique_ptr<app::api>                           user_api;
     std::vector<std::function<void ()>>                 debug_fns = {};
