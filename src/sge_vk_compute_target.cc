@@ -1,11 +1,7 @@
 #include "sge_vk_compute_target.hh"
 
-#include "sge.hh"
-
 #include "sge_vk_presentation.hh"
-
-
-#include <cassert>
+#include "sge_utils.hh"
 
 namespace sge::vk {
 

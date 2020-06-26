@@ -4,8 +4,11 @@
 
 #include <imgui/imgui.h>
 #include <sge.hh>
+#include <sge_app.hh>
 #include <ext_overlay.hh>
-#include <ext_input.hh>
+#include <ext_keyboard.hh>
+#include <ext_mouse.hh>
+#include <ext_gamepad.hh>
 #include <ext_instrumentation.hh>
 
 std::unique_ptr<sge::app::configuration> config;
@@ -64,9 +67,11 @@ void initialise () {
     extensions = std::make_unique<sge::app::extensions>();
     
     extensions->views = {
-        { sge::type_id<sge::overlay::view>(), [] (const sge::runtime::api& x) { return new sge::overlay::view (x); }},
-        { sge::type_id<sge::input::view>(), [] (const sge::runtime::api& x) { return new sge::input::view (x); }},
-        { sge::type_id<sge::instrumentation::view>(), [] (const sge::runtime::api& x) { return new sge::instrumentation::view (x); }},
+        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
+        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
+        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
+        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
+        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
     };
 }
 void terminate () {
@@ -75,48 +80,48 @@ void terminate () {
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
 
     UBO u = ubo;
 
     { // zoom
-        float zoom = sge.ext<sge::input::view>().gamepad.right_trigger() - sge.ext<sge::input::view>().gamepad.left_trigger();
-        if (sge.ext<sge::input::view>().keyboard.is_character_down('+') || sge.ext<sge::input::view>().keyboard.is_character_down('e')) zoom = 0.5f;
-        if (sge.ext<sge::input::view>().keyboard.is_character_down('-') || sge.ext<sge::input::view>().keyboard.is_character_down('q')) zoom = -0.5f;
+        float zoom = sge.ext<sge::ext::gamepad>().right_trigger() - sge.ext<sge::ext::gamepad>().left_trigger();
+        if (sge.ext<sge::ext::keyboard>().is_character_down('+') || sge.ext<sge::ext::keyboard>().is_character_down('e')) zoom = 0.5f;
+        if (sge.ext<sge::ext::keyboard>().is_character_down('-') || sge.ext<sge::ext::keyboard>().is_character_down('q')) zoom = -0.5f;
 
         const float speed = 1.5f * u.zoom;
-        if (!sge::math::is_zero (zoom)) { u.zoom += speed * sge.ext<sge::instrumentation::view>().dt() * zoom; }
+        if (!sge::math::is_zero (zoom)) { u.zoom += speed * sge.ext<sge::ext::instrumentation>().dt() * zoom; }
     }
 
     { // pan
-        float pan_x = sge.ext<sge::input::view>().gamepad.right_stick().x;
-        if (sge.ext<sge::input::view>().keyboard.is_key_down(sge::input::keyboard_key::right)) pan_x = 0.5f;
-        if (sge.ext<sge::input::view>().keyboard.is_key_down(sge::input::keyboard_key::left)) pan_x = -0.5f;
+        float pan_x = sge.ext<sge::ext::gamepad>().right_stick().x;
+        if (sge.ext<sge::ext::keyboard>().is_key_down(sge::runtime::keyboard_key::right)) pan_x = 0.5f;
+        if (sge.ext<sge::ext::keyboard>().is_key_down(sge::runtime::keyboard_key::left)) pan_x = -0.5f;
 
-        float pan_y = sge.ext<sge::input::view>().gamepad.right_stick().y;
-        if (sge.ext<sge::input::view>().keyboard.is_key_down(sge::input::keyboard_key::up)) pan_y = 0.5f;
-        if (sge.ext<sge::input::view>().keyboard.is_key_down(sge::input::keyboard_key::down)) pan_y = -0.5f;
+        float pan_y = sge.ext<sge::ext::gamepad>().right_stick().y;
+        if (sge.ext<sge::ext::keyboard>().is_key_down(sge::runtime::keyboard_key::up)) pan_y = 0.5f;
+        if (sge.ext<sge::ext::keyboard>().is_key_down(sge::runtime::keyboard_key::down)) pan_y = -0.5f;
 
         const float speed = 1.5f / u.zoom;
-        if (!sge::math::is_zero (pan_x)) { u.pan.x -= speed * sge.ext<sge::instrumentation::view>().dt() * pan_x; }
-        if (!sge::math::is_zero (pan_y)) { u.pan.y -= speed * sge.ext<sge::instrumentation::view>().dt() * pan_y; }
+        if (!sge::math::is_zero (pan_x)) { u.pan.x -= speed * sge.ext<sge::ext::instrumentation>().dt() * pan_x; }
+        if (!sge::math::is_zero (pan_y)) { u.pan.y -= speed * sge.ext<sge::ext::instrumentation>().dt() * pan_y; }
     }
 
     { // complex
-        float complex_x = sge.ext<sge::input::view>().gamepad.left_stick().x;
-        if (sge.ext<sge::input::view>().keyboard.is_character_down('d')) complex_x = 0.5f;
-        if (sge.ext<sge::input::view>().keyboard.is_character_down('a')) complex_x = -0.5f;
+        float complex_x = sge.ext<sge::ext::gamepad>().left_stick().x;
+        if (sge.ext<sge::ext::keyboard>().is_character_down('d')) complex_x = 0.5f;
+        if (sge.ext<sge::ext::keyboard>().is_character_down('a')) complex_x = -0.5f;
 
-        float complex_y = sge.ext<sge::input::view>().gamepad.left_stick().y;
-        if (sge.ext<sge::input::view>().keyboard.is_character_down('w')) complex_y = 0.5f;
-        if (sge.ext<sge::input::view>().keyboard.is_character_down('s')) complex_y = -0.5f;
+        float complex_y = sge.ext<sge::ext::gamepad>().left_stick().y;
+        if (sge.ext<sge::ext::keyboard>().is_character_down('w')) complex_y = 0.5f;
+        if (sge.ext<sge::ext::keyboard>().is_character_down('s')) complex_y = -0.5f;
 
         const float speed = 0.5f * u.zoom;
-        if (!sge::math::is_zero (complex_x)) { u.complex.x -= speed * sge.ext<sge::instrumentation::view>().dt() * complex_x; }
-        if (!sge::math::is_zero (complex_y)) { u.complex.y -= speed * sge.ext<sge::instrumentation::view>().dt() * complex_y; }
+        if (!sge::math::is_zero (complex_x)) { u.complex.x -= speed * sge.ext<sge::ext::instrumentation>().dt() * complex_x; }
+        if (!sge::math::is_zero (complex_y)) { u.complex.y -= speed * sge.ext<sge::ext::instrumentation>().dt() * complex_y; }
     }
 
     if (u != ubo) {
@@ -125,7 +130,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     }
 
     if (ubo.flags != 0) { // if we are animating update the timer
-        push.time = sge.ext<sge::instrumentation::view>().timer();
+        push.time = sge.ext<sge::ext::instrumentation>().timer();
         r.push_constants_changed = true;
     }
 }

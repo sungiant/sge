@@ -4,11 +4,10 @@
 
 #include <imgui/imgui.h>
 #include <sge.hh>
-#include <ext_overlay.hh>
+#include <sge_app.hh>
 
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
-std::unique_ptr<sge::app::extensions> extensions;
 
 void initialise () {
     config = std::make_unique<sge::app::configuration> ();
@@ -18,9 +17,6 @@ void initialise () {
         std::optional<sge::dataspan>(),
         {}
     });
-    
-    extensions = std::make_unique<sge::app::extensions>();
-    extensions->views = { { sge::type_id<sge::overlay::view>(), [] (const sge::runtime::api& x) { return new sge::overlay::view (x); }} };
 }
 
 void terminate () { config.reset (); }
@@ -32,7 +28,6 @@ namespace sge::app { // HOOK UP TO SGE
 void               initialise          ()                              { ::initialise (); }
 configuration&     get_configuration   ()                              { return *::config; }
 content&           get_content         ()                              { return *::computation; }
-extensions&        get_extensions      ()                              { return *::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   {}
 void               debug_ui            (response& r, const api& sge)   {}

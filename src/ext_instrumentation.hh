@@ -1,16 +1,6 @@
-#pragma once
+#if SGE_EXTENSIONS_ENABLED
 
-#include <cassert>
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
-#include <variant>
-#include <utility>
-#include <optional>
-#include <algorithm>
-#include <functional>
-#include <cctype>
-#include <imgui/imgui.h>
+#pragma once
 
 #include "sge.hh"
 
@@ -18,16 +8,23 @@
 // INSTRUMENTATION
 //--------------------------------------------------------------------------------------------------------------------//
 
-namespace sge::instrumentation {
+namespace sge::ext {
 
-class view : public runtime::view {
+class instrumentation : public runtime::view {
 
 public:
-    view (const runtime::api& z) : runtime::view (z) {}
+    instrumentation (const runtime::api& z) : runtime::view (z) {}
 
     uint32_t fps () const { return sge.timer__get_fps (); }
     float dt () const { return sge.timer__get_delta (); }
     float timer () const { return sge.timer__get_time (); }
+    
+    virtual void debug_ui () override {
+    
+    }
 };
 
 }
+
+#endif
+

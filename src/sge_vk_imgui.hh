@@ -5,15 +5,14 @@
 
 #pragma once
 
-#include <cassert>
-#include <array>
-
-#include <functional>
-#include <imgui/imgui.h>
-
 #include <vulkan/vulkan.h>
+#if TARGET_MACOSX
+#include <MoltenVK/mvk_vulkan.h>
+#include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
 
 #include "sge.hh"
+#include "sge_math.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_context.hh"
 #include "sge_vk_types.hh"

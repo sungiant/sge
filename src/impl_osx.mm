@@ -527,19 +527,19 @@ void calculate_sge_container_state (sge::core::container_state& container) {
     container.current_height = g_container_height;
 }
 
-void calculate_sge_input_state (sge::input_state& input) {
+void calculate_sge_input_state (sge::core::input_state& input) {
     // keyboard
     int keyboard_i = 0;
     assert (g_keyboard_pressed_characters.size () <= 10);
     for (wchar_t character : g_keyboard_pressed_characters) {
-        int i = static_cast<int> (sge::input_control_identifier::kc_0) + keyboard_i;
-        auto identifier = static_cast<sge::input_control_identifier> (i);
+        int i = static_cast<int> (sge::core::input_control_identifier::kc_0) + keyboard_i;
+        auto identifier = static_cast<sge::core::input_control_identifier> (i);
         input[identifier] = static_cast<wchar_t> (character);
         ++keyboard_i;
     }
     
     
-    #define FN(x, y) { if (g_keyboard_pressed_fns.find (x) != g_keyboard_pressed_fns.end()) input[sge::input_control_identifier::kb_ ## y] = true; }
+    #define FN(x, y) { if (g_keyboard_pressed_fns.find (x) != g_keyboard_pressed_fns.end()) input[sge::core::input_control_identifier::kb_ ## y] = true; }
     FN (27, escape); FN (13, enter); FN (32, spacebar);
     FN (NSEventModifierFlagShift, shift); FN (NSEventModifierFlagControl, control); FN (NSEventModifierFlagOption, alt);
     FN (127, backspace); FN (9, tab);
@@ -558,7 +558,7 @@ void calculate_sge_input_state (sge::input_state& input) {
     
     for (wchar_t character : g_keyboard_pressed_characters) {
         switch (toupper (character)) {
-            #define CASE(x, y) { case x: input[sge::input_control_identifier::kb_ ## y] = true; break; }
+            #define CASE(x, y) { case x: input[sge::core::input_control_identifier::kb_ ## y] = true; break; }
             CASE ('A', a); CASE ('B', b); CASE ('C', c); CASE ('D', d); CASE ('E', e);
             CASE ('F', f); CASE ('G', g); CASE ('H', h); CASE ('I', i); CASE ('J', j);
             CASE ('K', k); CASE ('L', l); CASE ('M', m); CASE ('N', n); CASE ('O', o);
@@ -574,22 +574,22 @@ void calculate_sge_input_state (sge::input_state& input) {
     
     for (wchar_t character : g_keyboard_pressed_characters) { // not sure how to get this to work
         if (g_keyboard_pressed_fns.find (NSEventModifierFlagNumericPad) != g_keyboard_pressed_fns.end()) {
-            if (character == '0') { input[sge::input_control_identifier::kb_numpad_0]; continue; }
-            if (character == '1') { input[sge::input_control_identifier::kb_numpad_1]; continue; }
-            if (character == '2') { input[sge::input_control_identifier::kb_numpad_2]; continue; }
-            if (character == '3') { input[sge::input_control_identifier::kb_numpad_3]; continue; }
-            if (character == '4') { input[sge::input_control_identifier::kb_numpad_4]; continue; }
-            if (character == '5') { input[sge::input_control_identifier::kb_numpad_5]; continue; }
-            if (character == '6') { input[sge::input_control_identifier::kb_numpad_6]; continue; }
-            if (character == '7') { input[sge::input_control_identifier::kb_numpad_7]; continue; }
-            if (character == '8') { input[sge::input_control_identifier::kb_numpad_8]; continue; }
-            if (character == '9') { input[sge::input_control_identifier::kb_numpad_9]; continue; }
-            if (character == '.') { input[sge::input_control_identifier::kb_numpad_decimal]; continue; }
-            if (character == '/') { input[sge::input_control_identifier::kb_numpad_divide]; continue; }
-            if (character == '*') { input[sge::input_control_identifier::kb_numpad_multiply]; continue; }
-            if (character == '-') { input[sge::input_control_identifier::kb_numpad_subtract]; continue; }
-            if (character == '+') { input[sge::input_control_identifier::kb_numpad_add]; continue; }
-            if (character == '=') { input[sge::input_control_identifier::kb_numpad_equals]; continue; }
+            if (character == '0') { input[sge::core::input_control_identifier::kb_numpad_0]; continue; }
+            if (character == '1') { input[sge::core::input_control_identifier::kb_numpad_1]; continue; }
+            if (character == '2') { input[sge::core::input_control_identifier::kb_numpad_2]; continue; }
+            if (character == '3') { input[sge::core::input_control_identifier::kb_numpad_3]; continue; }
+            if (character == '4') { input[sge::core::input_control_identifier::kb_numpad_4]; continue; }
+            if (character == '5') { input[sge::core::input_control_identifier::kb_numpad_5]; continue; }
+            if (character == '6') { input[sge::core::input_control_identifier::kb_numpad_6]; continue; }
+            if (character == '7') { input[sge::core::input_control_identifier::kb_numpad_7]; continue; }
+            if (character == '8') { input[sge::core::input_control_identifier::kb_numpad_8]; continue; }
+            if (character == '9') { input[sge::core::input_control_identifier::kb_numpad_9]; continue; }
+            if (character == '.') { input[sge::core::input_control_identifier::kb_numpad_decimal]; continue; }
+            if (character == '/') { input[sge::core::input_control_identifier::kb_numpad_divide]; continue; }
+            if (character == '*') { input[sge::core::input_control_identifier::kb_numpad_multiply]; continue; }
+            if (character == '-') { input[sge::core::input_control_identifier::kb_numpad_subtract]; continue; }
+            if (character == '+') { input[sge::core::input_control_identifier::kb_numpad_add]; continue; }
+            if (character == '=') { input[sge::core::input_control_identifier::kb_numpad_equals]; continue; }
         }
     }
     
@@ -599,52 +599,51 @@ void calculate_sge_input_state (sge::input_state& input) {
         const bool caps_lk_locked = UNKNOWN;
         const bool caps_lk_pressed = g_keyboard_pressed_fns.find (NSEventModifierFlagCapsLock) != g_keyboard_pressed_fns.end();
         if (caps_lk_locked || caps_lk_pressed)
-            input[sge::input_control_identifier::kq_caps_lk] = std::make_pair (caps_lk_locked, caps_lk_pressed);
+            input[sge::core::input_control_identifier::kq_caps_lk] = std::make_pair (caps_lk_locked, caps_lk_pressed);
         
         const bool scr_lk_locked = UNKNOWN;
         const bool scr_lk_pressed = g_keyboard_pressed_fns.find (NSScrollLockFunctionKey) != g_keyboard_pressed_fns.end();
         if (scr_lk_locked || scr_lk_pressed)
-            input[sge::input_control_identifier::kq_scr_lk] = std::make_pair (scr_lk_locked, scr_lk_pressed);
+            input[sge::core::input_control_identifier::kq_scr_lk] = std::make_pair (scr_lk_locked, scr_lk_pressed);
 
         const bool num_lk_locked = UNKNOWN;
         const bool num_lk_pressed = UNKNOWN;
         if (num_lk_locked || num_lk_pressed)
-            input[sge::input_control_identifier::kq_num_lk] = std::make_pair (num_lk_locked, num_lk_pressed);
+            input[sge::core::input_control_identifier::kq_num_lk] = std::make_pair (num_lk_locked, num_lk_pressed);
     }
 
-    
     // mouse
-    input[sge::input_control_identifier::md_scrollwheel] = g_mouse_scrollwheel;
-    input[sge::input_control_identifier::mp_position] = sge::input_point_control { (int) g_mouse_position_x, (int) g_mouse_position_y };
-    if (g_mouse_left) input[sge::input_control_identifier::mb_left] = true;
-    if (g_mouse_middle) input[sge::input_control_identifier::mb_middle] = true;
-    if (g_mouse_right) input[sge::input_control_identifier::mb_right] = true;
+    input[sge::core::input_control_identifier::md_scrollwheel] = g_mouse_scrollwheel;
+    input[sge::core::input_control_identifier::mp_position] = sge::core::input_point_control { (int) g_mouse_position_x, (int) g_mouse_position_y };
+    if (g_mouse_left) input[sge::core::input_control_identifier::mb_left] = true;
+    if (g_mouse_middle) input[sge::core::input_control_identifier::mb_middle] = true;
+    if (g_mouse_right) input[sge::core::input_control_identifier::mb_right] = true;
     
     // gamepad
-    input[sge::input_control_identifier::ga_left_trigger] = g_gamepad.get_left_trigger ();
-    input[sge::input_control_identifier::ga_right_trigger] = g_gamepad.get_right_trigger ();
+    input[sge::core::input_control_identifier::ga_left_trigger_0] = g_gamepad.get_left_trigger ();
+    input[sge::core::input_control_identifier::ga_right_trigger_0] = g_gamepad.get_right_trigger ();
     auto gamepad_left_stick = g_gamepad.get_left_stick ();
-    input[sge::input_control_identifier::ga_left_stick_x] = gamepad_left_stick.x;
-    input[sge::input_control_identifier::ga_left_stick_y] = gamepad_left_stick.y;
+    input[sge::core::input_control_identifier::ga_left_stick_x_0] = gamepad_left_stick.x;
+    input[sge::core::input_control_identifier::ga_left_stick_y_0] = gamepad_left_stick.y;
     auto gamepad_right_stick = g_gamepad.get_right_stick ();
-    input[sge::input_control_identifier::ga_right_stick_x] = gamepad_right_stick.x;
-    input[sge::input_control_identifier::ga_right_stick_y] = gamepad_right_stick.y;
+    input[sge::core::input_control_identifier::ga_right_stick_x_0] = gamepad_right_stick.x;
+    input[sge::core::input_control_identifier::ga_right_stick_y_0] = gamepad_right_stick.y;
     #define IF(x, y) { if (g_gamepad.is_button_pressed (x)) input[y] = true; }
-    IF (iokit_gamepad::button::dpad_up,         sge::input_control_identifier::gb_dpad_up);
-    IF (iokit_gamepad::button::dpad_down,       sge::input_control_identifier::gb_dpad_down);
-    IF (iokit_gamepad::button::dpad_left,       sge::input_control_identifier::gb_dpad_left);
-    IF (iokit_gamepad::button::dpad_right,      sge::input_control_identifier::gb_dpad_right);
-    IF (iokit_gamepad::button::option_left,     sge::input_control_identifier::gb_back);
-    //IF (iokit_gamepad::button::option_middle, sge::input_control_identifier::gb_center);
-    IF (iokit_gamepad::button::option_right,    sge::input_control_identifier::gb_start);
-    IF (iokit_gamepad::button::left_thumb,      sge::input_control_identifier::gb_left_thumb);
-    IF (iokit_gamepad::button::right_thumb,     sge::input_control_identifier::gb_right_thumb);
-    IF (iokit_gamepad::button::left_shoulder,   sge::input_control_identifier::gb_left_shoulder);
-    IF (iokit_gamepad::button::right_shoulder,  sge::input_control_identifier::gb_right_shoulder);
-    IF (iokit_gamepad::button::action_south,    sge::input_control_identifier::gb_a);
-    IF (iokit_gamepad::button::action_east,     sge::input_control_identifier::gb_b);
-    IF (iokit_gamepad::button::action_west,     sge::input_control_identifier::gb_x);
-    IF (iokit_gamepad::button::action_north,    sge::input_control_identifier::gb_y);
+    IF (iokit_gamepad::button::dpad_up,         sge::core::input_control_identifier::gb_dpad_up_0);
+    IF (iokit_gamepad::button::dpad_down,       sge::core::input_control_identifier::gb_dpad_down_0);
+    IF (iokit_gamepad::button::dpad_left,       sge::core::input_control_identifier::gb_dpad_left_0);
+    IF (iokit_gamepad::button::dpad_right,      sge::core::input_control_identifier::gb_dpad_right_0);
+    IF (iokit_gamepad::button::option_left,     sge::core::input_control_identifier::gb_back_0);
+    IF (iokit_gamepad::button::option_middle,   sge::core::input_control_identifier::gb_center_0);
+    IF (iokit_gamepad::button::option_right,    sge::core::input_control_identifier::gb_start_0);
+    IF (iokit_gamepad::button::left_thumb,      sge::core::input_control_identifier::gb_left_thumb_0);
+    IF (iokit_gamepad::button::right_thumb,     sge::core::input_control_identifier::gb_right_thumb_0);
+    IF (iokit_gamepad::button::left_shoulder,   sge::core::input_control_identifier::gb_left_shoulder_0);
+    IF (iokit_gamepad::button::right_shoulder,  sge::core::input_control_identifier::gb_right_shoulder_0);
+    IF (iokit_gamepad::button::action_south,    sge::core::input_control_identifier::gb_a_0);
+    IF (iokit_gamepad::button::action_east,     sge::core::input_control_identifier::gb_b_0);
+    IF (iokit_gamepad::button::action_west,     sge::core::input_control_identifier::gb_x_0);
+    IF (iokit_gamepad::button::action_north,    sge::core::input_control_identifier::gb_y_0);
     #undef IF
     
 }
@@ -753,7 +752,7 @@ void calculate_sge_input_state (sge::input_state& input) {
 
     // update the engine
     sge::core::container_state container_state;
-    sge::input_state input_state;
+    sge::core::input_state input_state;
 
     calculate_sge_container_state (container_state);
     calculate_sge_input_state (input_state);

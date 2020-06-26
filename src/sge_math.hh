@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <cmath>
+#include "sge.hh"
 
 namespace sge::math {
 
@@ -17,9 +17,14 @@ static bool is_zero (float f) { return (f >= -EPISILON) && (f <= EPISILON); }
 
 struct point2 {
     int x = 0, y = 0;
-    bool operator == (const point2& p) const { return x == p.x && y == p.y; }
-    bool operator != (const point2& p) const { return !(*this == p); }
+    inline bool operator == (const point2& p) const { return x == p.x && y == p.y; }
+    inline bool operator != (const point2& p) const { return !(*this == p); }
+    
 };
+
+inline point2 operator+(const point2& left, const point2& right) { return point2 { left.x + right.x, left.y + right.y }; }
+inline point2 operator-(const point2& value) { return point2 { - value.x, - value.y }; }
+inline point2 operator-(const point2& left, const point2& right) { return point2 { left.x - right.x, left.y - right.y }; }
 
 struct rect {
     point2 location;

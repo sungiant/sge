@@ -1,16 +1,6 @@
-#pragma once
+#if SGE_EXTENSIONS_ENABLED
 
-#include <cassert>
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
-#include <variant>
-#include <utility>
-#include <optional>
-#include <algorithm>
-#include <functional>
-#include <cctype>
-#include <imgui/imgui.h>
+#pragma once
 
 #include "sge.hh"
 
@@ -18,11 +8,11 @@
 // OVERLAY
 //--------------------------------------------------------------------------------------------------------------------//
 
-namespace sge::overlay {
+namespace sge::ext {
 
-class view : public runtime::view {
+class overlay : public runtime::view {
 public:
-    view (const runtime::api& z) : runtime::view (z) {}
+    overlay (const runtime::api& z) : runtime::view (z) {}
 
     virtual void debug_ui () override {
         ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
@@ -81,4 +71,7 @@ public:
 };
 
 }
+
+#endif
+
 

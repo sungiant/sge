@@ -1,13 +1,10 @@
 #include "sge_vk_imgui.hh"
 
-#undef min
-#undef max
-
-#include <utility>
-
+#include "sge_utils.hh"
 #include "sge_vk_utils.hh"
 #include "sge_vk_presentation.hh"
-#include "sge.hh"
+
+#include <imgui/imgui.h>
 
 
 namespace sge::vk {

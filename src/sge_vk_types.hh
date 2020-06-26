@@ -5,11 +5,13 @@
 
 #pragma once
 
-#include <vector>
-#include <unordered_map>
-#include <string>
-
 #include <vulkan/vulkan.h>
+#if TARGET_MACOSX
+#include <MoltenVK/mvk_vulkan.h>
+#include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
+
+#include "sge.hh"
 
 namespace sge::vk {
 

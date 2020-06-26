@@ -1,10 +1,337 @@
 #include "sge_core.hh"
 
-#include <sstream>
-#include <functional>
-#include <utility>
+#include <imgui/imgui.h>
 
 namespace sge::core {
+
+    
+    
+//--------------------------------------------------------------------------------------------------------------------//
+
+api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks
+#if SGE_EXTENSIONS_ENABLED
+                    , std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& z_exts
+#endif
+                    )
+    : engine_state (z_state)
+    , engine_tasks (z_tasks)
+#if SGE_EXTENSIONS_ENABLED
+    , engine_extensions (z_exts)
+#endif
+{}
+
+bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
+    switch (z){
+        
+        case runtime::system_bool_state::fullscreen: return engine_state.host.is_fullscreen;
+        case runtime::system_bool_state::imgui: return engine_state.graphics.imgui_on;
+        default: assert (false); return false;
+    }
+}
+int api_impl::system__get_state_int (runtime::system_int_state z) const {
+    switch (z) {
+        case runtime::system_int_state::screenwidth: return engine_state.container.current_width;
+        case runtime::system_int_state::screenheight: return engine_state.container.current_height;
+        default: assert (false); return 0;
+    }
+}
+const char* api_impl::system__get_state_string (runtime::system_string_state z) const {
+    switch (z) {
+        case runtime::system_string_state::title: return engine_state.host.window_title.c_str ();
+        case runtime::system_string_state::gpu_name: return engine_state.graphics.kernel->get_physical_device_name();
+        case runtime::system_string_state::engine_version: {
+            return engine_state.version.c_str ();
+        }
+        default: assert (false); return nullptr;
+    }
+}
+
+bool api_impl::system__did_container_just_change () const { return engine_state.host.container_just_changed; }
+
+uint32_t api_impl::timer__get_fps () const { return engine_state.instrumentation.lastFPS; }
+float api_impl::timer__get_delta () const { return engine_state.instrumentation.frameTimer; }
+float api_impl::timer__get_time () const { return engine_state.instrumentation.totalTimer; }
+
+void api_impl::input__keyboard_pressed_characters (uint32_t* z_size, wchar_t* z_keys) const {
+    const int first = static_cast<int>(input_control_identifier::kc_0);
+    const int last = static_cast<int>(input_control_identifier::kc_9);
+    // size query.
+    if (z_keys == nullptr) {
+        *z_size = 0;
+        for (int i = first; i <= last; ++i) {
+            const auto id = static_cast<input_control_identifier> (i);
+            if (engine_state.input.find (id) != engine_state.input.end ())
+                (*z_size)++;
+        }
+        return;
+    }
+    // full call.
+    uint32_t idx = 0;
+    for (int i = first; i <= last; ++i) {
+        const auto id = static_cast<input_control_identifier> (i);
+        const auto o = (engine_state.input.find (id) != engine_state.input.end ())
+            ? std::optional<input_character_control>(std::get<input_character_control> (engine_state.input.at (id)))
+            : std::nullopt;
+        if (o.has_value ())
+            z_keys[idx++] = o.value ();
+    }
+    assert (idx == *z_size);
+}
+    
+std::optional<runtime::keyboard_key> convert_to_keyboard_key (input_control_identifier z) {
+    #define CASE1(x) { case input_control_identifier::kb_ ## x: return runtime::keyboard_key::x; }
+    #define CASE2(x, y) { case input_control_identifier::kb_ ## x: return runtime::keyboard_key::y; }
+    switch (z) {
+        CASE1(escape); CASE1(enter); CASE1(spacebar); CASE1(shift); CASE1(control); CASE1(alt); CASE1(backspace); CASE1(tab);
+        CASE1(ins); CASE1(del); CASE1(home); CASE1(end); CASE1(page_up); CASE1(page_down); CASE1(right_click); CASE1(prt_sc); CASE1(pause);
+        CASE1(up); CASE1(down); CASE1(left); CASE1(right);
+        CASE1(a); CASE1(b); CASE1(c); CASE1(d); CASE1(e); CASE1(f); CASE1(g); CASE1(h); CASE1(i); CASE1(j); CASE1(k); CASE1(l); CASE1(m);
+        CASE1(n); CASE1(o); CASE1(p); CASE1(q); CASE1(r); CASE1(s); CASE1(t); CASE1(u); CASE1(v); CASE1(w); CASE1(x); CASE1(y); CASE1(z);
+        CASE2(0, zero); CASE2(1, one); CASE2(2, two); CASE2(3, three); CASE2(4, four); CASE2(5, five); CASE2(6, six); CASE2(7, seven); CASE2(8, eight); CASE2(9, nine);
+        CASE1(plus); CASE1(minus); CASE1(comma); CASE1(period);
+        CASE1(windows); CASE1(cmd);
+        CASE1(f1); CASE1(f2); CASE1(f3); CASE1(f4); CASE1(f5); CASE1(f6); CASE1(f7); CASE1(f8); CASE1(f9); CASE1(f10); CASE1(f11); CASE1(f12);
+        CASE1(numpad_0); CASE1(numpad_1); CASE1(numpad_2); CASE1(numpad_3); CASE1(numpad_4); CASE1(numpad_5); CASE1(numpad_6); CASE1(numpad_7); CASE1(numpad_8); CASE1(numpad_9);
+        CASE1(numpad_decimal); CASE1(numpad_divide); CASE1(numpad_multiply); CASE1(numpad_subtract); CASE1(numpad_add); CASE1(numpad_enter); CASE1(numpad_equals);
+        default: return std::nullopt;
+    }
+    #undef CASE2
+    #undef CASE1
+}
+    
+std::optional<runtime::gamepad_button> convert_to_gamepad_button (input_control_identifier z) {
+    #define CASE(x) { case input_control_identifier::gb_ ## x ## _0: return runtime::gamepad_button::x; }
+    switch (z) {
+        CASE(dpad_up); CASE(dpad_down); CASE(dpad_left); CASE(dpad_right);
+        CASE(start); CASE(center); CASE(back);
+        CASE(left_thumb); CASE(right_thumb); CASE(left_shoulder); CASE(right_shoulder);
+        CASE(a); CASE(b); CASE(x); CASE(y);
+        default: return std::nullopt;
+    }
+    #undef CASE
+}
+    
+std::optional<runtime::gamepad_axis> convert_to_gamepad_axis (input_control_identifier z) {
+    #define CASE(x, y) { case input_control_identifier::ga_ ## x ## _0: return runtime::gamepad_axis::y; }
+    switch (z) {
+        CASE(left_stick_x, left_stick_horizontal);
+        CASE(left_stick_y, left_stick_vertical);
+        CASE(right_stick_x, right_stick_horizontal);
+        CASE(right_stick_y, right_stick_vertical);
+        CASE(left_trigger, left_trigger);
+        CASE(right_trigger, right_trigger);
+        default: return std::nullopt;
+    }
+    #undef CASE
+}
+
+void api_impl::input__keyboard_pressed_keys (uint32_t* z_size, runtime::keyboard_key* z_keys) const {
+    const int first = static_cast<int>(input_control_identifier::kb_escape);
+    const int last = static_cast<int>(input_control_identifier::kb_numpad_equals);
+    // size query.
+    if (z_keys == nullptr) {
+        *z_size = 0;
+        for (int i = first; i <= last; ++i) {
+            const auto id = static_cast<input_control_identifier> (i);
+            if (engine_state.input.find (id) != engine_state.input.end ())
+                (*z_size)++;
+        }
+        return;
+    }
+    // full call.
+    uint32_t idx = 0;
+    for (int i = first; i <= last; ++i) {
+        const auto id = static_cast<input_control_identifier> (i);
+        const auto o = (engine_state.input.find (id) != engine_state.input.end ())
+            ? std::optional<input_binary_control>(std::get<input_binary_control> (engine_state.input.at (id)))
+            : std::nullopt;
+        auto v = convert_to_keyboard_key (id);
+        if (o.has_value () && o.value () && v.has_value())
+            z_keys[idx++] = v.value();
+    }
+    assert (idx == *z_size);
+}
+
+void api_impl::input__keyboard_pressed_locks (uint32_t* z_size, runtime::keyboard_lock* z_keys) const {
+    // size query.
+    if (z_keys == nullptr) {
+        *z_size = 0;
+        if ((engine_state.input.find (input_control_identifier::kq_caps_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_caps_lk)).second : false) (*z_size)++;
+        if ((engine_state.input.find (input_control_identifier::kq_scr_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_scr_lk)).second : false) (*z_size)++;
+        if ((engine_state.input.find (input_control_identifier::kq_num_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_num_lk)).second : false) (*z_size)++;
+        return;
+    }
+    // full call.
+    int idx = 0;
+    if ((engine_state.input.find (input_control_identifier::kq_caps_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_caps_lk)).second : false) z_keys[idx++] = runtime::keyboard_lock::caps_lk;
+    if ((engine_state.input.find (input_control_identifier::kq_scr_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_scr_lk)).second : false) z_keys[idx++] = runtime::keyboard_lock::scr_lk;
+    if ((engine_state.input.find (input_control_identifier::kq_num_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_num_lk)).second : false) z_keys[idx++] = runtime::keyboard_lock::num_lk;
+    assert (idx == *z_size);
+}
+
+void api_impl::input__keyboard_locked_locks (uint32_t* z_size, runtime::keyboard_lock* z_keys) const {
+    // size query.
+    if (z_keys == nullptr) {
+        *z_size = 0;
+        if ((engine_state.input.find (input_control_identifier::kq_caps_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_caps_lk)).first : false) (*z_size)++;
+        if ((engine_state.input.find (input_control_identifier::kq_scr_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_scr_lk)).first : false) (*z_size)++;
+        if ((engine_state.input.find (input_control_identifier::kq_num_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_num_lk)).first : false) (*z_size)++;
+        return;
+    }
+    // full call.
+    int idx = 0;
+    if ((engine_state.input.find (input_control_identifier::kq_caps_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_caps_lk)).first : false) z_keys[idx++] = runtime::keyboard_lock::caps_lk;
+    if ((engine_state.input.find (input_control_identifier::kq_scr_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_scr_lk)).first : false) z_keys[idx++] = runtime::keyboard_lock::scr_lk;
+    if ((engine_state.input.find (input_control_identifier::kq_num_lk) != engine_state.input.end ()) ? std::get<input_quaternary_control> (engine_state.input.at (input_control_identifier::kq_num_lk)).first : false) z_keys[idx++] = runtime::keyboard_lock::num_lk;
+    assert (idx == *z_size);
+}
+
+
+void api_impl::input__mouse_pressed_buttons (uint32_t* z_size, runtime::mouse_button* z_keys) const {
+    // size query.
+    if (z_keys == nullptr) {
+        *z_size = 0;
+        if (engine_state.input.find (input_control_identifier::mb_left)   != engine_state.input.end ()) (*z_size)++;
+        if (engine_state.input.find (input_control_identifier::mb_middle) != engine_state.input.end ()) (*z_size)++;
+        if (engine_state.input.find (input_control_identifier::mb_right)  != engine_state.input.end ()) (*z_size)++;
+        return;
+    }
+    // full call.
+    int idx = 0;
+    if (engine_state.input.find (input_control_identifier::mb_left)   != engine_state.input.end ()) z_keys[idx++] = runtime::mouse_button::left;
+    if (engine_state.input.find (input_control_identifier::mb_middle) != engine_state.input.end ()) z_keys[idx++] = runtime::mouse_button::middle;
+    if (engine_state.input.find (input_control_identifier::mb_right)  != engine_state.input.end ()) z_keys[idx++] = runtime::mouse_button::right;
+    assert (idx == *z_size);
+}
+
+void api_impl::input__mouse_position (int* x, int* y) const {
+    sge::math::point2 p = (engine_state.input.find (input_control_identifier::mp_position) != engine_state.input.end ())
+        ? std::get<input_point_control> (engine_state.input.at (input_control_identifier::mp_position))
+        : sge::math::point2 { 0, 0 };
+    *x = p.x;
+    *y = p.y;
+}
+
+void api_impl::input__mouse_scrollwheel (int* z) const {
+    *z = (engine_state.input.find (input_control_identifier::md_scrollwheel) != engine_state.input.end ())
+        ? std::get<input_digital_control> (engine_state.input.at (input_control_identifier::md_scrollwheel))
+        : 0;
+}
+
+void api_impl::input__gamepad_pressed_buttons (uint32_t* z_size, runtime::gamepad_button* z_keys) const {
+    const int first = static_cast<int>(input_control_identifier::gb_dpad_up_0);
+    const int last = static_cast<int>(input_control_identifier::gb_y_0); // right now the runtime api doesn't support multiple gamepads
+    // size query.
+    if (z_keys == nullptr) {
+        *z_size = 0;
+        for (int i = first; i <= last; ++i) {
+            const auto id = static_cast<input_control_identifier> (i);
+            if (engine_state.input.find (id) != engine_state.input.end ())
+                (*z_size)++;
+        }
+        return;
+    }
+    // full call.
+    uint32_t idx = 0;
+    for (int i = first; i <= last; ++i) {
+        const auto id = static_cast<input_control_identifier> (i);
+        const auto o = (engine_state.input.find (id) != engine_state.input.end ())
+            ? std::optional<input_binary_control>(std::get<input_binary_control> (engine_state.input.at (id)))
+            : std::nullopt;
+        auto v = convert_to_gamepad_button (id);
+        if (o.has_value () && o.value () && v.has_value())
+            z_keys[idx++] = v.value();
+    }
+    assert (idx == *z_size);
+}
+
+void api_impl::input__gamepad_analogue_axes (uint32_t* z_size, runtime::gamepad_axis* z_keys, float* z_values) const {
+    const int first = static_cast<int>(input_control_identifier::gb_dpad_up_0);
+    const int last = static_cast<int>(input_control_identifier::gb_y_0); // right now the runtime api doesn't support multiple gamepads
+    // size query.
+    if (z_keys == nullptr || z_values == nullptr) {
+        *z_size = 0;
+        for (int i = first; i <= last; ++i) {
+            const auto id = static_cast<input_control_identifier> (i);
+            if (engine_state.input.find (id) != engine_state.input.end ())
+                (*z_size)++;
+        }
+        return;
+    }
+    // full call.
+    uint32_t idx = 0;
+    for (int i = first; i <= last; ++i) {
+        const auto id = static_cast<input_control_identifier> (i);
+        const auto o = (engine_state.input.find (id) != engine_state.input.end ())
+            ? std::optional<input_analogue_control>(std::get<input_analogue_control> (engine_state.input.at (id)))
+            : std::nullopt;
+        auto v = convert_to_gamepad_axis (id);
+        if (o.has_value () && v.has_value()) {
+            z_keys[idx] = v.value();
+            z_values[idx] = o.value ();
+            idx++;
+        }
+    }
+    assert (idx == *z_size);
+}
+
+void api_impl::input__touches (uint32_t* z_size, uint32_t*, int*, int*) const {
+    *z_size = 0;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------------//
+// Non const functions - these don't do anything directly, the just add stuff to the engine task queue.
+//--------------------------------------------------------------------------------------------------------------------//
+
+void api_impl::system__request_shutdown () {
+    engine_tasks.shutdown_request = std::monostate {};
+}
+
+void api_impl::system__toggle_state_bool (runtime::system_bool_state z) {
+    bool v = system__get_state_bool (z);
+    system__set_state_bool (z, !v);
+}
+void api_impl::system__set_state_bool (runtime::system_bool_state z, bool v) {
+    switch (z){
+        case runtime::system_bool_state::fullscreen: engine_tasks.change_fullscreen_enabled = v; break;
+        case runtime::system_bool_state::imgui: engine_tasks.change_imgui_enabled = v; break;
+        default: break;
+    }
+}
+void api_impl::system__set_state_int (runtime::system_int_state z, int v) {
+    switch (z){
+        case runtime::system_int_state::screenwidth: engine_tasks.change_screen_width = v; break;
+        case runtime::system_int_state::screenheight: engine_tasks.change_screen_height = v; break;
+        default: break;
+    }
+}
+void api_impl::system__set_state_string (runtime::system_string_state z, const char* v) {
+    switch (z){
+        case runtime::system_string_state::title: engine_tasks.change_window_title = std::string (v); break;
+        default: break;
+    }
+}
+
+#if SGE_EXTENSIONS_ENABLED
+runtime::extension* api_impl::extension_get  (size_t id) const {
+    assert (engine_extensions.find(id) != engine_extensions.end());
+    runtime::extension* ext = engine_extensions.at(id).get();
+    assert (ext);
+    return ext;
+};
+#endif
+
+
+
+
+
+
+
+
+    
+//--------------------------------------------------------------------------------------------------------------------//
+    
 
 void internal_update (sge::app::response& user_response, engine_state& engine_state, engine_tasks& engine_tasks) {
     auto tStart = std::chrono::high_resolution_clock::now ();
@@ -96,97 +423,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
 }
     
 
-    
-    
-//--------------------------------------------------------------------------------------------------------------------//
 
-api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks, std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& z_exts)
-    : engine_state (z_state)
-    , engine_tasks (z_tasks)
-    , engine_extensions (z_exts)
-{}
-
-bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
-    switch (z){
-        
-        case runtime::system_bool_state::fullscreen: return engine_state.host.is_fullscreen;
-        case runtime::system_bool_state::imgui: return engine_state.graphics.imgui_on;
-    }
-}
-int api_impl::system__get_state_int (runtime::system_int_state z) const {
-    switch (z) {
-        case runtime::system_int_state::screenwidth: return engine_state.container.current_width;
-        case runtime::system_int_state::screenheight: return engine_state.container.current_height;
-    }
-}
-const char* api_impl::system__get_state_string (runtime::system_string_state z) const {
-    switch (z) {
-        case runtime::system_string_state::title: return engine_state.host.window_title.c_str ();
-        case runtime::system_string_state::gpu_name: return engine_state.graphics.kernel->get_physical_device_name();
-        case runtime::system_string_state::engine_version: {
-            return engine_state.version.c_str ();
-        }
-    }
-}
-
-bool api_impl::system__did_container_just_change () const { return engine_state.host.container_just_changed; }
-
-uint32_t api_impl::timer__get_fps () const { return engine_state.instrumentation.lastFPS; }
-float api_impl::timer__get_delta () const { return engine_state.instrumentation.frameTimer; }
-float api_impl::timer__get_time () const { return engine_state.instrumentation.totalTimer; }
-
-void api_impl::input__get_state (input_state& z) const { z = engine_state.input; }
-
-
-//--------------------------------------------------------------------------------------------------------------------//
-// Non const functions - these don't do anything directly, the just add stuff to the engine task queue.
-//--------------------------------------------------------------------------------------------------------------------//
-
-void api_impl::system__request_shutdown () {
-    engine_tasks.shutdown_request = std::monostate {};
-}
-
-void api_impl::system__toggle_state_bool (runtime::system_bool_state z) {
-    bool v = system__get_state_bool (z);
-    system__set_state_bool (z, !v);
-}
-void api_impl::system__set_state_bool (runtime::system_bool_state z, bool v) {
-    switch (z){
-        case runtime::system_bool_state::fullscreen: engine_tasks.change_fullscreen_enabled = v; break;
-        case runtime::system_bool_state::imgui: engine_tasks.change_imgui_enabled = v; break;
-        default: break;
-    }
-}
-void api_impl::system__set_state_int (runtime::system_int_state z, int v) {
-    switch (z){
-        case runtime::system_int_state::screenwidth: engine_tasks.change_screen_width = v; break;
-        case runtime::system_int_state::screenheight: engine_tasks.change_screen_height = v; break;
-        default: break;
-    }
-}
-void api_impl::system__set_state_string (runtime::system_string_state z, const char* v) {
-    switch (z){
-        case runtime::system_string_state::title: engine_tasks.change_window_title = std::string (v); break;
-        default: break;
-    }
-}
-
-runtime::extension* api_impl::extension_get  (size_t id) const {
-    assert (engine_extensions.find(id) != engine_extensions.end());
-    runtime::extension* ext = engine_extensions.at(id).get();
-    assert (ext);
-    return ext;
-};
-
-
-
-
-
-
-
-
-    
-//--------------------------------------------------------------------------------------------------------------------//
 engine::engine () {
     
     app::initialise ();
@@ -244,8 +481,13 @@ void engine::setup (
 #error
 #endif
 
-    engine_api = std::make_unique<api_impl> (*engine_state, *engine_tasks, engine_extensions);
-
+    engine_api = std::make_unique<api_impl> (*engine_state, *engine_tasks
+#if SGE_EXTENSIONS_ENABLED
+                                             , engine_extensions
+#endif
+                                             );
+    
+#if SGE_EXTENSIONS_ENABLED
     auto& user_extensions = sge::app::get_extensions ();
 
     // I am certain that this can be done in a much better way with some template wizardary.
@@ -264,14 +506,15 @@ void engine::setup (
         engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
     }
     
-
-    user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
-    user_api = std::make_unique<app::api> (*engine_api);
-
     for (auto& kvp : engine_extensions) {
         const size_t id = kvp.first;
         debug_fns.emplace_back ([this, id]() { engine_extensions[id]->debug_ui (); });
     }
+
+#endif
+    
+    user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
+    user_api = std::make_unique<app::api> (*engine_api);
 
     debug_fns.emplace_back ([this]() { sge::app::debug_ui (*user_response, *user_api); });
 
@@ -286,6 +529,13 @@ void engine::start () {
 void engine::update (container_state& z_container, input_state& z_input) {
 
     engine_state->host.container_just_changed = false;
+    
+    /*
+    if (z_input.find(input_control_identifier::kq_caps_lk) != z_input.end()) {
+        bool locked = std::get<input_quaternary_control> (z_input.at (input_control_identifier::kq_caps_lk)).first;
+        bool pressed = std::get<input_quaternary_control> (z_input.at (input_control_identifier::kq_caps_lk)).second;
+        std::cout << "caps lk (" << locked << ", " << pressed << ")" << '\n';
+    }*/
 
     if (z_container.current_width != engine_state->container.current_width
         || z_container.current_height != engine_state->container.current_height
@@ -297,14 +547,14 @@ void engine::update (container_state& z_container, input_state& z_input) {
     engine_state->container = z_container;
     engine_state->input = z_input;
 
-
-    // update the engine - not dependent on engine_extensions here as they've not been updated.
     internal_update (*user_response, *engine_state, *engine_tasks);
 
+#if SGE_EXTENSIONS_ENABLED
     // update all registered extensions
     for (auto& kvp : engine_extensions) {
         kvp.second->update ();
     }
+#endif
     // update the user's app
     sge::app::update (*user_response, *user_api);
 
@@ -317,7 +567,9 @@ void engine::stop () {
 void engine::shutdown () {
     user_api.reset ();
     user_response.reset ();
+#if SGE_EXTENSIONS_ENABLED
     engine_extensions.clear ();
+#endif
     engine_state->graphics.destroy ();
     engine_tasks.reset ();
     engine_state.reset ();

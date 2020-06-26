@@ -90,6 +90,8 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [ ] Complete dynamic csg tree SBO implementation.
 - [ ] Resolve/query issue with having more than one SBO with Molten VK.
 - [ ] Linux host implementation.
+- [ ] Mouse control for free camera.
+- [ ] Urgh - fix gamepad on Catalina.
 
 ### 0.2.0
 

@@ -5,16 +5,13 @@
 
 #pragma once
 
-#if TARGET_WIN32
-#include <windows.h>
+#include <vulkan/vulkan.h>
+#if TARGET_MACOSX
+#include <MoltenVK/mvk_vulkan.h>
+#include <MoltenVK/vk_mvk_moltenvk.h>
 #endif
 
-#if TARGET_LINUX
-#include <xcb/xcb.h>
-#endif
-
-#include <memory>
-
+#include "sge.hh"
 #include "sge_vk_kernel.hh"
 #include "sge_vk_presentation.hh"
 #include "sge_vk_compute_target.hh"

@@ -1,19 +1,5 @@
 #include "sge_vk_utils.hh"
 
-#include <map>
-#include <sstream>
-#include <vector>
-#include <numeric>
-#include <cassert>
-#include <iostream>
-#include <fstream>
-#include <unordered_map>
-
-#undef max
-#undef min
-
-#include <algorithm>
-
 namespace sge::vk::utils {
 
 uint32_t choose_memory_type (VkPhysicalDevice physical_device, const VkMemoryRequirements& memory_requirements, VkMemoryPropertyFlags required_flags, VkMemoryPropertyFlags preferred_flags) {

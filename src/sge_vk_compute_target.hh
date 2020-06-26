@@ -5,13 +5,14 @@
 
 #pragma once
 
-#include <vector>
-#include <functional>
-#include <optional>
-
 #include <vulkan/vulkan.h>
+#if TARGET_MACOSX
+#include <MoltenVK/mvk_vulkan.h>
+#include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
 
 #include "sge.hh"
+#include "sge_app.hh"
 #include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"

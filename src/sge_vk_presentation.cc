@@ -1,22 +1,5 @@
 #include "sge_vk_presentation.hh"
 
-#include <iostream>
-#include <vector>
-#include <array>
-#include <algorithm>
-#include <cassert>
-
-#if TARGET_MACOSX
-#include <MoltenVK/mvk_vulkan.h>
-#include <MoltenVK/vk_mvk_moltenvk.h>
-#endif
-
-#if TARGET_WIN32
-#include <windows.h>
-#endif
-
-#undef max
-
 #include "sge_vk_context.hh"
 #include "sge_vk_utils.hh"
 

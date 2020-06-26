@@ -1,9 +1,5 @@
 #include "sge_vk_allocator.hh"
 
-#include <memory>
-#include <iostream>
-#include <stdlib.h>
-
 #include <imgui/imgui.h>
 
 #if TARGET_WIN32

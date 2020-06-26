@@ -1,9 +1,5 @@
 #include "sge_vk_kernel.hh"
 
-#include <cassert>
-#include <sstream>
-#include <iostream>
-
 #include "sge_vk_allocator.hh"
 #include "sge_vk_types.hh"
 

@@ -1,10 +1,7 @@
 #include "sge_vk_fullscreen_render.hh"
 
-#include <cassert>
-#include <array>
-
-#include "sge.hh"
 #include "sge_vk_presentation.hh"
+#include "sge_utils.hh"
 
 namespace sge::vk {
 

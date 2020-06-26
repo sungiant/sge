@@ -43,6 +43,7 @@ endif ()
 
 #add_definitions (-DSGE_DEBUG_MODE)
 #add_definitions (-DSGE_PROFILING_MODE)
+add_definitions (-DSGE_EXTENSIONS_ENABLED)
 
 ################################################################################
 

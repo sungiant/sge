@@ -6,10 +6,7 @@
 
 #pragma once
 
-#include <cassert>
-#include <iostream>
-#include <fstream>
-#include <vector>
+#include "sge.hh"
 
 namespace sge::utils {
 
@@ -27,6 +24,12 @@ inline void get_file_stream (std::vector<uint8_t>& output, const char* path) {
 template <typename T>
 inline bool contains_value (std::vector<std::optional<T>> xs) {
     return std::find_if (xs.begin (), xs.end (), [](std::optional<T> x) { return x.has_value ();  }) != xs.end ();
+}
+    
+
+template <typename T>
+inline bool contains (std::unordered_set<T> xs, T value) {
+    return xs.find (value) != xs.end ();
 }
 
 }
