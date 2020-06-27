@@ -25,17 +25,19 @@ struct free_camera {
         const float r2 = input.gamepad.right_trigger();
 
         const float fast_factor = std::max (sp, std::max (r1, r2));
-        const float traverse_rate = std::max(TRAVERSE_RATE, fast_factor * FAST_TRAVERSE_RATE);
-        const float look_rate = std::max (LOOK_RATE, fast_factor * FAST_LOOK_RATE);
+        const float traverse_rate = std::max(TRAVERSE_RATE, fast_factor * FAST_TRAVERSE_RATE) * (1.0f / traverse_sensitivity);
+        const float look_rate = std::max (LOOK_RATE, fast_factor * FAST_LOOK_RATE) * (1.0f / look_sensitivity);
 
 
+        // UP/DOWN
         if (input.gamepad.is_button_down(sge::runtime::gamepad_button::dpad_down)) { position.y -= traverse_rate * dt; }
         if (input.gamepad.is_button_down(sge::runtime::gamepad_button::dpad_up)) { position.y += traverse_rate * dt; }
-
         if (input.mouse.is_button_down (sge::runtime::mouse_button::middle)) { position.y -= MOUSE_RATE * input.mouse.position_delta_proportional ().y * traverse_rate * dt; }
+
 
         sge::math::vector3 eulerAngles = sge::math::quaternion::to_yaw_pitch_roll(orientation);
 
+        // YAW
         float rxx = 0.0f;
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::left)) { rxx = -1.0f; }
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::right)) { rxx = +1.0f; }
@@ -45,6 +47,7 @@ struct free_camera {
             eulerAngles.x -=dt * look_rate * rxx;
         }
 
+        // PITCH
         float rxy = 0.0f;
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::down)) { rxy = -1.0f; }
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::up)) { rxy = +1.0f; }
@@ -59,6 +62,7 @@ struct free_camera {
         float z_comp = cos(eulerAngles.x);
         float y_comp = sin(eulerAngles.y);
 
+        // LEFT/RIGHT
         float lxx = 0.0f;
         if (input.keyboard.is_character_down('a')) { lxx = -1.0f; }
         if (input.keyboard.is_character_down('d')) { lxx = +1.0f; }
@@ -69,13 +73,14 @@ struct free_camera {
             position.z += x_comp * traverse_rate * lxx * dt;
         }
 
+        // FORWARD/BACKWARD
         float lxy = 0.0f;
         if (input.keyboard.is_character_down('s')) { lxy = -1.0f; }
         if (input.keyboard.is_character_down('w')) { lxy = +1.0f; }
         int scroll = input.mouse.scrollwheel_delta ();
         if (scroll > 0) { lxy = +50.0f; }
         if (scroll < 0) { lxy = -50.0f; }
-        if (abs(input.gamepad.left_stick().y) > abs (lxy)) { lxy = -input.gamepad.left_stick().y; }
+        if (abs(input.gamepad.left_stick().y) > abs (lxy)) { lxy = input.gamepad.left_stick().y; }
         if (!sge::math::is_zero (lxy)) {
             position.x += x_comp * traverse_rate * lxy * dt;
             position.z += z_comp * traverse_rate * lxy * dt;
@@ -85,6 +90,11 @@ struct free_camera {
 
     sge::math::vector3         position;
     sge::math::quaternion      orientation;
+
+
+    float traverse_sensitivity = 1.0f;
+    float look_sensitivity = 1.0f;
+
 
     float fov = 57.5;
     float near = 0.1f;

@@ -85,6 +85,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     {
         ImGui::Text("camera position (x:%.2f, y:%.2f, z:%.2f)", camera.position.x, camera.position.y, camera.position.z);
         ImGui::Text("camera orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera.orientation.i, camera.orientation.j, camera.orientation.k, camera.orientation.u);
+        ImGui::SliderFloat ("camera sensitivity", &camera.traverse_sensitivity, 1, 1000); // todo: automatically adjusted this based on proximity to surface - need info back from the compute shader for this.
         ImGui::SliderFloat("gamma", &u.gamma, 0, 4.0f);
         ImGui::SliderInt("marching step limit", &u.marching_step_limit, 1, 1024);
         ImGui::SliderInt("fractal step limit", &u.fractal_step_limit, 1, 32);
