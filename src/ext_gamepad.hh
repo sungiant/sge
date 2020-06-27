@@ -1,5 +1,3 @@
-#if SGE_EXTENSIONS_ENABLED
-
 #pragma once
 
 #include "sge.hh"
@@ -118,5 +116,3 @@ public:
 };
 
 }
-
-#endif

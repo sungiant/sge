@@ -68,10 +68,8 @@ struct api {
     virtual void                    input__gamepad_analogue_axes        (uint32_t*, gamepad_axis*, float*) const = 0;
     virtual void                    input__touches                      (uint32_t*, uint32_t*, int*, int*) const = 0;
     
-#if SGE_EXTENSIONS_ENABLED
     virtual extension*              extension_get                       (size_t) const = 0; // needs a better home...
-#endif
-    
+
     // The intention here is that every non-const function call to this api will be captured and enqueued for later processing.
     // ----------------------------------
     virtual void                    system__request_shutdown            () = 0;

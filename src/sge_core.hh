@@ -170,16 +170,10 @@ struct engine_tasks {
 class api_impl : public runtime::api {
     const core::engine_state& engine_state;
     core::engine_tasks& engine_tasks;
-#if SGE_EXTENSIONS_ENABLED
     std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& engine_extensions;
-#endif
 public:
 
-    api_impl (const core::engine_state&, core::engine_tasks&
-#if SGE_EXTENSIONS_ENABLED
-        , std::unordered_map<size_t, std::unique_ptr<runtime::extension>>&
-#endif
-    );
+    api_impl (const core::engine_state&, core::engine_tasks&, std::unordered_map<size_t, std::unique_ptr<runtime::extension>>&);
 
     bool                    system__get_state_bool              (runtime::system_bool_state) const;
     int                     system__get_state_int               (runtime::system_int_state) const;
@@ -210,10 +204,7 @@ public:
     void                    system__set_state_int               (runtime::system_int_state, int);
     void                    system__set_state_string            (runtime::system_string_state, const char*);
 
-#if SGE_EXTENSIONS_ENABLED
-    runtime::extension*     extension_get                       (size_t) const;
-#endif
-    
+    runtime::extension*     extension_get                       (size_t) const;    
     
 };
     
@@ -224,9 +215,7 @@ class engine {
     std::unique_ptr<engine_state>                       engine_state;
     std::unique_ptr<engine_tasks>                       engine_tasks;
     std::unique_ptr<api_impl>                           engine_api;
-#if SGE_EXTENSIONS_ENABLED
     std::unordered_map<size_t, std::unique_ptr<runtime::extension>> engine_extensions = {};
-#endif
     std::unique_ptr<app::response>                      user_response;
     app::api*                                           user_api;
     std::vector<std::function<void ()>>                 debug_fns = {};

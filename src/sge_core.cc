@@ -8,16 +8,10 @@ namespace sge::core {
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks
-#if SGE_EXTENSIONS_ENABLED
-                    , std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& z_exts
-#endif
-                    )
+api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks, std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& z_exts)
     : engine_state (z_state)
     , engine_tasks (z_tasks)
-#if SGE_EXTENSIONS_ENABLED
     , engine_extensions (z_exts)
-#endif
 {}
 
 bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
@@ -311,14 +305,12 @@ void api_impl::system__set_state_string (runtime::system_string_state z, const c
     }
 }
 
-#if SGE_EXTENSIONS_ENABLED
 runtime::extension* api_impl::extension_get  (size_t id) const {
     assert (engine_extensions.find(id) != engine_extensions.end());
     runtime::extension* ext = engine_extensions.at(id).get();
     assert (ext);
     return ext;
 };
-#endif
 
 
 
@@ -479,13 +471,8 @@ void engine::setup (
 #error
 #endif
 
-    engine_api = std::make_unique<api_impl> (*engine_state, *engine_tasks
-#if SGE_EXTENSIONS_ENABLED
-                                             , engine_extensions
-#endif
-                                             );
+    engine_api = std::make_unique<api_impl> (*engine_state, *engine_tasks, engine_extensions);
     
-#if SGE_EXTENSIONS_ENABLED
     auto& standard_extensions = sge::app::internal::get_standard_extensions ();
 
     // I am certain that this can be done in a much better way with some template wizardary.
@@ -519,13 +506,10 @@ void engine::setup (
         engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
     }
     
-    
     for (auto& kvp : engine_extensions) {
         const size_t id = kvp.first;
         debug_fns.emplace_back ([this, id]() { engine_extensions[id]->debug_ui (); });
     }
-
-#endif
     
     user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
     user_api = app::internal::create_user_api (*engine_api);
@@ -563,12 +547,11 @@ void engine::update (container_state& z_container, input_state& z_input) {
 
     internal_update (*user_response, *engine_state, *engine_tasks);
 
-#if SGE_EXTENSIONS_ENABLED
     // update all registered extensions
     for (auto& kvp : engine_extensions) {
         kvp.second->update ();
     }
-#endif
+
     // update the user's app
     sge::app::update (*user_response, *user_api);
 
@@ -581,9 +564,7 @@ void engine::stop () {
 void engine::shutdown () {
     app::internal::delete_user_api (user_api);
     user_response.reset ();
-#if SGE_EXTENSIONS_ENABLED
     engine_extensions.clear ();
-#endif
     engine_state->graphics.destroy ();
     engine_tasks.reset ();
     engine_state.reset ();
