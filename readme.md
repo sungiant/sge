@@ -81,16 +81,16 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [x] OSX gamepad rewrite.
 - [x] CI integration.
 - [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
-- [ ] Review codebase abstractions and type naming and simplify where needed, resolve inconsistencies.
+- [x] Mouse control for free camera.
+- [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
 - [ ] Replace ray tracing example (right now there is a familar placeholder to help explain the issue with SBOs).
 - [ ] Intelligent Vulkan queue selection.
-- [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Complete dynamic csg tree SBO implementation.
 - [ ] Resolve/query issue with having more than one SBO with Molten VK.
 - [ ] Linux host implementation.
-- [ ] Mouse control for free camera.
+- [ ] Review codebase abstractions and type naming and simplify where needed, resolve inconsistencies.
 
 ### 0.2.0
 
