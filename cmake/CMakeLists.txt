@@ -60,7 +60,7 @@ elseif (G_DEV_ENV STREQUAL DARWIN)
     set (CMAKE_CXX_STANDARD 20)
 elseif (G_DEV_ENV STREQUAL LINUX)
     set (CMAKE_CXX_STANDARD 20)
-    set (CMAKE_CXX_FLAGS "-fpermissive -std=c++20")
+    set (CMAKE_CXX_FLAGS "-fpermissive -std=c++2a")
 endif ()
 
 if (G_DEV_ENV STREQUAL WINDOWS)
