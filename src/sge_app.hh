@@ -57,7 +57,6 @@ struct api { // used by an SGE app to interact with SGE
     
     runtime::api& runtime; // direct access to full low level runtime api (not really needed).
 
-#if SGE_EXTENSIONS_ENABLED
     
     // direct access to full low level runtime api (not really needed).
     template<typename T>
@@ -70,7 +69,6 @@ struct api { // used by an SGE app to interact with SGE
         assert (ext_t);
         return *ext_t;
     }
-#endif
 };
 
 

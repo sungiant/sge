@@ -5,11 +5,12 @@
 
 #if TARGET_LINUX
 
+#include "sge.hh"
+#include "sge_core.hh"
+
 #include <unistd.h>      /* pause() */
 #include <stdlib.h>
-#include <xcb/xcb.h>
 
-#include "sge_core.hh"
 
 auto g_sge = std::make_unique<sge::core::engine>();
 

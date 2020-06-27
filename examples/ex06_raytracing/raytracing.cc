@@ -4,8 +4,11 @@
 
 #include <imgui/imgui.h>
 #include <sge.hh>
+#include <sge_app.hh>
 #include <ext_overlay.hh>
-#include <ext_input.hh>
+#include <ext_keyboard.hh>
+#include <ext_mouse.hh>
+#include <ext_gamepad.hh>
 #include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
@@ -13,8 +16,6 @@
 //todo: this demo is placeholder and is almost entirely a clone of sascha's compute raytracer.
 //      i've added it for now to try and help illustrate and debug a molten vk issue relating to
 //      more than a single SBO in a compute shader.
-
-
 
 std::unique_ptr<sge::app::configuration> config;
 std::unique_ptr<sge::app::content> computation;
@@ -122,22 +123,24 @@ void initialise () {
     extensions = std::make_unique<sge::app::extensions>();
     
     extensions->views = {
-        { sge::type_id<sge::overlay::view>(), [] (const sge::runtime::api& x) { return new sge::overlay::view (x); }},
-        { sge::type_id<sge::input::view>(), [] (const sge::runtime::api& x) { return new sge::input::view (x); }},
-        { sge::type_id<sge::instrumentation::view>(), [] (const sge::runtime::api& x) { return new sge::instrumentation::view (x); }},
+        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
+        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
+        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
+        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
+        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
     };
 }
 
 void terminate () { config.reset (); }
 
 void update (sge::app::response& r, const sge::app::api& sge) {
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
     UBO u = ubo;
 
-    camera.update (sge.ext<sge::instrumentation::view>().dt(), sge.ext<sge::input::view>());
+    camera.update (sge.ext<sge::ext::instrumentation>().dt(), sge.ext<sge::ext::keyboard>(), sge.ext<sge::ext::mouse>(), sge.ext<sge::ext::gamepad>());
 
     u.position = camera.position;
     u.orientation = camera.orientation;
@@ -147,7 +150,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         r.uniform_changes[0] = true;
     }
 
-    push.time = sge.ext<sge::instrumentation::view>().timer();
+    push.time = sge.ext<sge::ext::instrumentation>().timer();
     r.push_constants_changed = true;
 }
 

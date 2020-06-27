@@ -4,21 +4,11 @@
 
 #if TARGET_WIN32
 
-#include <windows.h>
-
-#include <cassert>
-#include <cstdio>
-#include <iostream>
-#include <unordered_set>
-#include <unordered_map>
-#include <functional>
-#include <memory>
-#include <variant>
-#include <algorithm>
-
+#include "sge.hh"
 #include "sge_core.hh"
 
-#include <windows.h>
+#include <XInput.h>
+#pragma comment(lib, "XInput.lib")
 
 // Windows Keyboard (stand alone class - independent of SGE)
 // -------------------------------------------------------------------------- //
@@ -264,9 +254,6 @@ public:
 
 // XInput Gamepad (stand alone class - independent of SGE)
 // -------------------------------------------------------------------------- //
-
-#include <XInput.h>
-#pragma comment(lib, "XInput.lib")
 
 class xinput_gamepad
 {

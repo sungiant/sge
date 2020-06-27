@@ -4,8 +4,11 @@
 
 #include <imgui/imgui.h>
 #include <sge.hh>
+#include <sge_app.hh>
 #include <ext_overlay.hh>
-#include <ext_input.hh>
+#include <ext_keyboard.hh>
+#include <ext_mouse.hh>
+#include <ext_gamepad.hh>
 #include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
@@ -260,12 +263,15 @@ void initialise () {
         }
     });
     
+    
     extensions = std::make_unique<sge::app::extensions>();
     
     extensions->views = {
-        { sge::type_id<sge::overlay::view>(), [] (const sge::runtime::api& x) { return new sge::overlay::view (x); }},
-        { sge::type_id<sge::input::view>(), [] (const sge::runtime::api& x) { return new sge::input::view (x); }},
-        { sge::type_id<sge::instrumentation::view>(), [] (const sge::runtime::api& x) { return new sge::instrumentation::view (x); }},
+        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
+        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
+        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
+        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
+        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
     };
 
     blobs_changed.resize (computation->blobs.size ());
@@ -280,11 +286,12 @@ bool has_local_blob_change = false;
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::input::view>().keyboard.key_just_pressed (sge::input::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
-    camera.update (sge.ext<sge::instrumentation::view>().dt(), sge.ext<sge::input::view>());
+    camera.update (sge.ext<sge::ext::instrumentation>().dt(), sge.ext<sge::ext::keyboard>(), sge.ext<sge::ext::mouse>(), sge.ext<sge::ext::gamepad>());
+
     int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
 
@@ -312,12 +319,12 @@ void update (sge::app::response& r, const sge::app::api& sge) {
 
     const bool blob_update_needed = std::find_if (blobs_changed.begin (), blobs_changed.end (), [](std::optional<sge::dataspan> x) { return x.has_value ();  }) != blobs_changed.end ();
 
-    if (blob_update_needed && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.ext<sge::instrumentation::view>().timer ()) {
+    if (blob_update_needed && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.ext<sge::ext::instrumentation>().timer ()) {
         // no need to update blobs every frames when user is just changing colours
         push.no_change = false;
         r.push_constants_changed = true;
         r.blob_changes = blobs_changed;
-        last_blob_update_time = sge.ext<sge::instrumentation::view>().timer ();
+        last_blob_update_time = sge.ext<sge::ext::instrumentation>().timer ();
         blobs_changed.clear ();
         blobs_changed.resize (computation->blobs.size ());
     }

@@ -4,7 +4,9 @@
 #include <algorithm>
 
 #include <sge_math.hh>
-#include <ext_input.hh>
+#include <ext_keyboard.hh>
+#include <ext_mouse.hh>
+#include <ext_gamepad.hh>
 
 struct free_camera {
     free_camera () {
@@ -14,37 +16,37 @@ struct free_camera {
         orientation = sge::math::quaternion::from_yaw_pitch_roll(5.0f * 3.1415962f / 4.0f, (3.1415962f / 2.0f) - (atan(sqrt(zx * zx * 2.0f) / y)), 0.0f);
     }
     
-    void update (const float dt, const sge::input::view& input) {
+    void update (const float dt, const sge::ext::keyboard& keyboard, const sge::ext::mouse& mouse, const sge::ext::gamepad& gamepad) {
 
-        if (input.gamepad.is_button_down(sge::input::gamepad_button::dpad_left)) { fov -= dt * FOV_DEBUG_RATE; }
-        if (input.gamepad.is_button_down(sge::input::gamepad_button::dpad_right)) {  fov += dt * FOV_DEBUG_RATE; }
+        if (gamepad.is_button_down(sge::runtime::gamepad_button::dpad_left)) { fov -= dt * FOV_DEBUG_RATE; }
+        if (gamepad.is_button_down(sge::runtime::gamepad_button::dpad_right)) {  fov += dt * FOV_DEBUG_RATE; }
         fov = std::clamp (fov, FOV_MIN, FOV_MAX);
         
-        float sp = input.keyboard.is_key_down(sge::input::keyboard_key::spacebar) ? 0.8f : 0.0f;
-        float r1 = input.gamepad.is_button_down(sge::input::gamepad_button::right_shoulder) ? 0.5f : 0.0f;
-        float r2 = input.gamepad.right_trigger();
+        float sp = keyboard.is_key_down(sge::runtime::keyboard_key::spacebar) ? 0.8f : 0.0f;
+        float r1 = gamepad.is_button_down(sge::runtime::gamepad_button::right_shoulder) ? 0.5f : 0.0f;
+        float r2 = gamepad.right_trigger();
 
         float fast_factor = std::max (sp, std::max (r1, r2));
         float traverse_rate = std::max(TRAVERSE_RATE, fast_factor * FAST_TRAVERSE_RATE);
         float look_rate = std::max (LOOK_RATE, fast_factor * FAST_LOOK_RATE);
         
-        if (input.gamepad.is_button_down(sge::input::gamepad_button::dpad_down)) { position.y -= traverse_rate * dt; }
-        if (input.gamepad.is_button_down(sge::input::gamepad_button::dpad_up)) { position.y += traverse_rate * dt; }
+        if (gamepad.is_button_down(sge::runtime::gamepad_button::dpad_down)) { position.y -= traverse_rate * dt; }
+        if (gamepad.is_button_down(sge::runtime::gamepad_button::dpad_up)) { position.y += traverse_rate * dt; }
 
         sge::math::vector3 eulerAngles = sge::math::quaternion::to_yaw_pitch_roll(orientation);
         
         float rxx = 0.0f;
-        if (input.keyboard.is_key_down(sge::input::keyboard_key::left)) { rxx = -1.0f; }
-        if (input.keyboard.is_key_down(sge::input::keyboard_key::right)) { rxx = +1.0f; }
-        if (std::abs(input.gamepad.right_stick().x) > std::abs (rxx)) { rxx = input.gamepad.right_stick().x; }
+        if (keyboard.is_key_down(sge::runtime::keyboard_key::left)) { rxx = -1.0f; }
+        if (keyboard.is_key_down(sge::runtime::keyboard_key::right)) { rxx = +1.0f; }
+        if (std::abs(gamepad.right_stick().x) > std::abs (rxx)) { rxx = gamepad.right_stick().x; }
         if (!sge::math::is_zero (rxx)) {
             eulerAngles.x -=dt * look_rate * rxx;
         }
         
         float rxy = 0.0f;
-        if (input.keyboard.is_key_down(sge::input::keyboard_key::down)) { rxy = -1.0f; }
-        if (input.keyboard.is_key_down(sge::input::keyboard_key::up)) { rxy = +1.0f; }
-        if (std::abs(input.gamepad.right_stick().y) > std::abs (rxy)) { rxy = input.gamepad.right_stick().y; }
+        if (keyboard.is_key_down(sge::runtime::keyboard_key::down)) { rxy = -1.0f; }
+        if (keyboard.is_key_down(sge::runtime::keyboard_key::up)) { rxy = +1.0f; }
+        if (std::abs(gamepad.right_stick().y) > std::abs (rxy)) { rxy = gamepad.right_stick().y; }
         if (!sge::math::is_zero (rxy)) {
             eulerAngles.y += dt * look_rate * rxy;
         }
@@ -55,18 +57,18 @@ struct free_camera {
         float y_comp = std::sin(eulerAngles.y);
 
         float lxx = 0.0f;
-        if (input.keyboard.is_character_down('a')) { lxx = -1.0f; }
-        if (input.keyboard.is_character_down('d')) { lxx = +1.0f; }
-        if (std::abs(input.gamepad.left_stick().x) > std::abs (lxx)) { lxx = input.gamepad.left_stick().x; }
+        if (keyboard.is_character_down('a')) { lxx = -1.0f; }
+        if (keyboard.is_character_down('d')) { lxx = +1.0f; }
+        if (std::abs(gamepad.left_stick().x) > std::abs (lxx)) { lxx = gamepad.left_stick().x; }
         if (!sge::math::is_zero (lxx)) {
             position.x += -z_comp * traverse_rate * lxx * dt;
             position.z += x_comp * traverse_rate * lxx * dt;
         }
         
         float lxy = 0.0f;
-        if (input.keyboard.is_character_down('s')) { lxy = -1.0f; }
-        if (input.keyboard.is_character_down('w')) { lxy = +1.0f; }
-        if (std::abs(input.gamepad.left_stick().y) > std::abs (lxy)) { lxy = input.gamepad.left_stick().y; }
+        if (keyboard.is_character_down('s')) { lxy = -1.0f; }
+        if (keyboard.is_character_down('w')) { lxy = +1.0f; }
+        if (std::abs(gamepad.left_stick().y) > std::abs (lxy)) { lxy = gamepad.left_stick().y; }
         if (!sge::math::is_zero (lxy)) {
             position.x += x_comp * traverse_rate * lxy * dt;
             position.z += z_comp * traverse_rate * lxy * dt;

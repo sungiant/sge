@@ -4,27 +4,15 @@
 
 #if TARGET_MACOSX
 
+#include "sge.hh"
+#include "sge_core.hh"
+
 #include <pthread.h>
-
-#include <chrono>
-#include <unordered_set>
-#include <algorithm>
-#include <optional>
-#include <vector>
-#include <queue>
-#include <functional>
-#include <string>
-#include <thread>
-
 #include <Cocoa/Cocoa.h>
 #include <MetalKit/MTKView.h>
 #include <IOKit/hid/IOHIDManager.h>
 
-#include "sge.hh"
-#include "sge_core.hh"
-
-#define SGE_OSX_INPUT_DEBUG 1
-
+#define SGE_OSX_INPUT_DEBUG 0
 
 
 // IOKit Gamepad (stand alone class - independent of SGE)
