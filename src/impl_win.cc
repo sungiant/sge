@@ -452,20 +452,20 @@ void calculate_sge_container_state (sge::core::container_state& container) {
     }
 }
 
-void calculate_sge_input_state (sge::input_state& input) {
+void calculate_sge_input_state (sge::core::input_state& input) {
     // keyboard
     int keyboard_i = 0;
     auto keyboard_characters = g_keyboard.get_pressed_characters ();
     assert (keyboard_characters.size () <= 10);
     for (wchar_t character : keyboard_characters) {
-        int i = static_cast<int> (sge::input_control_identifier::kc_0) + keyboard_i;
-        auto id = static_cast<sge::input_control_identifier> (i);
+        int i = static_cast<int> (sge::core::input_control_identifier::kc_0) + keyboard_i;
+        auto id = static_cast<sge::core::input_control_identifier> (i);
         input[id] = static_cast<wchar_t> (character);
         ++keyboard_i;
     }
 
-#define SGEX1(x) { if (g_keyboard.is_key_pressed (win32_keyboard::key::x)) input[sge::input_control_identifier::kb_ ## x] = true; }
-#define SGEX2(x, y) { if (g_keyboard.is_key_pressed (win32_keyboard::key::x)) input[sge::input_control_identifier::kb_ ## y] = true; }
+#define SGEX1(x) { if (g_keyboard.is_key_pressed (win32_keyboard::key::x)) input[sge::core::input_control_identifier::kb_ ## x] = true; }
+#define SGEX2(x, y) { if (g_keyboard.is_key_pressed (win32_keyboard::key::x)) input[sge::core::input_control_identifier::kb_ ## y] = true; }
 
     SGEX1(escape); SGEX1(enter); SGEX1(spacebar); SGEX1(shift); SGEX1(control); SGEX1(alt); SGEX1(backspace); SGEX1(tab);
     SGEX1(ins); SGEX1(del); SGEX1(home); SGEX1(end); SGEX1(page_up); SGEX1(page_down); SGEX1(right_click); SGEX1(prt_sc); SGEX1(pause); SGEX1(up); SGEX1(down); SGEX1(left); SGEX1(right);
@@ -485,41 +485,41 @@ void calculate_sge_input_state (sge::input_state& input) {
         const bool caps_lk_locked = g_keyboard.is_caps_lk_locked ();
         const bool caps_lk_pressed = g_keyboard.is_key_pressed (win32_keyboard::key::caps_lk);
         if (caps_lk_locked || caps_lk_pressed)
-            input[sge::input_control_identifier::kq_caps_lk] = std::make_pair (caps_lk_locked, caps_lk_pressed);
+            input[sge::core::input_control_identifier::kq_caps_lk] = std::make_pair (caps_lk_locked, caps_lk_pressed);
 
         const bool scr_lk_locked = g_keyboard.is_scr_lk_locked ();
         const bool scr_lk_pressed = g_keyboard.is_key_pressed (win32_keyboard::key::scr_lk);
         if (scr_lk_locked || scr_lk_pressed)
-            input[sge::input_control_identifier::kq_scr_lk] = std::make_pair (scr_lk_locked, scr_lk_pressed);
+            input[sge::core::input_control_identifier::kq_scr_lk] = std::make_pair (scr_lk_locked, scr_lk_pressed);
 
         const bool num_lk_locked = g_keyboard.is_num_lk_locked ();
         const bool num_lk_pressed = g_keyboard.is_key_pressed (win32_keyboard::key::num_lk);
         if (num_lk_locked || num_lk_pressed)
-            input[sge::input_control_identifier::kq_num_lk] = std::make_pair (num_lk_locked, num_lk_pressed);
+            input[sge::core::input_control_identifier::kq_num_lk] = std::make_pair (num_lk_locked, num_lk_pressed);
     }
 
     // mouse
-    input[sge::input_control_identifier::md_scrollwheel] = g_mouse.get_scrollwheel ();
+    input[sge::core::input_control_identifier::md_scrollwheel] = g_mouse.get_scrollwheel ();
     auto mouse_position = g_mouse.get_position ();
-    input[sge::input_control_identifier::mp_position] = sge::input_point_control { mouse_position.x, mouse_position.y };
+    input[sge::core::input_control_identifier::mp_position] = sge::core::input_point_control { mouse_position.x, mouse_position.y };
 
-#define SGE_X(x) { if (g_mouse.is_button_pressed (win32_mouse::button::x)) input[sge::input_control_identifier::mb_ ## x] = true; }
+#define SGE_X(x) { if (g_mouse.is_button_pressed (win32_mouse::button::x)) input[sge::core::input_control_identifier::mb_ ## x] = true; }
 
     SGE_X (left); SGE_X (middle); SGE_X (right);
 
 #undef SGE_X
 
     // gamepad
-    input[sge::input_control_identifier::ga_left_trigger] = g_gamepad.get_left_trigger ();
-    input[sge::input_control_identifier::ga_right_trigger] = g_gamepad.get_right_trigger ();
+    input[sge::core::input_control_identifier::ga_left_trigger_0] = g_gamepad.get_left_trigger ();
+    input[sge::core::input_control_identifier::ga_right_trigger_0] = g_gamepad.get_right_trigger ();
     auto gamepad_left_stick = g_gamepad.get_left_stick ();
-    input[sge::input_control_identifier::ga_left_stick_x] = gamepad_left_stick.x;
-    input[sge::input_control_identifier::ga_left_stick_y] = gamepad_left_stick.y;
+    input[sge::core::input_control_identifier::ga_left_stick_x_0] = gamepad_left_stick.x;
+    input[sge::core::input_control_identifier::ga_left_stick_y_0] = gamepad_left_stick.y;
     auto gamepad_right_stick = g_gamepad.get_right_stick ();
-    input[sge::input_control_identifier::ga_right_stick_x] = gamepad_right_stick.x;
-    input[sge::input_control_identifier::ga_right_stick_y] = gamepad_right_stick.y;
+    input[sge::core::input_control_identifier::ga_right_stick_x_0] = gamepad_right_stick.x;
+    input[sge::core::input_control_identifier::ga_right_stick_y_0] = gamepad_right_stick.y;
 
-#define SGE_X(x) { if (g_gamepad.is_button_pressed (xinput_gamepad::button::x)) input[sge::input_control_identifier::gb_ ## x] = true; }
+#define SGE_X(x) { if (g_gamepad.is_button_pressed (xinput_gamepad::button::x)) input[sge::core::input_control_identifier::gb_ ## x ## _0] = true; }
 
     SGE_X (dpad_up); SGE_X (dpad_down); SGE_X (dpad_left); SGE_X (dpad_right);
     SGE_X (start); SGE_X (back);
@@ -619,7 +619,7 @@ int run (HINSTANCE hinst, HWND hwnd, sge::app::configuration& configuration) {
 
         // update the engine
         sge::core::container_state container_state;
-        sge::input_state input_state;
+        sge::core::input_state input_state;
 
         calculate_sge_container_state (container_state);
         calculate_sge_input_state (input_state);

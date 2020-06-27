@@ -30,6 +30,7 @@
 #include <variant>
 #include <utility>
 #include <algorithm>
+#include <array>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
@@ -46,6 +47,10 @@
 
 #if TARGET_WIN32
 #include <windows.h>
+#undef min
+#undef max
+#undef near
+#undef far
 #endif
 
 #if TARGET_LINUX
