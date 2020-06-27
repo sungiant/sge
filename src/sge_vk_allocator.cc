@@ -1,7 +1,5 @@
 #include "sge_vk_allocator.hh"
 
-#include <imgui/imgui.h>
-
 #if TARGET_WIN32
 #define aligned_alloc _aligned_malloc
 #define aligned_realloc _aligned_realloc

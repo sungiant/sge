@@ -9,7 +9,7 @@
 
 namespace sge::math {
 
-const float PI = std::atan (1.0f) * 4.0f;
+const float PI = atan (1.0f) * 4.0f;
 const float TAU = 2.0f * PI;
 const float EPISILON = 0.000001f;
 
@@ -61,12 +61,12 @@ struct quaternion {
         float p = pitch * 0.5f;
         float r = roll * 0.5f;
 
-        float sy = std::sin (y);
-        float cy = std::cos (y);
-        float sp = std::sin (p);
-        float cp = std::cos (p);
-        float sr = std::sin (r);
-        float cr = std::cos (r);
+        float sy = sin (y);
+        float cy = cos (y);
+        float sp = sin (p);
+        float cp = cos (p);
+        float sr = sin (r);
+        float cr = cos (r);
 
         return {
             (cy * sp * cr) + (sy * cp * sr),//y
@@ -81,19 +81,19 @@ struct quaternion {
         // roll (x-axis rotation)
         float sinr_cosp = 2 * (q.u * q.k + q.i * q.j);
         float cosr_cosp = 1 - 2 * (q.k * q.k + q.i * q.i);
-        angles.z = std::atan2 (sinr_cosp, cosr_cosp);
+        angles.z = atan2 (sinr_cosp, cosr_cosp);
 
         // pitch (y-axis rotation)
         float sinp = 2 * (q.u * q.i - q.j * q.k);
-        if (std::abs (sinp) >= 1)
-            angles.y = std::copysign (PI / 2, sinp); // use 90 degrees if out of range
+        if (abs (sinp) >= 1)
+            angles.y = copysign (PI / 2, sinp); // use 90 degrees if out of range
         else
-            angles.y = std::asin (sinp);
+            angles.y = asin (sinp);
 
         // yaw (z-axis rotation)
         float siny_cosp = 2 * (q.u * q.j + q.k * q.i);
         float cosy_cosp = 1 - 2 * (q.i * q.i + q.j * q.j);
-        angles.x = std::atan2 (siny_cosp, cosy_cosp);
+        angles.x = atan2 (siny_cosp, cosy_cosp);
 
         return angles;
     }

@@ -15,12 +15,12 @@
 
 // ---------------------------------- //
 
-#include <cstdlib>
-#include <cmath>
-#include <cassert>
-#include <cstdio>
-#include <cctype>
-#include <cstring>
+#include <stdlib.h>
+#include <math.h>
+#include <assert.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
 // ---------------------------------- //
 
@@ -65,6 +65,10 @@
 #include <MoltenVK/mvk_vulkan.h>
 #include <MoltenVK/vk_mvk_moltenvk.h>
 #endif
+
+// ---------------------------------- //
+
+#include <imgui/imgui.h>
 
 // ---------------------------------- //
 

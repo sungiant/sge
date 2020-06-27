@@ -10,7 +10,7 @@
 #if CONFIGURATION_FINAL
 #define vk_assert(x) x
 #else
-#define vk_assert(x) { VkResult r=(x); assert (r == VK_SUCCESS); }
+#define vk_assert(x) { VkResult r=(x); ASSERT (r == VK_SUCCESS); }
 #endif
 
 namespace sge::vk::utils {

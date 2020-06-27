@@ -4,9 +4,6 @@
 #include "sge_vk_utils.hh"
 #include "sge_vk_presentation.hh"
 
-#include <imgui/imgui.h>
-
-
 namespace sge::vk {
 
 

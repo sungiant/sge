@@ -1,8 +1,3 @@
-#include <memory>
-#include <optional>
-#include <string>
-
-#include <imgui/imgui.h>
 #include <sge_app.hh>
 
 sge::app::configuration config = {};

@@ -45,7 +45,7 @@ struct device_buffer {
 
     void copy (void* data, VkDeviceSize size) {
         assert (mapped);
-        std::memcpy (mapped, data, size);
+        memcpy (mapped, data, size);
     }
 
     void flush (VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) {

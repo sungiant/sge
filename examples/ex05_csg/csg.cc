@@ -1,8 +1,3 @@
-#include <memory>
-#include <optional>
-#include <string>
-
-#include <imgui/imgui.h>
 #include <sge_app.hh>
 
 #include "../ex_common/free_camera.hh"
@@ -379,7 +374,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
             char id[64];
 
             sprintf(&id[0], "#%d", i);
-            
+
             ImGui::Text("%s", id);
             ImGui::NextColumn();
 
