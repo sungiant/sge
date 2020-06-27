@@ -33,7 +33,7 @@ enum class keyboard_lock        { caps_lk, scr_lk, num_lk, COUNT };
 
 enum class mouse_button         { left, middle, right, COUNT };
     
-enum class gamepad_button       { dpad_up, dpad_down, dpad_left, dpad_right, start, center, back, left_thumb, right_thumb, left_shoulder, right_shoulder, a, b, x, y, COUNT };
+enum class gamepad_button       { dpad_up, dpad_down, dpad_left, dpad_right, back, center, start, left_thumb, right_thumb, left_shoulder, right_shoulder, a, b, x, y, COUNT };
 enum class gamepad_axis         { left_trigger, right_trigger, left_stick_vertical, left_stick_horizontal, right_stick_vertical, right_stick_horizontal, COUNT };
     
 enum class system_bool_state    { fullscreen, imgui, COUNT };

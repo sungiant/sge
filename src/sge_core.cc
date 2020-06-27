@@ -219,19 +219,13 @@ void api_impl::input__mouse_scrollwheel (int* z) const {
 }
 
 void api_impl::input__gamepad_pressed_buttons (uint32_t* z_size, runtime::gamepad_button* z_keys) const {
-    const int first = static_cast<int>(input_control_identifier::gb_dpad_up_0);
-    const int last = static_cast<int>(input_control_identifier::gb_y_0); // right now the runtime api doesn't support multiple gamepads
-    // size query.
+
     if (z_keys == nullptr) {
         *z_size = 0;
-        for (int i = first; i <= last; ++i) {
-            const auto id = static_cast<input_control_identifier> (i);
-            if (engine_state.input.find (id) != engine_state.input.end ())
-                (*z_size)++;
-        }
-        return;
     }
-    // full call.
+    const int first = static_cast<int>(input_control_identifier::gb_dpad_up_0);
+    const int last = static_cast<int>(input_control_identifier::gb_y_0); // right now the runtime api doesn't support multiple gamepads
+    
     uint32_t idx = 0;
     for (int i = first; i <= last; ++i) {
         const auto id = static_cast<input_control_identifier> (i);
@@ -239,26 +233,25 @@ void api_impl::input__gamepad_pressed_buttons (uint32_t* z_size, runtime::gamepa
             ? std::optional<input_binary_control>(std::get<input_binary_control> (engine_state.input.at (id)))
             : std::nullopt;
         auto v = convert_to_gamepad_button (id);
-        if (o.has_value () && o.value () && v.has_value())
-            z_keys[idx++] = v.value();
+        if (o.has_value () && o.value () && v.has_value()) {
+            if (z_keys == nullptr)
+                (*z_size)++;
+            else
+                z_keys[idx++] = v.value();
+        }
     }
-    assert (idx == *z_size);
+    
+    assert (idx == *z_size || !z_keys);
+    
 }
 
 void api_impl::input__gamepad_analogue_axes (uint32_t* z_size, runtime::gamepad_axis* z_keys, float* z_values) const {
-    const int first = static_cast<int>(input_control_identifier::gb_dpad_up_0);
-    const int last = static_cast<int>(input_control_identifier::gb_y_0); // right now the runtime api doesn't support multiple gamepads
-    // size query.
     if (z_keys == nullptr || z_values == nullptr) {
         *z_size = 0;
-        for (int i = first; i <= last; ++i) {
-            const auto id = static_cast<input_control_identifier> (i);
-            if (engine_state.input.find (id) != engine_state.input.end ())
-                (*z_size)++;
-        }
-        return;
     }
-    // full call.
+    const int first = static_cast<int>(input_control_identifier::ga_left_stick_x_0);
+    const int last = static_cast<int>(input_control_identifier::ga_right_trigger_0); // right now the runtime api doesn't support multiple gamepads
+    
     uint32_t idx = 0;
     for (int i = first; i <= last; ++i) {
         const auto id = static_cast<input_control_identifier> (i);
@@ -267,12 +260,16 @@ void api_impl::input__gamepad_analogue_axes (uint32_t* z_size, runtime::gamepad_
             : std::nullopt;
         auto v = convert_to_gamepad_axis (id);
         if (o.has_value () && v.has_value()) {
-            z_keys[idx] = v.value();
-            z_values[idx] = o.value ();
-            idx++;
+            if (z_keys == nullptr || z_values == nullptr)
+                (*z_size)++;
+            else {
+                z_keys[idx] = v.value();
+                z_values[idx] = o.value ();
+                idx++;
+            }
         }
     }
-    assert (idx == *z_size);
+    assert (idx == *z_size || !z_keys || !z_values);
 }
 
 void api_impl::input__touches (uint32_t* z_size, uint32_t*, int*, int*) const {

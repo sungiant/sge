@@ -61,7 +61,7 @@ public:
             static std::array<float, (size_t) runtime::gamepad_axis::COUNT> axes_arr_values;
             
             sge.input__gamepad_analogue_axes (&sz, nullptr, nullptr);
-            assert (sz <= axes_arr_keys.size () && sz < axes_arr_values.size ());
+            assert (sz <= axes_arr_keys.size () && sz <= axes_arr_values.size ());
             sge.input__gamepad_analogue_axes (&sz, axes_arr_keys.data(), axes_arr_values.data());
             
             for (uint32_t i = 0; i < sz; ++i)
@@ -97,8 +97,9 @@ public:
 
         ImGui::NextColumn ();
 
-        bool button_start = is_button_down (runtime::gamepad_button::start); ImGui::Checkbox ("Start", &button_start);
         bool button_back = is_button_down (runtime::gamepad_button::back); ImGui::Checkbox ("Back", &button_back);
+        bool button_center = is_button_down (runtime::gamepad_button::center); ImGui::Checkbox ("Center", &button_center);
+        bool button_start = is_button_down (runtime::gamepad_button::start); ImGui::Checkbox ("Start", &button_start);
 
         ImGui::NextColumn ();
 

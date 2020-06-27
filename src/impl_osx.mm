@@ -69,7 +69,7 @@ private:
 
     enum identifier_type { BUTTON, AXIS };
 
-    enum button_cookie {
+    enum button_identifier {
         BUTTON_ACTION_SOUTH = 0, BUTTON_ACTION_EAST = 1,
         BUTTON_ACTION_WEST = 2, BUTTON_ACTION_NORTH = 3,
         BUTTON_LEFT_SHOULDER = 4, BUTTON_RIGHT_SHOULDER = 5,
@@ -79,7 +79,7 @@ private:
         BUTTON_OPTION_EXTRA = 12, BUTTON_OPTION_MIDDLE = 13,
     };
         
-    enum axis_cookie {
+    enum axis_identifier {
         AXIS_LEFT_X = 0, AXIS_LEFT_Y = 1, AXIS_RIGHT_X = 2, AXIS_RIGHT_Y = 3,
         AXIS_DPAD = 4, AXIS_LEFT_TRIGGER = 5, AXIS_RIGHT_TRIGGER = 6,
     };

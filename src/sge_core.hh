@@ -36,10 +36,10 @@ enum class input_control_identifier {
     // mouse digital controls
     md_scrollwheel,
     // gamepad binary controls
-    gb_dpad_up_0, gb_dpad_down_0, gb_dpad_left_0, gb_dpad_right_0, gb_start_0, gb_center_0, gb_back_0, gb_left_thumb_0, gb_right_thumb_0, gb_left_shoulder_0, gb_right_shoulder_0, gb_a_0, gb_b_0, gb_x_0, gb_y_0,
-    gb_dpad_up_1, gb_dpad_down_1, gb_dpad_left_1, gb_dpad_right_1, gb_start_1, gb_center_1, gb_back_1, gb_left_thumb_1, gb_right_thumb_1, gb_left_shoulder_1, gb_right_shoulder_1, gb_a_1, gb_b_1, gb_x_1, gb_y_1,
-    gb_dpad_up_2, gb_dpad_down_2, gb_dpad_left_2, gb_dpad_right_2, gb_start_2, gb_center_2, gb_back_2, gb_left_thumb_2, gb_right_thumb_2, gb_left_shoulder_2, gb_right_shoulder_2, gb_a_2, gb_b_2, gb_x_2, gb_y_2,
-    gb_dpad_up_3, gb_dpad_down_3, gb_dpad_left_3, gb_dpad_right_3, gb_start_3, gb_center_3, gb_back_3, gb_left_thumb_3, gb_right_thumb_3, gb_left_shoulder_3, gb_right_shoulder_3, gb_a_3, gb_b_3, gb_x_3, gb_y_3,
+    gb_dpad_up_0, gb_dpad_down_0, gb_dpad_left_0, gb_dpad_right_0, gb_back_0, gb_center_0, gb_start_0, gb_left_thumb_0, gb_right_thumb_0, gb_left_shoulder_0, gb_right_shoulder_0, gb_a_0, gb_b_0, gb_x_0, gb_y_0,
+    gb_dpad_up_1, gb_dpad_down_1, gb_dpad_left_1, gb_dpad_right_1, gb_back_1, gb_center_1, gb_start_1, gb_left_thumb_1, gb_right_thumb_1, gb_left_shoulder_1, gb_right_shoulder_1, gb_a_1, gb_b_1, gb_x_1, gb_y_1,
+    gb_dpad_up_2, gb_dpad_down_2, gb_dpad_left_2, gb_dpad_right_2, gb_back_2, gb_center_2, gb_start_2, gb_left_thumb_2, gb_right_thumb_2, gb_left_shoulder_2, gb_right_shoulder_2, gb_a_2, gb_b_2, gb_x_2, gb_y_2,
+    gb_dpad_up_3, gb_dpad_down_3, gb_dpad_left_3, gb_dpad_right_3, gb_back_3, gb_center_3, gb_start_3, gb_left_thumb_3, gb_right_thumb_3, gb_left_shoulder_3, gb_right_shoulder_3, gb_a_3, gb_b_3, gb_x_3, gb_y_3,
     // gamepad analogue controls
     ga_left_stick_x_0, ga_left_stick_y_0, ga_left_trigger_0, ga_right_stick_x_0, ga_right_stick_y_0, ga_right_trigger_0,
     ga_left_stick_x_1, ga_left_stick_y_1, ga_left_trigger_1, ga_right_stick_x_1, ga_right_stick_y_1, ga_right_trigger_1,
