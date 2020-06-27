@@ -379,7 +379,8 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
             char id[64];
 
             sprintf(&id[0], "#%d", i);
-            ImGui::Text(id);
+            
+            ImGui::Text("%s", id);
             ImGui::NextColumn();
 
             sprintf(&id[0], "##mat:%d-colour", i);
@@ -427,7 +428,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         {
             char id[64];
             sprintf(&id[0], "#%d", i);
-            ImGui::Text(id);
+            ImGui::Text("%s", id);
             ImGui::NextColumn();
 
             sprintf(&id[0], "##light:%d-pos", i);
