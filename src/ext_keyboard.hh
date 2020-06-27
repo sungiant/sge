@@ -163,55 +163,6 @@ public:
         
         ImGui::End();
     }
-    
-    /* will need this later
-     
-     ImGui::Columns (3);
-     int first = static_cast<int>(input_control_identifier::kc_0);
-     int last = static_cast<int>(input_control_identifier::kc_9);
-     int counter = 0;
-     for (int i = first; i <= last; ++i) {
-         auto id = static_cast<input_control_identifier> (i);
-         if (input_state_current.find (id) != input_state_current.end ()) {
-             wchar_t c = std::get<input_character_control> (input_state_current.at (id));
-             ImGui::TextColored (ImGui::GetStyleColorVec4 (ImGuiCol_CheckMark), "character_%d: [%c]", counter++, static_cast<char>(c));
-         }
-         else {
-             ImGui::Text ("character_%d: ", counter++);
-         }
-         ImGui::NextColumn ();
-     }
-
-     ImGui::Columns (1);
-     
-     private:
-    
-     std::optional<wchar_t> get_character_control (input_control_identifier z, bool z_previous) const {
-         const input_state& is = z_previous ? previous : current;
-         return (is.find (z) != is.end ())
-             ? std::optional<input_character_control>(std::get<input_character_control> (is.at (z)))
-             : std::nullopt;
-     }
-
-     void append_character_controls (std::vector<wchar_t>& z, bool z_previous) const {
-         int first = static_cast<int>(input_control_identifier::kc_0);
-         int last = static_cast<int>(input_control_identifier::kc_9);
-         for (int i = first; i <= last; ++i) {
-             auto id = static_cast<input_control_identifier> (i);
-             auto cc = get_character_control (id, z_previous);
-             if (cc.has_value ()) {
-                 z.emplace_back (cc.value ());
-             }
-         }
-     }
-
-     bool get_character (wchar_t z, bool z_previous = false) const {
-         std::vector<wchar_t> xs;
-         append_character_controls (xs, z_previous);
-         return std::find (xs.begin (), xs.end (), z) != xs.end ();
-     }
-     bool get_previous_character (wchar_t z) const { return get_character (z, true); }
-*/
 };
 
 }

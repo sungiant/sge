@@ -4,12 +4,18 @@
 
 namespace sge::app::internal {
 
-sge::app::api* create_user_api (sge::runtime::api& r) {
-    return new api (r);
+std::unique_ptr<sge::app::api> user_api;
+std::unique_ptr<extensions> standard_extensions;
+    
+api* create_user_api (sge::runtime::api& r) {
+    user_api = std::make_unique<api>(r);
+    return user_api.get();
 }
 
-
-std::unique_ptr<extensions> standard_extensions;
+void delete_user_api (sge::app::api* z) {
+    assert (z == user_api.get());
+    user_api.reset();
+}
 
 extensions& get_standard_extensions () {
 

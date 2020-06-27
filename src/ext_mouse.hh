@@ -82,28 +82,6 @@ public:
         int mouse_scroll = scrollwheel (); ImGui::SliderInt ("Scroll Wheel", &mouse_scroll, -16384, 16384);
         ImGui::End();
     }
-    /*
-private:
-    input_digital_control get_digital_control (input_control_identifier z) const {
-        return (current.find (z) != current.end ())
-            ? std::get<input_digital_control> (current.at (z))
-            : 0;
-    }
-
-    sge::math::point2 get_point_control (input_control_identifier z) const {
-        return (current.find (z) != current.end ())
-            ? std::get<input_point_control> (current.at (z))
-            : sge::math::point2 {0, 0 };
-    }
-
-    input_digital_control get_digital_control_delta (input_control_identifier z) const {
-        return (current.find (z) != current.end ())
-            ? previous.find (z) != previous.end ()
-                ? std::get<input_digital_control> (current.at (z)) - std::get<input_digital_control> (previous.at (z))
-                : std::get<input_digital_control> (current.at (z))
-            : 0;
-    }
-    */
 };
 
 }

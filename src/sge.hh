@@ -23,6 +23,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cctype>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <optional>

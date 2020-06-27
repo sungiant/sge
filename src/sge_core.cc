@@ -579,7 +579,7 @@ void engine::stop () {
 }
 
 void engine::shutdown () {
-    SAFE_DELETE (user_api);
+    app::internal::delete_user_api (user_api);
     user_response.reset ();
 #if SGE_EXTENSIONS_ENABLED
     engine_extensions.clear ();
