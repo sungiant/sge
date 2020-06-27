@@ -6,7 +6,7 @@
 #pragma once
 
 #include "sge.hh"
-#include "sge_app.hh"
+#include "sge_app_interface.hh"
 #include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"

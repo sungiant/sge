@@ -3,19 +3,13 @@
 #include <string>
 
 #include <imgui/imgui.h>
-#include <sge.hh>
 #include <sge_app.hh>
-#include <ext_overlay.hh>
-#include <ext_keyboard.hh>
-#include <ext_mouse.hh>
-#include <ext_gamepad.hh>
-#include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
 
-std::unique_ptr<sge::app::configuration> config;
-std::unique_ptr<sge::app::content> computation;
-std::unique_ptr<sge::app::extensions> extensions;
+sge::app::configuration config = {};
+sge::app::content computation = {};
+sge::app::extensions extensions = {};
 
 struct PUSH { float time = 0.0f; } push;
 
@@ -55,45 +49,29 @@ struct UBO {
 free_camera camera;
 
 void initialise () {
-    config = std::make_unique<sge::app::configuration> ();
-    config->app_name = "mandlebulb";
-    config->app_width = 1280;
-    config->app_height = 720;
-    config->enable_console = true;
+    config.app_name = "mandlebulb";
+    config.app_width = 1280;
+    config.app_height = 720;
+    config.enable_console = true;
 
-    computation = std::make_unique<sge::app::content>(sge::app::content {
-        "mandlebulb.comp.spv",
-        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
-        {
-            sge::dataspan { &ubo, sizeof (UBO) },
-        }
-    });
-    
-    
-    extensions = std::make_unique<sge::app::extensions>();
-    
-    extensions->views = {
-        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
-        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
-        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
-        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
-        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
-    };
+    computation.shader_path = "mandlebulb.comp.spv";
+    computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
+    computation.uniforms = { sge::dataspan { &ubo, sizeof (UBO) }, };
 
     camera.position = { 0.62f, 0.53f, -2.65f };
     camera.orientation = { 0.09f, -0.10f, -0.01f, 0.99f };
 }
 
-void terminate () { config.reset (); }
+void terminate () {}
 
 void update (sge::app::response& r, const sge::app::api& sge) {
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
     UBO u = ubo;
 
-    camera.update (sge.ext<sge::ext::instrumentation>().dt(), sge.ext<sge::ext::keyboard>(), sge.ext<sge::ext::mouse>(), sge.ext<sge::ext::gamepad>());
+    camera.update (sge.instrumentation.dt(), sge.input);
 
     u.position = camera.position;
     u.orientation = camera.orientation;
@@ -102,7 +80,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         r.uniform_changes[0] = true;
     }
 
-    push.time = sge.ext<sge::ext::instrumentation>().timer();
+    push.time = sge.instrumentation.timer();
     r.push_constants_changed = true;
 }
 
@@ -140,9 +118,9 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 namespace sge::app { // HOOK UP TO SGE
 
 void               initialise          ()                              { ::initialise (); }
-configuration&     get_configuration   ()                              { return *::config; }
-content&           get_content         ()                              { return *::computation; }
-extensions&        get_extensions      ()                              { return *::extensions; }
+configuration&     get_configuration   ()                              { return ::config; }
+content&           get_content         ()                              { return ::computation; }
+extensions&        get_extensions      ()                              { return ::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }

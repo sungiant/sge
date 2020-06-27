@@ -6,28 +6,23 @@
 #include <sge.hh>
 #include <sge_app.hh>
 
-std::unique_ptr<sge::app::configuration> config;
-std::unique_ptr<sge::app::content> computation;
+sge::app::configuration config = {};
+sge::app::content computation = {};
+sge::app::extensions extensions = {};
 
 void initialise () {
-    config = std::make_unique<sge::app::configuration> ();
-
-    computation = std::make_unique<sge::app::content>(sge::app::content {
-        "vanilla.comp.spv",
-        std::optional<sge::dataspan>(),
-        {}
-    });
+    computation.shader_path = "vanilla.comp.spv";
 }
 
-void terminate () { config.reset (); }
-
+void terminate () {}
 
 //--------------------------------------------------------------------------------------------------------------------//
 namespace sge::app { // HOOK UP TO SGE
 
 void               initialise          ()                              { ::initialise (); }
-configuration&     get_configuration   ()                              { return *::config; }
-content&           get_content         ()                              { return *::computation; }
+configuration&     get_configuration   ()                              { return ::config; }
+content&           get_content         ()                              { return ::computation; }
+extensions&        get_extensions      ()                              { return ::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   {}
 void               debug_ui            (response& r, const api& sge)   {}

@@ -3,13 +3,7 @@
 #include <string>
 
 #include <imgui/imgui.h>
-#include <sge.hh>
 #include <sge_app.hh>
-#include <ext_overlay.hh>
-#include <ext_keyboard.hh>
-#include <ext_mouse.hh>
-#include <ext_gamepad.hh>
-#include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
 
@@ -85,9 +79,9 @@ struct UBO_SETTINGS {
 
 
 
-std::unique_ptr<sge::app::configuration> config;
-std::unique_ptr<sge::app::content> computation;
-std::unique_ptr<sge::app::extensions> extensions;
+sge::app::configuration config = {};
+sge::app::content computation = {};
+sge::app::extensions extensions = {};
 free_camera camera;
 
 PUSH push;
@@ -132,14 +126,13 @@ sge::dataspan current_tree_dataspan () { return sge::dataspan{ sbo_tree.data (),
 #endif
 
 void initialise () {
-    config = std::make_unique<sge::app::configuration> ();
-    config->app_name = "Dynamic CSG evaluation";
-    config->app_width = 960;
-    config->app_height = 540;
-    config->enable_console = true;
+    config.app_name = "Dynamic CSG evaluation";
+    config.app_width = 960;
+    config.app_height = 540;
+    config.enable_console = true;
 
     // initial ubo settings
-    ubo_camera.aspect = (float)config->app_width / (float)config->app_height;
+    ubo_camera.aspect = (float)config.app_width / (float)config.app_height;
     ubo_settings.iterations = 64;
     ubo_settings.display_mode = 0;
 #if (USE_SBO_MATERIALS == 1)
@@ -242,55 +235,42 @@ void initialise () {
 
 #endif
 
-    computation = std::make_unique<sge::app::content>(sge::app::content {
-        "csg.comp.spv",
-        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
-        {
-            sge::dataspan { &ubo_camera,              sizeof (UBO_CAMERA) },
-            sge::dataspan { &ubo_settings,            sizeof (UBO_SETTINGS) },
-        },
-        {
+    computation.shader_path = "csg.comp.spv";
+    computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
+    computation.uniforms = {
+        sge::dataspan { &ubo_camera, sizeof (UBO_CAMERA) },
+        sge::dataspan { &ubo_settings, sizeof (UBO_SETTINGS) },
+    };
+    computation.blobs = {
 #if (USE_SBO_MATERIALS == 1)
-            current_materials_dataspan (),
+        current_materials_dataspan (),
 #endif
 #if (USE_SBO_LIGHTS == 1)
-            current_lights_dataspan (),
+        current_lights_dataspan (),
 #endif
 #if (USE_SBO_SCENE == 1)
-            current_shapes_dataspan (),
-            current_tree_dataspan (),
+        current_shapes_dataspan (),
+        current_tree_dataspan (),
 #endif
-        }
-    });
-    
-    
-    extensions = std::make_unique<sge::app::extensions>();
-    
-    extensions->views = {
-        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
-        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
-        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
-        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
-        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
     };
 
-    blobs_changed.resize (computation->blobs.size ());
+    blobs_changed.resize (computation.blobs.size ());
 
     push.time = 0.0f;
     push.no_change = false;
 }
 
-void terminate () { config.reset (); }
+void terminate () {}
 
 bool has_local_blob_change = false;
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
-    camera.update (sge.ext<sge::ext::instrumentation>().dt(), sge.ext<sge::ext::keyboard>(), sge.ext<sge::ext::mouse>(), sge.ext<sge::ext::gamepad>());
+    camera.update (sge.instrumentation.dt(), sge.input);
 
     int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
@@ -319,14 +299,14 @@ void update (sge::app::response& r, const sge::app::api& sge) {
 
     const bool blob_update_needed = std::find_if (blobs_changed.begin (), blobs_changed.end (), [](std::optional<sge::dataspan> x) { return x.has_value ();  }) != blobs_changed.end ();
 
-    if (blob_update_needed && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.ext<sge::ext::instrumentation>().timer ()) {
+    if (blob_update_needed && last_blob_update_time + UPDATE_STORAGE_BUFFER_DELAY < sge.instrumentation.timer ()) {
         // no need to update blobs every frames when user is just changing colours
         push.no_change = false;
         r.push_constants_changed = true;
         r.blob_changes = blobs_changed;
-        last_blob_update_time = sge.ext<sge::ext::instrumentation>().timer ();
+        last_blob_update_time = sge.instrumentation.timer ();
         blobs_changed.clear ();
-        blobs_changed.resize (computation->blobs.size ());
+        blobs_changed.resize (computation.blobs.size ());
     }
 
 }
@@ -500,9 +480,9 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 namespace sge::app { // HOOK UP TO SGE
 
 void               initialise          ()                              { ::initialise (); }
-configuration&     get_configuration   ()                              { return *::config; }
-content&           get_content         ()                              { return *::computation; }
-extensions&        get_extensions      ()                              { return *::extensions; }
+configuration&     get_configuration   ()                              { return ::config; }
+content&           get_content         ()                              { return ::computation; }
+extensions&        get_extensions      ()                              { return ::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }

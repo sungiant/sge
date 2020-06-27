@@ -3,19 +3,13 @@
 #include <string>
 
 #include <imgui/imgui.h>
-#include <sge.hh>
 #include <sge_app.hh>
-#include <ext_overlay.hh>
-#include <ext_keyboard.hh>
-#include <ext_mouse.hh>
-#include <ext_gamepad.hh>
-#include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
 
-std::unique_ptr<sge::app::configuration> config;
-std::unique_ptr<sge::app::content> computation;
-std::unique_ptr<sge::app::extensions> extensions;
+sge::app::configuration config = {};
+sge::app::content computation = {};
+sge::app::extensions extensions = {};
 
 struct PUSH {
     float time;
@@ -78,51 +72,37 @@ struct UBO_SETTINGS {
 free_camera camera;
 
 void initialise () {
-    config = std::make_unique<sge::app::configuration> ();
-    config->app_name = "Raymarching (static SDF)";
-    config->app_width = 960;
-    config->app_height = 540;
-    config->enable_console = true;
+    config.app_name = "Raymarching (static SDF)";
+    config.app_width = 960;
+    config.app_height = 540;
+    config.enable_console = true;
 
     // initial ubo settings
-    ubo_camera.aspect = (float)config->app_width / (float)config->app_height;
+    ubo_camera.aspect = (float)config.app_width / (float)config.app_height;
     ubo_settings.iterations = 64;
     ubo_settings.display_mode = 0;
 
-    computation = std::make_unique<sge::app::content>(sge::app::content {
-        "raymarching.comp.spv",
-        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
-        {
-            sge::dataspan { &ubo_camera, sizeof (UBO_CAMERA) },
-            sge::dataspan { &ubo_settings, sizeof (UBO_SETTINGS) },
-        }
-    });
-    
-    
-    extensions = std::make_unique<sge::app::extensions>();
-    
-    extensions->views = {
-        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
-        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
-        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
-        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
-        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
+    computation.shader_path = "raymarching.comp.spv";
+    computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
+    computation.uniforms = {
+        sge::dataspan { &ubo_camera, sizeof (UBO_CAMERA) },
+        sge::dataspan { &ubo_settings, sizeof (UBO_SETTINGS) },
     };
 
     push.time = 0.0f;
     push.no_change = false;
 }
 
-void terminate () { config.reset (); }
+void terminate () {}
 
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
-    camera.update (sge.ext<sge::ext::instrumentation>().dt(), sge.ext<sge::ext::keyboard>(), sge.ext<sge::ext::mouse>(), sge.ext<sge::ext::gamepad>());
+    camera.update (sge.instrumentation.dt(), sge.input);
 
     int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
@@ -205,9 +185,9 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 namespace sge::app { // HOOK UP TO SGE
 
 void               initialise          ()                              { ::initialise (); }
-configuration&     get_configuration   ()                              { return *::config; }
-content&           get_content         ()                              { return *::computation; }
-extensions&        get_extensions      ()                              { return *::extensions; }
+configuration&     get_configuration   ()                              { return ::config; }
+content&           get_content         ()                              { return ::computation; }
+extensions&        get_extensions      ()                              { return ::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }

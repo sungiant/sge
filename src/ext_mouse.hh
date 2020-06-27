@@ -4,6 +4,8 @@
 
 #include "sge.hh"
 
+#include <imgui/imgui.h>
+
 namespace sge::ext {
 
 class mouse : public runtime::view {

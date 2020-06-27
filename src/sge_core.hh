@@ -7,6 +7,7 @@
 #pragma once
 
 #include "sge.hh"
+#include "sge_runtime.hh"
 #include "sge_vk.hh"
 
 namespace sge::core {
@@ -227,7 +228,7 @@ class engine {
     std::unordered_map<size_t, std::unique_ptr<runtime::extension>> engine_extensions = {};
 #endif
     std::unique_ptr<app::response>                      user_response;
-    std::unique_ptr<app::api>                           user_api;
+    app::api*                                           user_api;
     std::vector<std::function<void ()>>                 debug_fns = {};
 
 public:

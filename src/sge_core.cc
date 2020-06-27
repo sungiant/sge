@@ -1,11 +1,11 @@
 #include "sge_core.hh"
 
+#include "sge_app_interface.hh"
+
 #include <imgui/imgui.h>
 
 namespace sge::core {
 
-    
-    
 //--------------------------------------------------------------------------------------------------------------------//
 
 api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks
@@ -303,6 +303,7 @@ void api_impl::system__set_state_int (runtime::system_int_state z, int v) {
         default: break;
     }
 }
+    
 void api_impl::system__set_state_string (runtime::system_string_state z, const char* v) {
     switch (z){
         case runtime::system_string_state::title: engine_tasks.change_window_title = std::string (v); break;
@@ -485,9 +486,25 @@ void engine::setup (
                                              );
     
 #if SGE_EXTENSIONS_ENABLED
-    auto& user_extensions = sge::app::get_extensions ();
+    auto& standard_extensions = sge::app::internal::get_standard_extensions ();
 
     // I am certain that this can be done in a much better way with some template wizardary.
+    for (int i = 0; i < standard_extensions.views.size(); ++i) {
+        size_t id = standard_extensions.views[i].first;
+        auto& new_fn = standard_extensions.views[i].second;
+        runtime::view* view = new_fn (*engine_api);
+        engine_extensions[id] = std::unique_ptr<runtime::extension> (view);
+    }
+    
+    for (int i = 0; i < standard_extensions.systems.size(); ++i) {
+        size_t id = standard_extensions.systems[i].first;
+        auto& new_fn = standard_extensions.systems[i].second;
+        runtime::system* system = new_fn (*engine_api);
+        engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
+    }
+    
+    auto& user_extensions = sge::app::get_extensions ();
+    
     for (int i = 0; i < user_extensions.views.size(); ++i) {
         size_t id = user_extensions.views[i].first;
         auto& new_fn = user_extensions.views[i].second;
@@ -495,13 +512,13 @@ void engine::setup (
         engine_extensions[id] = std::unique_ptr<runtime::extension> (view);
     }
     
- 
     for (int i = 0; i < user_extensions.systems.size(); ++i) {
         size_t id = user_extensions.systems[i].first;
         auto& new_fn = user_extensions.systems[i].second;
         runtime::system* system = new_fn (*engine_api);
         engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
     }
+    
     
     for (auto& kvp : engine_extensions) {
         const size_t id = kvp.first;
@@ -511,7 +528,7 @@ void engine::setup (
 #endif
     
     user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
-    user_api = std::make_unique<app::api> (*engine_api);
+    user_api = app::internal::create_user_api (*engine_api);
 
     debug_fns.emplace_back ([this]() { sge::app::debug_ui (*user_response, *user_api); });
 
@@ -562,7 +579,7 @@ void engine::stop () {
 }
 
 void engine::shutdown () {
-    user_api.reset ();
+    SAFE_DELETE (user_api);
     user_response.reset ();
 #if SGE_EXTENSIONS_ENABLED
     engine_extensions.clear ();

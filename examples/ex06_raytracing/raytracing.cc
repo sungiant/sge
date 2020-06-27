@@ -3,13 +3,7 @@
 #include <string>
 
 #include <imgui/imgui.h>
-#include <sge.hh>
 #include <sge_app.hh>
-#include <ext_overlay.hh>
-#include <ext_keyboard.hh>
-#include <ext_mouse.hh>
-#include <ext_gamepad.hh>
-#include <ext_instrumentation.hh>
 
 #include "../ex_common/free_camera.hh"
 
@@ -17,9 +11,9 @@
 //      i've added it for now to try and help illustrate and debug a molten vk issue relating to
 //      more than a single SBO in a compute shader.
 
-std::unique_ptr<sge::app::configuration> config;
-std::unique_ptr<sge::app::content> computation;
-std::unique_ptr<sge::app::extensions> extensions;
+sge::app::configuration config = {};
+sge::app::content computation = {};
+sge::app::extensions extensions = {};
 
 struct PUSH { float time = 0.0f; } push;
 
@@ -87,11 +81,10 @@ Plane newPlane(sge::math::vector3 normal, float distance, sge::math::vector3 dif
 free_camera camera;
 
 void initialise () {
-    config = std::make_unique<sge::app::configuration> ();
-    config->app_name = "Raytracing";
-    config->app_width = 1280;
-    config->app_height = 720;
-    config->enable_console = true;
+    config.app_name = "Raytracing";
+    config.app_width = 1280;
+    config.app_height = 720;
+    config.enable_console = true;
 
     sbo_spheres.push_back(newSphere(sge::math::vector3 { 1.75f, -0.5f, 0.0f }, 1.0f, sge::math::vector3 { 0.0f, 1.0f, 0.0f }, 32.0f));
     sbo_spheres.push_back(newSphere(sge::math::vector3 { 0.0f, 1.0f, -0.5f }, 1.0f, sge::math::vector3 { 0.65f, 0.77f, 0.97f }, 32.0f));
@@ -108,39 +101,25 @@ void initialise () {
     camera.position = ubo.position;
     camera.orientation = ubo.orientation;
 
-    computation = std::make_unique<sge::app::content>(sge::app::content {
-        "raytracing.comp.spv",
-        std::optional<sge::dataspan> ({ &push, sizeof (PUSH) }),
-        {
-            sge::dataspan { &ubo, sizeof (UBO) },
-        },
-        {
-            sge::dataspan { sbo_spheres.data(), sbo_spheres.size() * sizeof(Sphere) },
-            sge::dataspan { sbo_planes.data(), sbo_planes.size() * sizeof(Plane) },
-        }
-    });
-    
-    extensions = std::make_unique<sge::app::extensions>();
-    
-    extensions->views = {
-        { sge::runtime::type_id<sge::ext::overlay>(), [] (const sge::runtime::api& x) { return new sge::ext::overlay (x); }},
-        { sge::runtime::type_id<sge::ext::keyboard>(), [] (const sge::runtime::api& x) { return new sge::ext::keyboard (x); }},
-        { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
-        { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
-        { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
+    computation.shader_path = "raytracing.comp.spv";
+    computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
+    computation.uniforms = { sge::dataspan { &ubo, sizeof (UBO) }, };
+    computation.blobs = {
+        sge::dataspan { sbo_spheres.data(), sbo_spheres.size() * sizeof(Sphere) },
+        sge::dataspan { sbo_planes.data(), sbo_planes.size() * sizeof(Plane) },
     };
 }
 
-void terminate () { config.reset (); }
+void terminate () {}
 
 void update (sge::app::response& r, const sge::app::api& sge) {
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
-    if (sge.ext<sge::ext::keyboard>().key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
+    if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
     UBO u = ubo;
 
-    camera.update (sge.ext<sge::ext::instrumentation>().dt(), sge.ext<sge::ext::keyboard>(), sge.ext<sge::ext::mouse>(), sge.ext<sge::ext::gamepad>());
+    camera.update (sge.instrumentation.dt(), sge.input);
 
     u.position = camera.position;
     u.orientation = camera.orientation;
@@ -150,7 +129,7 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         r.uniform_changes[0] = true;
     }
 
-    push.time = sge.ext<sge::ext::instrumentation>().timer();
+    push.time = sge.instrumentation.timer();
     r.push_constants_changed = true;
 }
 
@@ -179,9 +158,9 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
 namespace sge::app { // HOOK UP TO SGE
 
 void               initialise          ()                              { ::initialise (); }
-configuration&     get_configuration   ()                              { return *::config; }
-content&           get_content         ()                              { return *::computation; }
-extensions&        get_extensions      ()                              { return *::extensions; }
+configuration&     get_configuration   ()                              { return ::config; }
+content&           get_content         ()                              { return ::computation; }
+extensions&        get_extensions      ()                              { return ::extensions; }
 void               start               (const api& sge)                {}
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }

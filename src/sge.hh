@@ -68,9 +68,9 @@
 #define SGE_VERSION_MINOR(version) (((uint32_t)(version) >> 12) & 0x3ff)
 #define SGE_VERSION_PATCH(version) ((uint32_t)(version) & 0xfff)
 
-#define SGE_ASSERT(x) assert(x);
-#define SGE_SAFE_DELETE(x) { delete x; x = nullptr; }
-#define SGE_TRACE(x) { printf (x); }
+#define ASSERT(x) assert(x);
+#define SAFE_DELETE(x) { delete x; x = nullptr; }
+#define TRACE(x) { printf (x); }
 
 // ---------------------------------- //
 
