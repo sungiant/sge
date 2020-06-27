@@ -18,6 +18,7 @@ public:
     bool is_button_just_released    (runtime::mouse_button z)   const { return is_button_up (z) && was_button_down (z); }
     math::point2 position           ()                          const { return position_current; }
     math::point2 position_delta     ()                          const { return position_current - position_previous; }
+    math::vector2 position_delta_proportional ()                const { math::point2 d = position_current - position_previous; return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }
     int scrollwheel                 ()                          const { return scrollwheel_current; }
     int scrollwheel_delta           ()                          const { return scrollwheel_current - scrollwheel_previous; }
 
@@ -30,6 +31,9 @@ private:
     
     int scrollwheel_current = 0;
     int scrollwheel_previous = 0;
+
+    int current_screenwidth;
+    int current_screenheight;
     
 public:
     
@@ -40,6 +44,9 @@ public:
 
     virtual void update () override {
         
+        current_screenwidth = sge.system__get_state_int (sge::runtime::system_int_state::screenwidth);
+        current_screenheight = sge.system__get_state_int (sge::runtime::system_int_state::screenheight);
+
         { // buttons
             uint32_t sz = 0;
             static std::array<runtime::mouse_button, (size_t) runtime::mouse_button::COUNT> buttons_arr;

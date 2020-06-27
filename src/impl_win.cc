@@ -237,15 +237,15 @@ public:
 
     void wnd_proc (HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
         switch (message) {
-            case WM_LBUTTONDOWN:            pressed_buttons.insert (button::left);                      break;
-            case WM_RBUTTONDOWN:            pressed_buttons.insert (button::right);                     break;
-            case WM_MBUTTONDOWN:            pressed_buttons.insert (button::middle);                    break;
-            case WM_LBUTTONUP:              pressed_buttons.erase  (button::left);                      break;
-            case WM_RBUTTONUP:              pressed_buttons.erase  (button::right);                     break;
-            case WM_MBUTTONUP:              pressed_buttons.erase  (button::middle);                    break;
-            case WM_MOUSEWHEEL:             scrollwheel += GET_WHEEL_DELTA_WPARAM (wparam) / 120;       break;
-            case WM_MOUSEMOVE:              position.x = LOWORD (lparam), position.y = HIWORD (lparam); break;
-            default:                                                                                    break;
+            case WM_LBUTTONDOWN: SetCapture (hwnd); pressed_buttons.insert (button::left);   break;
+            case WM_RBUTTONDOWN: SetCapture (hwnd); pressed_buttons.insert (button::right);  break;
+            case WM_MBUTTONDOWN: SetCapture (hwnd); pressed_buttons.insert (button::middle); break;
+            case WM_LBUTTONUP:   ReleaseCapture (); pressed_buttons.erase  (button::left);   break;
+            case WM_RBUTTONUP:   ReleaseCapture (); pressed_buttons.erase  (button::right);  break;
+            case WM_MBUTTONUP:   ReleaseCapture (); pressed_buttons.erase  (button::middle); break;
+            case WM_MOUSEWHEEL:  scrollwheel += GET_WHEEL_DELTA_WPARAM (wparam) / 120;       break;
+            case WM_MOUSEMOVE:  position.x = LOWORD (lparam), position.y = HIWORD (lparam);  break;
+            default:                                                                         break;
         }
     }
 
