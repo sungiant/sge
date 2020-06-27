@@ -23,7 +23,8 @@
 #include "sge.hh"
 #include "sge_core.hh"
 
-#define SGE_OSX_INPUT_DEBUG 0
+#define SGE_OSX_INPUT_DEBUG 1
+
 
 
 // IOKit Gamepad (stand alone class - independent of SGE)
@@ -35,7 +36,7 @@
 class iokit_gamepad {
 
 public:
-    
+
     enum class index { one, two, three, four };
     struct vector { float x; float y; };
     enum class button {
@@ -44,7 +45,7 @@ public:
         option_left, option_middle, option_right,
         left_thumb, right_thumb, left_shoulder, right_shoulder
     };
-    
+
     vector                  get_left_stick      ()                  const { return get_left_stick (default_connection ().value_or(index::one)).value_or (vector { 0.0f, 0.0f }); }
     vector                  get_right_stick     ()                  const { return get_right_stick (default_connection ().value_or(index::one)).value_or (vector { 0.0f, 0.0f }); }
     float                   get_left_trigger    ()                  const { return get_left_trigger (default_connection ().value_or(index::one)).value_or (0.0f); }
@@ -56,27 +57,38 @@ public:
     std::optional<float>    get_left_trigger    (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.left_trigger; } return std::nullopt; }
     std::optional<float>    get_right_trigger   (index i)           const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.right_trigger; } return std::nullopt; }
     std::optional<bool>     is_button_pressed   (index i, button z) const { int idx = convert(i); if (connections[idx].has_value()) { return connections[idx].value().second.pressed_buttons.find(z) != connections[idx].value().second.pressed_buttons.end(); } return std::nullopt; }
-    
+
                             iokit_gamepad       ()                        { start (); }
                             ~iokit_gamepad      ()                        { stop (); }
     void                    update              ()                        { process (); }
     std::optional<index>    default_connection  ()                  const { for (int i = 0; i < CONNECTION_LIMIT; ++i) { if (connections[i].has_value()) return (index) i; } return std::nullopt; }
 
 private:
+
     static constexpr int CONNECTION_LIMIT = 4;
-    
-    enum Cookie {
-        BUTTON_ACTION_SOUTH = 2, BUTTON_ACTION_EAST = 3, BUTTON_ACTION_WEST = 4, BUTTON_ACTION_NORTH = 5,
-        BUTTON_LEFT_SHOULDER = 6, BUTTON_RIGHT_SHOULDER = 7, BUTTON_LEFT_TRIGGER = 8, BUTTON_RIGHT_TRIGGER = 9,
-        BUTTON_OPTION_LEFT = 10, BUTTON_OPTION_RIGHT = 11, BUTTON_LEFT_THUMB = 12, BUTTON_RIGHT_THUMB = 13,
-        BUTTON_OPTION_EXTRA = 14, BUTTON_OPTION_MIDDLE = 15,
-        AXIS_LEFT_X = 16, AXIS_LEFT_Y = 17, AXIS_RIGHT_X = 18, AXIS_RIGHT_Y = 19,
-        AXIS_DPAD = 20, AXIS_LEFT_TRIGGER = 22, AXIS_RIGHT_TRIGGER = 23,
+
+    enum identifier_type { BUTTON, AXIS };
+
+    enum button_cookie {
+        BUTTON_ACTION_SOUTH = 0, BUTTON_ACTION_EAST = 1,
+        BUTTON_ACTION_WEST = 2, BUTTON_ACTION_NORTH = 3,
+        BUTTON_LEFT_SHOULDER = 4, BUTTON_RIGHT_SHOULDER = 5,
+        BUTTON_LEFT_TRIGGER = 6, BUTTON_RIGHT_TRIGGER = 7,
+        BUTTON_OPTION_LEFT = 8, BUTTON_OPTION_RIGHT = 9,
+        BUTTON_LEFT_THUMB = 10, BUTTON_RIGHT_THUMB = 11,
+        BUTTON_OPTION_EXTRA = 12, BUTTON_OPTION_MIDDLE = 13,
     };
-    
+        
+    enum axis_cookie {
+        AXIS_LEFT_X = 0, AXIS_LEFT_Y = 1, AXIS_RIGHT_X = 2, AXIS_RIGHT_Y = 3,
+        AXIS_DPAD = 4, AXIS_LEFT_TRIGGER = 5, AXIS_RIGHT_TRIGGER = 6,
+    };
+
     struct attached_event   { IOHIDDeviceRef device; };
     struct detached_event   { IOHIDDeviceRef device; };
-    struct input_event      { IOHIDDeviceRef device; IOHIDElementCookie identifier; IOHIDElementType type; int value; };
+    struct input_event      { IOHIDDeviceRef device;
+                              IOHIDElementCookie element_cookie; IOHIDElementType element_type;
+                              identifier_type identifier_type; uint32_t identifier; int value; };
 
     struct device_state {
         std::unordered_set<button>  pressed_buttons;
@@ -85,21 +97,32 @@ private:
         float                       left_trigger;
         float                       right_trigger;
     };
-    
+
+    struct device_info {
+        std::string product;
+        std::string manufacturer;
+        int vendor_id;
+        int product_id;
+        std::unordered_map<IOHIDElementCookie, int> button_indicies;
+        std::unordered_map<IOHIDElementCookie, int> axis_indicies;
+    };
+
     struct input_reference {
-        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd) : parent (zp), device (zd) {}
+        input_reference (iokit_gamepad& zp, IOHIDDeviceRef zd, device_info& zi) : parent (zp), device (zd), info (zi) {}
         iokit_gamepad&              parent;
         const IOHIDDeviceRef        device;
+        device_info                 info;
+
     };
-    
+
     typedef std::variant<attached_event, detached_event, input_event>       event;
     typedef std::chrono::high_resolution_clock::time_point                  timestamp;
     typedef std::optional<std::pair<IOHIDDeviceRef, device_state>>          connection;
-    
+
     // accessed on hid thread
     std::queue<event>                                                       event_queue;
-    std::unordered_map<IOHIDDeviceRef, std::unique_ptr<input_reference>>    input_callback_data; // crap needed by the input callback
-    
+    std::unordered_map<IOHIDDeviceRef, std::unique_ptr<input_reference>>    input_callback_data;
+
     // local only
     IOHIDManagerRef                                                         hid_manager = nullptr;
     CFRunLoopRef                                                            event_thread_loop = nullptr;
@@ -109,7 +132,7 @@ private:
     timestamp                                                               last_gamepad_scan;
     std::array <connection, CONNECTION_LIMIT>                               connections;
 
-    
+
     //
     // Implementation
     // --------------
@@ -154,7 +177,7 @@ private:
         }
         IOHIDManagerScheduleWithRunLoop (hid_manager, CFRunLoopGetCurrent (), CFSTR ("RunLoopModeDiscovery"));
     }
-    
+
     void stop () {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
             if (connections[i].has_value ())
@@ -163,6 +186,15 @@ private:
         pthread_mutex_lock (&mutex);
         while (event_queue.size ())
             event_queue.pop();
+        
+        // having this bit causes `IOHIDManagerClose` to assert... :/
+        //for (auto& kvp : input_callback_data) {
+            //IOReturn r = IOHIDDeviceClose (kvp.first, kIOHIDOptionsTypeSeizeDevice);
+            //if (r != kIOReturnSuccess) {
+            //    std::cout << "Unexpected return code [" << r << "] from IOHIDDeviceClose (" << kvp.first << ")" << '\n';
+            //}
+        //}
+
         input_callback_data.clear ();
         pthread_mutex_unlock (&mutex);
         if (event_thread_loop != nullptr) {
@@ -183,7 +215,7 @@ private:
         CFRelease (hid_manager);
         hid_manager = nullptr;
     }
-    
+
     void process () {
         const auto now = std::chrono::high_resolution_clock::now ();
         if (now - last_gamepad_scan >= std::chrono::seconds (1)) { // scan
@@ -197,13 +229,13 @@ private:
                 event_queue.pop ();
                 if (attached_event* attached = std::get_if<attached_event> (&event)) { add_connection (attached->device); }
                 if (detached_event* detached = std::get_if<detached_event> (&event)) { remove_connection (detached->device); }
-                if (input_event* input = std::get_if<input_event> (&event)) { handle_input_event (input->device, input->identifier, input->value); }
+                if (input_event* input = std::get_if<input_event> (&event)) { handle_input_event (input->device, input->identifier_type, input->identifier, input->value); }
             }
             pthread_mutex_unlock (&mutex);
             last_gamepad_update = now;
         }
     }
-    
+
     void add_connection (IOHIDDeviceRef device) {
         auto idx = get_next_connection_index ();
         if (idx.has_value ()) {
@@ -218,7 +250,7 @@ private:
 #endif
         }
     }
-    
+
     void remove_connection (IOHIDDeviceRef device) {
         const auto idx = get_connection_index (device);
         if (idx.has_value ()) {
@@ -228,79 +260,142 @@ private:
             connections[idx.value ()].reset();
         }
     }
-    void handle_input_event (IOHIDDeviceRef device, IOHIDElementCookie identifier, int value) {
+
+    void handle_input_event (IOHIDDeviceRef device, identifier_type type, int identifier, int value) {
+
         const auto idx = get_connection_index (device);
         assert (idx.has_value());
         const int index = idx.value();
         assert (connections[index].has_value());
         auto& state = connections[index].value ().second;
-        switch (identifier) {
-            // buttons
-            #define CASE(x, y) { case x: { if (value > 0) state.pressed_buttons.insert (y); else state.pressed_buttons.erase (y); break; } }
-            CASE (BUTTON_ACTION_SOUTH,   button::action_south);
-            CASE (BUTTON_ACTION_EAST,    button::action_east);
-            CASE (BUTTON_ACTION_WEST,    button::action_west);
-            CASE (BUTTON_ACTION_NORTH,   button::action_north);
-            CASE (BUTTON_LEFT_SHOULDER,  button::left_shoulder);
-            CASE (BUTTON_RIGHT_SHOULDER, button::right_shoulder);
-            CASE (BUTTON_OPTION_LEFT,    button::option_left);
-            CASE (BUTTON_OPTION_MIDDLE,  button::option_middle);
-            CASE (BUTTON_OPTION_RIGHT,   button::option_right);
-            CASE (BUTTON_LEFT_THUMB,     button::left_thumb);
-            CASE (BUTTON_RIGHT_THUMB,    button::right_thumb);
-            #undef CASE
-            // sticks
-            case AXIS_LEFT_X: case AXIS_LEFT_Y: case AXIS_RIGHT_X: case AXIS_RIGHT_Y: {
-                float v = (((float) value / 255.0f) * 2.0f) - 1.0f;
-                const float THUMBSTICK_DEADZONE = 0.1f;
-                if (v < THUMBSTICK_DEADZONE && v > -THUMBSTICK_DEADZONE) { v = 0.0f; }
-
-                if (identifier == AXIS_LEFT_X)      state.left_stick.x = v;
-                else if (identifier == AXIS_LEFT_Y) state.left_stick.y = -v;
-                else if (identifier == AXIS_RIGHT_X) state.right_stick.x = v;
-                else if (identifier == AXIS_RIGHT_Y) state.right_stick.y = -v;
-                
-                break;
+        
+        if (type == identifier_type::BUTTON) {
+            switch (identifier) {
+                #define CASE(x, y) { case BUTTON_ ## x: { if (value > 0) state.pressed_buttons.insert (y); else state.pressed_buttons.erase (y); break; } }
+                CASE (ACTION_SOUTH,   button::action_south);
+                CASE (ACTION_EAST,    button::action_east);
+                CASE (ACTION_WEST,    button::action_west);
+                CASE (ACTION_NORTH,   button::action_north);
+                CASE (LEFT_SHOULDER,  button::left_shoulder);
+                CASE (RIGHT_SHOULDER, button::right_shoulder);
+                CASE (OPTION_LEFT,    button::option_left);
+                CASE (OPTION_MIDDLE,  button::option_middle);
+                CASE (OPTION_RIGHT,   button::option_right);
+                CASE (LEFT_THUMB,     button::left_thumb);
+                CASE (RIGHT_THUMB,    button::right_thumb);
+                #undef CASE
+                // button triggers (these exist on the N30 Pro instead of real triggers)
+                case BUTTON_LEFT_TRIGGER: { if (value > 0) state.left_trigger = 1.0f; else state.left_trigger = 0.0f; break; }
+                case BUTTON_RIGHT_TRIGGER: { if (value > 0) state.right_trigger = 1.0f; else state.right_trigger = 0.0f; break; }
             }
-            // dpad
-            case AXIS_DPAD: {
-                #define FN(x) { state.pressed_buttons.insert (x); }
-                switch (value) {
-                    case 0: FN (button::dpad_up);                                   break;
-                    case 1: FN (button::dpad_up);       FN (button::dpad_right);    break;
-                    case 2: FN (button::dpad_right);                                break;
-                    case 3: FN (button::dpad_right);    FN (button::dpad_down);     break;
-                    case 4: FN (button::dpad_down);                                 break;
-                    case 5: FN (button::dpad_left);     FN (button::dpad_down);     break;
-                    case 6: FN (button::dpad_left);                                 break;
-                    case 7: FN (button::dpad_left);     FN (button::dpad_up);       break;
-                    case 8:
-                        state.pressed_buttons.erase (button::dpad_up);
-                        state.pressed_buttons.erase (button::dpad_right);
-                        state.pressed_buttons.erase (button::dpad_down);
-                        state.pressed_buttons.erase (button::dpad_left);            break;
+        }
+        
+        if (type == identifier_type::AXIS) {
+            switch (identifier) {
+                // sticks
+                case AXIS_LEFT_X: case AXIS_LEFT_Y: case AXIS_RIGHT_X: case AXIS_RIGHT_Y: {
+                    float v = (((float) value / 255.0f) * 2.0f) - 1.0f;
+                    const float THUMBSTICK_DEADZONE = 0.1f;
+                    if (v < THUMBSTICK_DEADZONE && v > -THUMBSTICK_DEADZONE) { v = 0.0f; }
+
+                    if (identifier == AXIS_LEFT_X)      state.left_stick.x = v;
+                    else if (identifier == AXIS_LEFT_Y) state.left_stick.y = -v;
+                    else if (identifier == AXIS_RIGHT_X) state.right_stick.x = v;
+                    else if (identifier == AXIS_RIGHT_Y) state.right_stick.y = -v;
+                    
+                    break;
                 }
-                #undef FN
+                // dpad
+                case AXIS_DPAD: {
+                    #define FN(x) { state.pressed_buttons.insert (x); }
+                    switch (value) {
+                        case 0: FN (button::dpad_up);                                   break;
+                        case 1: FN (button::dpad_up);       FN (button::dpad_right);    break;
+                        case 2: FN (button::dpad_right);                                break;
+                        case 3: FN (button::dpad_right);    FN (button::dpad_down);     break;
+                        case 4: FN (button::dpad_down);                                 break;
+                        case 5: FN (button::dpad_left);     FN (button::dpad_down);     break;
+                        case 6: FN (button::dpad_left);                                 break;
+                        case 7: FN (button::dpad_left);     FN (button::dpad_up);       break;
+                        case 8:
+                            state.pressed_buttons.erase (button::dpad_up);
+                            state.pressed_buttons.erase (button::dpad_right);
+                            state.pressed_buttons.erase (button::dpad_down);
+                            state.pressed_buttons.erase (button::dpad_left);            break;
+                    }
+                    #undef FN
+                }
                 // triggers
                 case AXIS_LEFT_TRIGGER: case AXIS_RIGHT_TRIGGER: {
                     float v = (float) value / 255.0f;
                     const float TRIGGER_DEADZONE = 0.01f;
                     if (value < TRIGGER_DEADZONE) { v = 0.0f; }
-                    if (identifier == 22)      state.left_trigger = v;
-                    else if (identifier == 23) state.right_trigger = v;
+                    if (identifier == AXIS_LEFT_TRIGGER)      state.left_trigger = v;
+                    else if (identifier == AXIS_RIGHT_TRIGGER) state.right_trigger = v;
                     break;
                 }
-                // button triggers (after real triggers as both fire)
-                case BUTTON_LEFT_TRIGGER: { if (value > 0) state.left_trigger = 1.0f; else state.left_trigger = 0.0f; break; }
-                case BUTTON_RIGHT_TRIGGER: { if (value > 0) state.right_trigger = 1.0f; else state.right_trigger = 0.0f; break; }
             }
         }
     }
-    
+
+    static void get_device_info (IOHIDDeviceRef device, device_info& info) {
+        
+        info.vendor_id = get_registry_int (device, CFSTR (kIOHIDVendorIDKey));
+        info.product_id = get_registry_int (device, CFSTR (kIOHIDProductIDKey));
+        info.product = get_registry_string (device, CFSTR (kIOHIDProductKey));
+        info.manufacturer = get_registry_string (device, CFSTR (kIOHIDManufacturerKey));
+        
+        
+        CFArrayRef elements = IOHIDDeviceCopyMatchingElements (device, nullptr, kIOHIDOptionsTypeNone);
+        for (int i = 0; i < CFArrayGetCount (elements); i++) {
+            IOHIDElementRef element = (IOHIDElementRef)CFArrayGetValueAtIndex (elements, i);
+            IOHIDElementType type = IOHIDElementGetType (element);
+
+            const uint32_t usagePage = IOHIDElementGetUsagePage (element);
+            if (usagePage != kHIDPage_GenericDesktop && usagePage != kHIDPage_Button) {
+                continue;
+            }
+
+            IOHIDElementCookie cookie = IOHIDElementGetCookie (element);
+            if (type == kIOHIDElementTypeInput_Misc ||
+                type == kIOHIDElementTypeInput_Axis) {
+                CFIndex minimum = IOHIDElementGetLogicalMin (element);
+                CFIndex maximum = IOHIDElementGetLogicalMax (element);
+                std::cout << "adding axis [" << cookie << "] #" << info.axis_indicies.size() << " (" << minimum << " - " << maximum << ")" << '\n';
+                info.axis_indicies[cookie] = info.axis_indicies.size();
+            }
+            else if (type == kIOHIDElementTypeInput_Button) {
+                std::cout << "adding button [" << cookie << "] #" << info.button_indicies.size() << '\n';
+                info.button_indicies[cookie] = info.button_indicies.size();
+            }
+        }
+        CFRelease (elements);
+    }
+    static int get_registry_int (IOHIDDeviceRef device, CFStringRef k) {
+        int r;
+        CFTypeRef rr = IOHIDDeviceGetProperty (device, k);
+        assert (CFGetTypeID (rr) == CFNumberGetTypeID ());
+        CFNumberGetValue ((CFNumberRef) rr, kCFNumberSInt32Type, &r);
+        return r;
+    }
+    static std::string get_registry_string (IOHIDDeviceRef device, CFStringRef k) {
+        std::string r;
+        CFTypeRef rr = IOHIDDeviceGetProperty (device, k);
+        if (rr == nullptr || CFGetTypeID (rr) != CFStringGetTypeID ()) {
+            r = "<unknown>";
+        } else {
+            char buffer[1024];
+            CFStringGetCString ((CFStringRef)rr, buffer, 1024, kCFStringEncodingUTF8);
+            r = buffer;
+        }
+        return r;
+    }
+
+
     //
     // Callbacks
     // --------------
-    
+
     static void* thread_start (void* context) {
         iokit_gamepad* system = static_cast<iokit_gamepad*>(context);
         system->event_thread_loop = CFRunLoopGetCurrent ();
@@ -310,57 +405,81 @@ private:
         }
         return nullptr;
     }
-    
+
     static void iohid_attached_callback (void* context, IOReturn result, void* sender, IOHIDDeviceRef device) {
         iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
+        
+        device_info info = {};
+        get_device_info(device, info);
+        //bool ps4_dual_shock = (info.vendor_id == 1356 && info.product_id == 1476);
+
+        //std::cout << "[T] Opening device (" << device << "):" << info.manufacturer << " " << info.product << '\n';
+        //IOReturn r = IOHIDDeviceOpen (device, kIOHIDOptionsTypeNone); // kIOHIDOptionsTypeSeizeDevice
+        //if (r != kIOReturnSuccess) {
+        //    std::cout << "Unexpected return code [" << r << "] from IOHIDDeviceOpen (" << device << ")" << '\n';
+        //}
+        
         pthread_mutex_lock (&gp->mutex);
-        gp->input_callback_data[device] = std::make_unique<input_reference> (*gp, device);
+        gp->input_callback_data[device] = std::make_unique<input_reference> (*gp, device, info);
         gp->event_queue.push (attached_event { device });
         IOHIDDeviceRegisterInputValueCallback (device, iohid_input_callback, gp->input_callback_data[device].get());
         IOHIDDeviceScheduleWithRunLoop (device, gp->event_thread_loop, kCFRunLoopDefaultMode);
         pthread_mutex_unlock (&gp->mutex);
+        
+
     }
-    
+
     static void iohid_detached_callback (void* context, IOReturn result, void* sender, IOHIDDeviceRef device) {
+        //std::cout << "[T] Closing device (" << device << ")" << '\n';
+        //IOReturn r = IOHIDDeviceClose (device, kIOHIDOptionsTypeNone);
+        //if (r != kIOReturnSuccess) {
+        //    std::cout << "Unexpected return code [" << r << "] from IOHIDDeviceClose (" << device << ")." << '\n';
+        //}
+        
         iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
         pthread_mutex_lock (&gp->mutex);
         gp->input_callback_data.erase (device);
         gp->event_queue.push (detached_event { device });
         pthread_mutex_unlock (&gp->mutex);
     }
-    
+
     static void iohid_input_callback (void* context, IOReturn result, void* sender, IOHIDValueRef value) {
-        static const std::unordered_set<int> interesting_cookies = {
-            BUTTON_ACTION_SOUTH, BUTTON_ACTION_EAST, BUTTON_ACTION_WEST, BUTTON_ACTION_NORTH,
-            BUTTON_LEFT_SHOULDER, BUTTON_RIGHT_SHOULDER, BUTTON_LEFT_TRIGGER, BUTTON_RIGHT_TRIGGER,
-            BUTTON_OPTION_LEFT, BUTTON_OPTION_RIGHT, BUTTON_LEFT_THUMB, BUTTON_RIGHT_THUMB,
-            BUTTON_OPTION_EXTRA, BUTTON_OPTION_MIDDLE,
-            AXIS_LEFT_X, AXIS_LEFT_Y, AXIS_RIGHT_X, AXIS_RIGHT_Y,
-            AXIS_DPAD, AXIS_LEFT_TRIGGER, AXIS_RIGHT_TRIGGER,
-        };
+       
         
         input_reference* ir = static_cast<input_reference*>(context);
+        
         const IOHIDElementRef element = IOHIDValueGetElement (value);
-        IOHIDElementType type = IOHIDElementGetType (element);
-        const IOHIDElementCookie cookie = IOHIDElementGetCookie (element);
+        IOHIDElementType element_type = IOHIDElementGetType (element);
+        const IOHIDElementCookie element_cookie = IOHIDElementGetCookie (element);
         const int int_value = IOHIDValueGetIntegerValue (value);
         
         pthread_mutex_lock (&ir->parent.mutex);
-        if (interesting_cookies.find (cookie) != interesting_cookies.end()) {
-            if (ir->parent.event_queue.size () < 512) {
-                ir->parent.event_queue.push (input_event { ir->device, cookie, type, int_value });
+
+        if (ir->parent.event_queue.size () < 512) {
+            if (ir->info.button_indicies.find (element_cookie) != ir->info.button_indicies.end()) {
+                assert (element_type == kIOHIDElementTypeInput_Button);
+                uint32_t identifier = ir->info.button_indicies.at (element_cookie);
+                auto item = input_event { ir->device, element_cookie, element_type, identifier_type::BUTTON, identifier, int_value };
+                ir->parent.event_queue.push (item);
             }
-            else assert (false); // too many events!
+            if (ir->info.axis_indicies.find (element_cookie) != ir->info.axis_indicies.end()) {
+                assert (element_type == kIOHIDElementTypeInput_Axis || element_type == kIOHIDElementTypeInput_Misc);
+                uint32_t identifier = ir->info.axis_indicies.at (element_cookie);
+                auto item = input_event { ir->device, element_cookie, element_type, identifier_type::AXIS, identifier, int_value };
+                ir->parent.event_queue.push (item);
+            }
         }
+        else assert (false); // too many events!
         pthread_mutex_unlock (&ir->parent.mutex);
     }
-    
+
+
     //
     // Utils
     // --------------
-    
+
     int convert (index z) const { switch (z) { case index::one: return 0; case index::two: return 1; case index::three: return 2; case index::four: return 3; } }
-    
+
     std::optional<int> get_next_connection_index () const {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
             if (!connections[i].has_value())
@@ -368,6 +487,7 @@ private:
         }
         return std::nullopt;
     }
+
     std::optional<int> get_connection_index (IOHIDDeviceRef device) const {
         for (int i = 0; i < CONNECTION_LIMIT; ++i) {
             if (connections[i].has_value() && connections[i].value().first == device)
@@ -375,6 +495,7 @@ private:
         }
         return std::nullopt;
     }
+    
 };
 
 
