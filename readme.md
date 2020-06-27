@@ -17,7 +17,7 @@
   <br/>
   <br/>
   <a href="https://travis-ci.org/sungiant/sge">
-    <img src="https://api.travis-ci.org/sungiant/sge.svg?branch=master"/>
+    <img alt="CI" src="https://img.shields.io/travis/sungiant/sge"/>
   </a>
   <a href="https://github.com/sungiant/sge/issues">
     <img alt="Issues" src="https://img.shields.io/github/issues-raw/sungiant/sge.svg"/>
