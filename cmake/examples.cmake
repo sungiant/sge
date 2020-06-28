@@ -10,8 +10,8 @@ list (APPEND EXAMPLES
 foreach(PROJ IN LISTS EXAMPLES)
 
 project (${PROJ})
-file (GLOB_RECURSE SOURCES ${G_ROOT_DIR}/examples/${PROJ}/*.cc)
-file (GLOB_RECURSE INCLUDES ${G_ROOT_DIR}/examples/${PROJ}/*.hh)
+file (GLOB_RECURSE SOURCES ${G_ROOT_DIR}/examples/${PROJ}/*.cc ${G_ROOT_DIR}/examples/ex_common/*.cc)
+file (GLOB_RECURSE INCLUDES ${G_ROOT_DIR}/examples/${PROJ}/*.hh ${G_ROOT_DIR}/examples/ex_common/*.hh)
 file (GLOB_RECURSE RESOURCES ${G_ROOT_DIR}/examples/${PROJ}/*.comp)
 set (SOURCE_LIST ${SOURCES} ${INCLUDES} ${RESOURCES})
 

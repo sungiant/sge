@@ -28,11 +28,10 @@ struct free_camera {
         const float traverse_rate = std::max(TRAVERSE_RATE, fast_factor * FAST_TRAVERSE_RATE) * (1.0f / traverse_sensitivity);
         const float look_rate = std::max (LOOK_RATE, fast_factor * FAST_LOOK_RATE) * (1.0f / look_sensitivity);
 
-
-        // UP/DOWN
+        
+        // AXIS UP/DOWN
         if (input.gamepad.is_button_down(sge::runtime::gamepad_button::dpad_down)) { position.y -= traverse_rate * dt; }
         if (input.gamepad.is_button_down(sge::runtime::gamepad_button::dpad_up)) { position.y += traverse_rate * dt; }
-        if (input.mouse.is_button_down (sge::runtime::mouse_button::middle)) { position.y -= MOUSE_RATE * input.mouse.position_delta_proportional ().y * traverse_rate * dt; }
 
 
         sge::math::vector3 eulerAngles = sge::math::quaternion::to_yaw_pitch_roll(orientation);
@@ -41,7 +40,7 @@ struct free_camera {
         float rxx = 0.0f;
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::left)) { rxx = -1.0f; }
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::right)) { rxx = +1.0f; }
-        if (input.mouse.is_button_down (sge::runtime::mouse_button::right)) { rxx += MOUSE_RATE * input.mouse.position_delta_proportional ().x; }
+        if (input.mouse.is_button_down (sge::runtime::mouse_button::right)) { rxx += input.mouse.velocity (sge::ext::mouse::proportion::displaysize).x * MOUSE_F; }
         if (abs(input.gamepad.right_stick().x) > abs (rxx)) { rxx = input.gamepad.right_stick().x; }
         if (!sge::math::is_zero (rxx)) {
             eulerAngles.x -=dt * look_rate * rxx;
@@ -51,50 +50,57 @@ struct free_camera {
         float rxy = 0.0f;
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::down)) { rxy = -1.0f; }
         if (input.keyboard.is_key_down(sge::runtime::keyboard_key::up)) { rxy = +1.0f; }
-        if (input.mouse.is_button_down (sge::runtime::mouse_button::right)) { rxy += MOUSE_RATE * input.mouse.position_delta_proportional ().y; } // not inverting here as it feels wrong with the visible mouse cursor.
+        if (input.mouse.is_button_down (sge::runtime::mouse_button::right)) { rxy += input.mouse.velocity (sge::ext::mouse::proportion::displaysize).y * MOUSE_F; } // not inverting here as it feels wrong with the visible mouse cursor.
         if (abs(input.gamepad.right_stick().y) > abs (rxy)) { rxy = input.gamepad.right_stick().y; }
         if (!sge::math::is_zero (rxy)) {
             eulerAngles.y += dt * look_rate * rxy;
         }
 
         orientation = sge::math::quaternion::from_yaw_pitch_roll(eulerAngles.x, eulerAngles.y, eulerAngles.z);
-        float x_comp = sin(eulerAngles.x);
-        float z_comp = cos(eulerAngles.x);
-        float y_comp = sin(eulerAngles.y);
 
         // LEFT/RIGHT
-        float lxx = 0.0f;
-        if (input.keyboard.is_character_down('a')) { lxx = -1.0f; }
-        if (input.keyboard.is_character_down('d')) { lxx = +1.0f; }
-        if (input.mouse.is_button_down (sge::runtime::mouse_button::middle)) { lxx += MOUSE_RATE * input.mouse.position_delta_proportional().x; }
-        if (abs(input.gamepad.left_stick().x) > abs (lxx)) { lxx = input.gamepad.left_stick().x; }
-        if (!sge::math::is_zero (lxx)) {
-            position.x += -z_comp * traverse_rate * lxx * dt;
-            position.z += x_comp * traverse_rate * lxx * dt;
+        {
+        float f = 0.0f;
+            if (input.keyboard.is_character_down('a')) { f = -1.0f; }
+            if (input.keyboard.is_character_down('d')) { f = +1.0f; }
+            if (input.mouse.is_button_down (sge::runtime::mouse_button::middle)) { f += input.mouse.velocity (sge::ext::mouse::proportion::displaysize).x * MOUSE_F; }
+            if (abs(input.gamepad.left_stick().x) > abs (f)) { f = input.gamepad.left_stick().x; }
+            if (!sge::math::is_zero (f)) {
+                position.x -= cos(eulerAngles.x) * traverse_rate * f * dt;
+                position.z += sin(eulerAngles.x) * traverse_rate * f * dt;
+            }
         }
 
         // FORWARD/BACKWARD
-        float lxy = 0.0f;
-        if (input.keyboard.is_character_down('s')) { lxy = -1.0f; }
-        if (input.keyboard.is_character_down('w')) { lxy = +1.0f; }
-        int scroll = input.mouse.scrollwheel_delta ();
-        if (scroll > 0) { lxy = +50.0f; }
-        if (scroll < 0) { lxy = -50.0f; }
-        if (abs(input.gamepad.left_stick().y) > abs (lxy)) { lxy = input.gamepad.left_stick().y; }
-        if (!sge::math::is_zero (lxy)) {
-            position.x += x_comp * traverse_rate * lxy * dt;
-            position.z += z_comp * traverse_rate * lxy * dt;
-            position.y -= y_comp * traverse_rate * lxy * dt;
+        {
+            float f = 0.0f;
+            if (input.keyboard.is_character_down('s')) { f = -1.0f; }
+            if (input.keyboard.is_character_down('w')) { f = +1.0f; }
+            int scroll = input.mouse.scrollwheel_delta ();
+            if (scroll > 0) { f = +50.0f; }
+            if (scroll < 0) { f = -50.0f; }
+            if (abs(input.gamepad.left_stick().y) > abs (f)) { f = input.gamepad.left_stick().y; }
+            if (!sge::math::is_zero (f)) {
+                position.x += sin(eulerAngles.x) * traverse_rate * f * dt;
+                position.y -= sin(eulerAngles.y) * traverse_rate * f * dt;
+                position.z += cos(eulerAngles.x) * traverse_rate * f * dt;
+            }
+        }
+        // UP/DOWN
+        {
+            float f = 0.0f;
+            if (input.mouse.is_button_down (sge::runtime::mouse_button::middle)) { f += input.mouse.velocity (sge::ext::mouse::proportion::displaysize).y * MOUSE_F; }
+            if (!sge::math::is_zero (f)) {
+                position.y -= cos(eulerAngles.y) * traverse_rate * f * dt;
+            }
         }
     }
 
     sge::math::vector3         position;
     sge::math::quaternion      orientation;
 
-
     float traverse_sensitivity = 1.0f;
     float look_sensitivity = 1.0f;
-
 
     float fov = 57.5;
     float near = 0.1f;
@@ -108,6 +114,6 @@ struct free_camera {
     constexpr static float FAST_TRAVERSE_RATE = 30.0f;
     constexpr static float LOOK_RATE = 1.20f;
     constexpr static float FAST_LOOK_RATE = 1.70f;
-    constexpr static float MOUSE_RATE = 300.0f;
+    constexpr static float MOUSE_F = 1.0f / 0.40f; // moving 40% of screen space per second is equivalent to holding a joystick on full
 
 };

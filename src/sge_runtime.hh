@@ -37,7 +37,7 @@ enum class gamepad_button       { dpad_up, dpad_down, dpad_left, dpad_right, bac
 enum class gamepad_axis         { left_trigger, right_trigger, left_stick_vertical, left_stick_horizontal, right_stick_vertical, right_stick_horizontal, COUNT };
     
 enum class system_bool_state    { fullscreen, imgui, COUNT };
-enum class system_int_state     { screenwidth, screenheight, COUNT };
+enum class system_int_state     { /* renderable area */ screenwidth, screenheight, /* fullscreen area */ displaywidth, displayheight, COUNT };
 enum class system_string_state  { title, gpu_name, engine_version, COUNT };
 
 class extension;

@@ -85,6 +85,8 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
 - [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
 - [ ] Intelligent Vulkan queue selection.
+- [ ] Host independent from core.
+- [ ] App api review.
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Complete dynamic csg tree SBO implementation.

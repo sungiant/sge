@@ -450,6 +450,9 @@ void calculate_sge_container_state (sge::core::container_state& container) {
         container.current_width = width (g_latest_window_rect) - g_window_style_x;
         container.current_height = height (g_latest_window_rect) - g_window_style_y;
     }
+
+    container.max_width = g_fullscreen_width;
+    container.max_height = g_fullscreen_height;
 }
 
 void calculate_sge_input_state (sge::core::input_state& input) {

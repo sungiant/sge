@@ -81,9 +81,16 @@ typedef std::variant<input_binary_control, input_quaternary_control, input_chara
 typedef std::unordered_map<input_control_identifier, input_control_value> input_state;
 
 struct container_state {
-    bool is_resizing;
+    bool is_resizing; // todo: surely this isn't needed and is just a function of changes in the values below.
+    
+    // the size in pixels of the area SGE is currently contained within (this does not include the OS window borders).
     int current_width;
     int current_height;
+    
+    // the maximum possible size the rendering area could be (i.e. in fullscreen mode -
+    // equivalent to the primary monitor's resolution).
+    int max_width;
+    int max_height;
 };
 
 typedef std::function <void (void)>         void_fn;
@@ -103,6 +110,7 @@ struct host_state {
     std::string                             window_title;
     bool                                    is_fullscreen;
     bool                                    container_just_changed;
+    
 };
 
 struct configuration_state {

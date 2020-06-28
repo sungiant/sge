@@ -513,6 +513,10 @@ void calculate_sge_container_state (sge::core::container_state& container) {
     container.is_resizing = g_is_resizing;
     container.current_width = g_container_width;
     container.current_height = g_container_height;
+    
+    NSRect e = [[NSScreen mainScreen] frame];
+    container.max_width = (int)e.size.width;
+    container.max_height = (int)e.size.height;
 }
 
 void calculate_sge_input_state (sge::core::input_state& input) {

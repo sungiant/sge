@@ -24,6 +24,8 @@ int api_impl::system__get_state_int (runtime::system_int_state z) const {
     switch (z) {
         case runtime::system_int_state::screenwidth: return engine_state.container.current_width;
         case runtime::system_int_state::screenheight: return engine_state.container.current_height;
+        case runtime::system_int_state::displaywidth: return engine_state.container.max_width;
+        case runtime::system_int_state::displayheight: return engine_state.container.max_height;
         default: assert (false); return 0;
     }
 }
