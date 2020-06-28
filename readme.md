@@ -83,7 +83,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
 - [x] Mouse control for free camera.
 - [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
-- [ ] Replace ray tracing example (right now there is a familar placeholder to help explain the issue with SBOs).
+- [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
 - [ ] Intelligent Vulkan queue selection.
 - [ ] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
@@ -140,13 +140,13 @@ set -gx DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH $VULKAN_SDK/lib
 set -gx PATH $PATH $VULKAN_SDK/bin
 ```
 
-### Environment setup: Linux
-
-Work in progress!
-
 #### Notes
 
 * When running via XCode Vulkan calls can fail due to environment variables being inaccessible; opening XCode with `open -a xcode` can fix the issue.
+
+### Environment setup: Linux
+
+Work in progress!
 
 ### Building
 
