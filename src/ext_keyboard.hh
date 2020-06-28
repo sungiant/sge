@@ -105,12 +105,6 @@ public:
         
         for (wchar_t wc : characters_current) {
             // todo: how to get imgui to show wchars
-            
-            std::wstring ws;
-            ws[0] = wc;
-            std::string s (ws.begin(), ws.end());
-            const char* c =  s.c_str();
-            
             ImGui::TextColored (ImGui::GetStyleColorVec4 (ImGuiCol_CheckMark), "character_%d: [%c]", counter++, wc);
             ImGui::NextColumn ();
         }

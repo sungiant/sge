@@ -20,11 +20,11 @@ public:
     inline bool is_button_just_released    (runtime::mouse_button z)   const { return is_button_up (z) && was_button_down (z); }
     inline math::point2 position           ()                          const { return position_current; }
     inline math::point2 position_delta     ()                          const { return position_current - position_previous; }
-    inline math::vector2 velocity          ()                          const { math::point2 d = position_delta (); return sge::math::vector2 { (float) d.x / current_dt, (float)d.y / current_dt }; }
+    inline math::vector2 velocity          ()                          const { return position_delta () / current_dt; }
     
-    inline math::vector2 position (proportion p)                      const { math::point2 d = position (); return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }
-    inline math::vector2 position_delta (proportion p)                const { math::point2 d = position_delta (); return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }
-    inline math::vector2 velocity (proportion p)                      const { math::vector2 d = position_delta (p); return sge::math::vector2 { d.x / current_dt, d.y / current_dt }; }
+    inline math::vector2 position          (proportion p)              const { math::point2 d = position (); return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }
+    inline math::vector2 position_delta    (proportion p)              const { math::point2 d = position_delta (); return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }
+    inline math::vector2 velocity          (proportion p)              const { math::vector2 d = position_delta (p); return sge::math::vector2 { d.x / current_dt, d.y / current_dt }; }
     
     inline int scrollwheel                 ()                          const { return scrollwheel_current; }
     inline int scrollwheel_delta           ()                          const { return scrollwheel_current - scrollwheel_previous; }
