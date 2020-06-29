@@ -36,7 +36,7 @@ enum class mouse_button         { left, middle, right, COUNT };
 enum class gamepad_button       { dpad_up, dpad_down, dpad_left, dpad_right, back, center, start, left_thumb, right_thumb, left_shoulder, right_shoulder, a, b, x, y, COUNT };
 enum class gamepad_axis         { left_trigger, right_trigger, left_stick_vertical, left_stick_horizontal, right_stick_vertical, right_stick_horizontal, COUNT };
     
-enum class system_bool_state    { fullscreen, imgui, COUNT };
+enum class system_bool_state    { fullscreen, imgui, hide_cusor, COUNT };
 enum class system_int_state     { /* renderable area */ screenwidth, screenheight, /* fullscreen area */ displaywidth, displayheight, COUNT };
 enum class system_string_state  { title, gpu_name, engine_version, COUNT };
 
@@ -52,6 +52,7 @@ struct api {
     virtual int                     system__get_state_int               (system_int_state) const = 0;
     virtual const char*             system__get_state_string            (system_string_state) const = 0;
     virtual bool                    system__did_container_just_change   () const = 0;
+    //virtual void                    system__set_cursor                  (int, int, int, int, bool*, bool*) const = 0;
 
     virtual uint32_t                timer__get_fps                      () const = 0;
     virtual float                   timer__get_delta                    () const = 0;

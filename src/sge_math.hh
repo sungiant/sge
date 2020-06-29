@@ -1,8 +1,8 @@
 // SGE-MATH - A.J.Pook
 // ---------------------------------- //
 // Stand alone mathematics library.
+// (dependencies: math.h, assert.h)
 // ---------------------------------- //
-
 #pragma once
 
 #include "sge.hh"
@@ -30,6 +30,8 @@ struct point2 {
     
     bool operator == (const point2& p) const { return x == p.x && y == p.y; }
     bool operator != (const point2& p) const { return !(*this == p); }
+    int& operator[] (const int i) { assert (i >=0 && i <= 1); return (&x)[i]; }
+    const int& operator[] (const int i) const { assert (i >=0 && i <= 1); return (&x)[i]; }
     
     point2& operator+= (const point2& v) { x+=v.x; y+=v.y; return *this; }
     point2& operator+= (const int i) { x+=i; y+=i; return *this; }
@@ -59,6 +61,8 @@ struct vector2 {
     
     bool operator == (const vector2& v) const { return is_zero (x - v.x) && is_zero (y - v.y); }
     bool operator != (const vector2& v) const { return !(*this == v); }
+    float& operator[] (const int i) { assert (i >=0 && i <= 1); return (&x)[i]; }
+    const float& operator[] (const int i) const { assert (i >=0 && i <= 1); return (&x)[i]; }
     
     vector2& operator+= (const vector2& v) { x+=v.x; y+=v.y; return *this; }
     vector2& operator+= (const float f) { x+=f; y+=f; return *this; }
@@ -69,6 +73,7 @@ struct vector2 {
     vector2& operator/= (const vector2& v) { x/=v.x; y/=v.y;; return *this; }
     vector2& operator/= (const float f) { x/=f; y/=f; return *this; }
     
+    bool is_unit () const { return is_zero (1.0f - x*x - y*y); }
     float length () const { return sqrt (x*x + y*y); }
     float length_sq () const { return x*x + y*y; }
     vector2& normalise () { const float l = length (); x /= l; y /= l; return *this; }
@@ -84,6 +89,8 @@ struct vector3 {
     
     bool operator== (const vector3&v) const { return is_zero (x - v.x) && is_zero (y - v.y) && is_zero (z - v.z); }
     bool operator!= (const vector3& v) const { return !(*this == v); }
+    float& operator[] (const int i) { assert (i >=0 && i <= 2); return (&x)[i]; }
+    const float& operator[] (const int i) const { assert (i >=0 && i <= 2); return (&x)[i]; }
     
     vector3& operator+= (const vector3& v) { x+=v.x; y+=v.y; z+=v.z; return *this; }
     vector3& operator+= (const float f) { x+=f; y+=f; z+=f; return *this; }
@@ -100,7 +107,8 @@ struct vector3 {
         float const zx = x*v.y - y*v.x;
         x = xx; y = yx; z = zx; return *this;
     }
-        
+    
+    bool is_unit () const { return is_zero (1.0f - x*x - y*y - z*z); }
     float length () const { return sqrt (x*x + y*y + z*z); }
     float length_sq () const { return x*x + y*y + z*z; }
     vector3& normalise () { const float l = length (); x /= l; y /= l; z /= l; return *this; }
@@ -116,6 +124,8 @@ struct vector4 {
     
     bool operator == (const vector4& v) const { return is_zero (x - v.x) && is_zero (y - v.y) && is_zero (z - v.z) && is_zero (w - v.w); }
     bool operator != (const vector4& v) const { return !(*this == v); }
+    float& operator[] (const int i) { assert (i >=0 && i <= 3); return (&x)[i]; }
+    const float& operator[] (const int i) const { assert (i >=0 && i <= 3); return (&x)[i]; }
     
     vector4& operator+= (const vector4& v) { x+=v.x; y+=v.y; z+=v.z; w+=v.w; return *this; }
     vector4& operator+= (const float f) { x+=f; y+=f; z+=f; w+=f; return *this; }
@@ -123,9 +133,10 @@ struct vector4 {
     vector4& operator-= (const float f) { x-=f; y-=f; z-=f; w-=f; return *this; }
     vector4& operator*= (const vector4& v) { x*=v.x; y*=v.y; z*=v.z; w*=v.w; return *this; }
     vector4& operator*= (const float f) { x*=f; y*=f; z*=f; w*=f; return *this; }
-    vector4& operator/= (const vector4& v) { x/=v.x; y/=v.y; w/=v.w; return *this; }
+    vector4& operator/= (const vector4& v) { x/=v.x; y/=v.y; z/=v.z; w/=v.w; return *this; }
     vector4& operator/= (const float f) { x/=f; y/=f; z/=f; w/=f; return *this; }
-        
+
+    bool is_unit () const { return is_zero (1.0f - x*x - y*y - z*z - w*w); }
     float length () const { return sqrt (x*x + y*y + z*z + w*w); }
     float length_sq () const { return x*x + y*y + z*z + w*w; }
     vector4& normalise () { const float l = length (); x /= l; y /= l; z /= l; w /= l; return *this; }
@@ -157,17 +168,102 @@ struct quaternion {
         i = ix; j = jx; k = kx; u = ux; return *this;
     }
     
+    bool is_unit () const { return is_zero (1.0f - i*i - j*j - k*k - u*u); }
     float length () const { return sqrt (i*i + j*j + k*k + u*u); }
     float length_sq () const { return i*i + j*j + k*k + u*u; }
     quaternion& normalise () { const float l = length (); i /= l; j /= l; k /= l; u /= l; return *this; }
-    void get_axis_angle (vector3& axis, float& angle) const;
-    void get_yaw_pitch_roll (vector3& angles) const;
-    quaternion& set_axis_angle (const vector3& axis, const float angle);
-    quaternion& set_yaw_pitch_roll (const float yaw, const float pitch, const float roll);
+    void get_axis_angle (vector3&, float&) const;
+    void get_yaw_pitch_roll (vector3&) const;
+    quaternion& set_axis_angle (const vector3&, const float);
+    quaternion& set_yaw_pitch_roll (const float, const float, const float);
     
     static quaternion const zero, identity;
     static quaternion create_from_axis_angle (const vector3& axis, const float angle) { return quaternion ().set_axis_angle (axis, angle); }
     static quaternion create_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { return quaternion ().set_yaw_pitch_roll (yaw, pitch, roll); }
+};
+
+struct matrix33 {
+    float r0c0, r0c1, r0c2, r1c0, r1c1, r1c2, r2c0, r2c1, r2c2;
+    matrix33 () = default;
+    
+    bool operator == (const matrix33& m) const { return (*this)[0] == m[0] && (*this)[1] == m[1] && (*this)[2] == m[2]; }
+    bool operator != (const matrix33& m) const { return !(*this == m); }
+    vector3& operator[] (const int i) { assert (i >=0 && i <= 2); return reinterpret_cast<vector3*>(&r0c0)[i]; }
+    const vector3& operator[] (const int i) const { assert (i >=0 && i <= 2); return reinterpret_cast<const vector3*>(&r0c0)[i]; }
+    
+    matrix33& operator+= (const matrix33& v) { (*this)[0]+=v[0]; (*this)[1]+=v[1]; (*this)[2]+=v[2]; return *this; }
+    matrix33& operator+= (const float f) { (*this)[0]+=f; (*this)[1]+=f; (*this)[2]+=f; return *this; }
+    matrix33& operator-= (const matrix33& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; return *this; }
+    matrix33& operator-= (const float f) { (*this)[0]-=f; (*this)[1]-=f; (*this)[2]-=f; return *this; }
+    //matrix33& operator*= (const matrix33& v) { todo; return *this; }
+    matrix33& operator*= (const float f) { (*this)[0]*=f; (*this)[1]*=f; (*this)[2]*=f; return *this; }
+    
+    matrix33& set_rotation (const quaternion&);
+    
+    static matrix33 create_from_rotation (const quaternion& q) { return matrix33 ().set_rotation (q); }
+};
+
+struct matrix43 {
+    float r0c0, r0c1, r0c2, r1c0, r1c1, r1c2, r2c0, r2c1, r2c2, r3c0, r3c1, r3c2;
+    matrix43 () = default;
+    
+    bool operator == (const matrix43& m) const { return (*this)[0] == m[0] && (*this)[1] == m[1] && (*this)[2] == m[2] && (*this)[3] == m[3]; }
+    bool operator != (const matrix43& m) const { return !(*this == m); }
+    vector3& operator[] (const int i) { assert (i >=0 && i <= 3); return reinterpret_cast<vector3*>(&r0c0)[i]; }
+    const vector3& operator[] (const int i) const { assert (i >=0 && i <= 3); return reinterpret_cast<const vector3*>(&r0c0)[i]; }
+    
+    matrix43& operator+= (const matrix43& v) { (*this)[0]+=v[0]; (*this)[1]+=v[1]; (*this)[2]+=v[2]; (*this)[3]+=v[3]; return *this; }
+    matrix43& operator+= (const float f) { (*this)[0]+=f; (*this)[1]+=f; (*this)[2]+=f; (*this)[3]+=f; return *this; }
+    matrix43& operator-= (const matrix43& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
+    matrix43& operator-= (const float f) { (*this)[0]-=f; (*this)[1]-=f; (*this)[2]-=f; (*this)[3]-=f; return *this; }
+    //matrix43& operator*= (const matrix43& v) { todo; return *this; }
+    //matrix43& operator*= (const matrix33& v) { todo; return *this; }
+    matrix43& operator*= (const float f) { (*this)[0]*=f; (*this)[1]*=f; (*this)[2]*=f; (*this)[3]*=f; return *this; }
+    
+    matrix43& set_rotation (const quaternion&);
+    
+    static matrix43 create_from_rotation (const quaternion& q) { return matrix43 ().set_rotation (q); }
+};
+    
+struct matrix44 {
+    float r0c0, r0c1, r0c2, r0c3, r1c0, r1c1, r1c2, r1c3, r2c0, r2c1, r2c2, r2c3, r3c0, r3c1, r3c2, r3c3;
+    matrix44 () = default;
+    
+    bool operator == (const matrix44& m) const { return (*this)[0] == m[0] && (*this)[1] == m[1] && (*this)[2] == m[2] && (*this)[3] == m[3]; }
+    bool operator != (const matrix44& m) const { return !(*this == m); }
+    vector4& operator[] (const int i) { assert (i >=0 && i <= 3); return reinterpret_cast<vector4*>(&r0c0)[i]; }
+    const vector4& operator[] (const int i) const { assert (i >=0 && i <= 3); return reinterpret_cast<const vector4*>(&r0c0)[i]; }
+    
+    matrix44& operator+= (const matrix44& v) { (*this)[0]+=v[0]; (*this)[1]+=v[1]; (*this)[2]+=v[2]; (*this)[3]+=v[3]; return *this; }
+    matrix44& operator+= (const float f) { (*this)[0]+=f; (*this)[1]+=f; (*this)[2]+=f; (*this)[3]+=f; return *this; }
+    matrix44& operator-= (const matrix44& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
+    matrix44& operator-= (const float f) { (*this)[0]-=f; (*this)[1]-=f; (*this)[2]-=f; (*this)[3]-=f; return *this; }
+    matrix44& operator*= (const matrix44& v) {
+        r0c0 = r0c0*v.r0c0 + r0c1*v.r1c0 + r0c2*v.r2c0 + r0c3*v.r3c0;
+        r0c1 = r0c0*v.r0c1 + r0c1*v.r1c1 + r0c2*v.r2c1 + r0c3*v.r3c1;
+        r0c2 = r0c0*v.r0c2 + r0c1*v.r1c2 + r0c2*v.r2c2 + r0c3*v.r3c2;
+        r0c3 = r0c0*v.r0c3 + r0c1*v.r1c3 + r0c2*v.r2c3 + r0c3*v.r3c3;
+        r1c0 = r1c0*v.r0c0 + r1c1*v.r1c0 + r1c2*v.r2c0 + r1c3*v.r3c0;
+        r1c1 = r1c0*v.r0c1 + r1c1*v.r1c1 + r1c2*v.r2c1 + r1c3*v.r3c1;
+        r1c2 = r1c0*v.r0c2 + r1c1*v.r1c2 + r1c2*v.r2c2 + r1c3*v.r3c2;
+        r1c3 = r1c0*v.r0c3 + r1c1*v.r1c3 + r1c2*v.r2c3 + r1c3*v.r3c3;
+        r2c0 = r2c0*v.r0c0 + r2c1*v.r1c0 + r2c2*v.r2c0 + r2c3*v.r3c0;
+        r2c1 = r2c0*v.r0c1 + r2c1*v.r1c1 + r2c2*v.r2c1 + r2c3*v.r3c1;
+        r2c2 = r2c0*v.r0c2 + r2c1*v.r1c2 + r2c2*v.r2c2 + r2c3*v.r3c2;
+        r2c3 = r2c0*v.r0c3 + r2c1*v.r1c3 + r2c2*v.r2c3 + r2c3*v.r3c3;
+        r3c0 = r3c0*v.r0c0 + r3c1*v.r1c0 + r3c2*v.r2c0 + r3c3*v.r3c0;
+        r3c1 = r3c0*v.r0c1 + r3c1*v.r1c1 + r3c2*v.r2c1 + r3c3*v.r3c1;
+        r3c2 = r3c0*v.r0c2 + r3c1*v.r1c2 + r3c2*v.r2c2 + r3c3*v.r3c2;
+        r3c3 = r3c0*v.r0c3 + r3c1*v.r1c3 + r3c2*v.r2c3 + r3c3*v.r3c3;
+        return *this;
+    }
+    //matrix44& operator*= (const matrix43& v) { todo; return *this; }
+    //matrix44& operator*= (const matrix33& v) { todo; return *this; }
+    matrix44& operator*= (const float f) { (*this)[0]*=f; (*this)[1]*=f; (*this)[2]*=f; (*this)[3]*=f; return *this; }
+    
+    matrix44& set_rotation (const quaternion&);
+    
+    static matrix44 create_from_rotation (const quaternion& q) { return matrix44 ().set_rotation (q); }
 };
 
 // Point 2 inline
@@ -293,6 +389,7 @@ inline quaternion& quaternion::set_axis_angle(const vector3& axis, const float a
     j = s * axis.y;
     k = s * axis.z;
     u = c;
+    assert (is_unit());
     return *this;
 }
 
@@ -310,6 +407,69 @@ inline quaternion& quaternion::set_yaw_pitch_roll (const float yaw, const float 
     j = (sy * cp * cr) - (cy * sp * sr);
     k = (cy * cp * sr) - (sy * sp * cr);
     u = (cy * cp * cr) + (sy * sp * sr);
+    assert (is_unit());
+    return *this;
+}
+
+// Matrix 3x3 inline
+// ------------------------------------------------------------------------------------------------------------------ //
+
+inline matrix33& matrix33::set_rotation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+    assert (q.is_unit());
+    (*this)[0][0] = 1.0f - 2.0f* q.j*q.j - 2.0f* q.k*q.k;
+    (*this)[1][0] = 2.0f* q.i*q.j - 2.0f* q.u*q.k;
+    (*this)[2][0] = 2.0f* q.i*q.k + 2.0f* q.u*q.j;
+    (*this)[0][1] = 2.0f* q.i*q.j + 2.0f* q.u*q.k;
+    (*this)[1][1] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.k*q.k;
+    (*this)[2][1] = 2.0f* q.j*q.k - 2.0f* q.u*q.i;
+    (*this)[0][2] = 2.0f* q.i*q.k - 2.0f* q.u*q.j;
+    (*this)[1][2] = 2.0f* q.j*q.k + 2.0f* q.u*q.i;
+    (*this)[2][2] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.j*q.j;
+    return *this;
+}
+    
+// Matrix 4x3 inline
+// ------------------------------------------------------------------------------------------------------------------ //
+
+    
+inline matrix43& matrix43::set_rotation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+    assert (q.is_unit());
+    (*this)[0][0] = 1.0f - 2.0f* q.j*q.j - 2.0f* q.k*q.k;
+    (*this)[1][0] = 2.0f* q.i*q.j - 2.0f* q.u*q.k;
+    (*this)[2][0] = 2.0f* q.i*q.k + 2.0f* q.u*q.j;
+    (*this)[3][0] = 0.0f;
+    (*this)[0][1] = 2.0f* q.i*q.j + 2.0f* q.u*q.k;
+    (*this)[1][1] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.k*q.k;
+    (*this)[2][1] = 2.0f* q.j*q.k - 2.0f* q.u*q.i;
+    (*this)[3][1] = 0.0f;
+    (*this)[0][2] = 2.0f* q.i*q.k - 2.0f* q.u*q.j;
+    (*this)[1][2] = 2.0f* q.j*q.k + 2.0f* q.u*q.i;
+    (*this)[2][2] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.j*q.j;
+    (*this)[3][2] = 0.0f;
+    return *this;
+}
+    
+// Matrix 4x4 inline
+// ------------------------------------------------------------------------------------------------------------------ //
+    
+inline matrix44& matrix44::set_rotation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+    assert (q.is_unit());
+    (*this)[0][0] = 1.0f - 2.0f* q.j*q.j - 2.0f* q.k*q.k;
+    (*this)[1][0] = 2.0f* q.i*q.j - 2.0f* q.u*q.k;
+    (*this)[2][0] = 2.0f* q.i*q.k + 2.0f* q.u*q.j;
+    (*this)[3][0] = 0.0f;
+    (*this)[0][1] = 2.0f* q.i*q.j + 2.0f* q.u*q.k;
+    (*this)[1][1] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.k*q.k;
+    (*this)[2][1] = 2.0f* q.j*q.k - 2.0f* q.u*q.i;
+    (*this)[3][1] = 0.0f;
+    (*this)[0][2] = 2.0f* q.i*q.k - 2.0f* q.u*q.j;
+    (*this)[1][2] = 2.0f* q.j*q.k + 2.0f* q.u*q.i;
+    (*this)[2][2] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.j*q.j;
+    (*this)[3][2] = 0.0f;
+    (*this)[0][3] = 0.0f;
+    (*this)[1][3] = 0.0f;
+    (*this)[2][3] = 0.0f;
+    (*this)[3][3] = 1.0f;
     return *this;
 }
 

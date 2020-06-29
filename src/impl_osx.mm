@@ -737,8 +737,8 @@ void calculate_sge_input_state (sge::core::input_state& input) {
 
     // update application side stuff
     NSPoint point = [[view window] mouseLocationOutsideOfEventStream];
-    g_mouse_position_x = std::clamp <int>(point.x, 0, g_container_width);
-    g_mouse_position_y = g_container_height - std::clamp<int> (point.y, 0, g_container_height);
+    g_mouse_position_x = point.x;//std::clamp <int>(point.x, 0, g_container_width);
+    g_mouse_position_y = g_container_height-point.y;// g_container_height - std::clamp<int> (point.y, 0, g_container_height);
     
     g_gamepad.update();
 

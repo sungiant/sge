@@ -555,8 +555,8 @@ void engine::update (container_state& z_container, input_state& z_input) {
     // update the user's app
     sge::app::update (*user_response, *user_api);
 
-
 }
+    
 void engine::stop () {
     sge::app::stop (*user_api);
 }
