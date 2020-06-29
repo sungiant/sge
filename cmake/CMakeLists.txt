@@ -82,7 +82,7 @@ if (G_DEV_ENV STREQUAL LINUX)
 
 
 else ()
-    find_package (vulkan REQUIRED)
+    find_package (Vulkan REQUIRED)
 endif ()
 
 message (STATUS ">> Vulkan_FOUND: ${Vulkan_FOUND}")
