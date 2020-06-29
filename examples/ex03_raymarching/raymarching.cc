@@ -4,7 +4,13 @@
 
 sge::app::configuration config = {};
 sge::app::content computation = {};
-sge::app::extensions extensions = {};
+sge::app::extensions extensions = { sge::app::extensions {
+    { { sge::runtime::type_id<free_camera>(), [] (const sge::runtime::api& x) { return new free_camera (x); }}, },
+    {}
+}
+};
+free_camera* camera = nullptr;
+
 
 struct PUSH {
     float time;
@@ -63,9 +69,6 @@ struct UBO_SETTINGS {
     bool operator != (const UBO_SETTINGS& ubo) const { return !(*this == ubo); }
 } ubo_settings;
 
-
-free_camera camera;
-
 void initialise () {
     config.app_name = "Raymarching (static SDF)";
     config.app_width = 960;
@@ -90,6 +93,14 @@ void initialise () {
 
 void terminate () {}
 
+void start (const sge::app::api& sge) {
+    assert (!camera);
+    camera = &sge.ext <free_camera>();
+    assert (camera);
+    
+}
+
+void stop (const sge::app::api& sge) { camera = nullptr; }
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
@@ -97,17 +108,15 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
-    camera.update (sge.instrumentation.dt(), sge.input);
-
     int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
 
     UBO_CAMERA uc = ubo_camera;
-    uc.position = camera.position;
-    uc.orientation = camera.orientation;
-    uc.fov = camera.fov;
-    uc.near = camera.near;
-    uc.far = camera.far;
+    uc.position = camera->position;
+    uc.orientation = camera->orientation;
+    uc.fov = camera->fov;
+    uc.near = camera->near;
+    uc.far = camera->far;
     uc.aspect = (float) res_x / (float)res_y;
     if (uc != ubo_camera) {
         ubo_camera = uc;
@@ -139,17 +148,20 @@ const char* display_mode_text[] {
 };
 
 void debug_ui (sge::app::response& r, const sge::app::api& sge) {
+    
     ImGui::Begin ("SDF (static)");
     {
         UBO_SETTINGS us = ubo_settings;
 
         ImGui::Text("displaying: %s", display_mode_text[us.display_mode]);
-        ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", camera.position.x, camera.position.y, camera.position.z);
-        ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera.orientation.i, camera.orientation.j, camera.orientation.k, camera.orientation.u);
-
-        ImGui::SliderFloat("fov", &camera.fov, free_camera::FOV_MIN, free_camera::FOV_MAX);
-        ImGui::SliderFloat("near", &camera.near, 0.0f, 1000.0f);
-        ImGui::SliderFloat("far", &camera.far, 0.0f, 1000.0f);
+        ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", camera->position.x, camera->position.y, camera->position.z);
+        ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera->orientation.i, camera->orientation.j, camera->orientation.k, camera->orientation.u);
+        
+        if (ImGui::Button("reset camera")) camera->reset();
+        
+        ImGui::SliderFloat("fov", &camera->fov, free_camera::FOV_MIN, free_camera::FOV_MAX);
+        ImGui::SliderFloat("near", &camera->near, 0.0f, 1000.0f);
+        ImGui::SliderFloat("far", &camera->far, 0.0f, 1000.0f);
 
         ImGui::SliderInt("display mode", &us.display_mode, 0, 7);
         ImGui::SliderFloat("gamma", &us.gamma, 0, 4.0f);
@@ -183,10 +195,10 @@ void               initialise          ()                              { ::initi
 configuration&     get_configuration   ()                              { return ::config; }
 content&           get_content         ()                              { return ::computation; }
 extensions&        get_extensions      ()                              { return ::extensions; }
-void               start               (const api& sge)                {}
+void               start               (const api& sge)                { ::start (sge); }
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }
-void               stop                (const api& sge)                {}
+void               stop                (const api& sge)                { ::stop (sge); }
 void               terminate           ()                              { ::terminate (); }
 
 }
