@@ -19,6 +19,8 @@ namespace sge::math {
 const float PI = atan (1.0f) * 4.0f;
 const float TAU = 2.0f * PI;
 const float EPSILON = 0.000001f;
+const float RAD2DEG = 180.f / PI;
+const float DEG2RAD = PI / 180.f;
 
 inline bool is_zero (const float f) { return (f >= -EPSILON) && (f <= EPSILON); }
     
@@ -200,10 +202,6 @@ struct quaternion {
     quaternion& set_from_yaw_pitch_roll (const float, const float, const float);
     quaternion& set_from_rotation (const matrix33&);
     
-    static quaternion create_from_axis_angle (const vector3& axis, const float angle) { return quaternion ().set_from_axis_angle (axis, angle); }
-    static quaternion create_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { return quaternion ().set_from_yaw_pitch_roll (yaw, pitch, roll); }
-    static quaternion create_from_rotation (const matrix33& m) { return quaternion ().set_from_rotation (m); }
-    
     static quaternion const zero, identity;
 };
 
@@ -241,13 +239,15 @@ struct matrix33 {
     bool is_orthonormal () const;
     matrix33& orthonormalise ();
     
-    matrix33& set_from_orientation (const quaternion&);
-    matrix33& set_from_transform (const matrix43& m);
-    matrix33& set_from_transform (const matrix44& m);
-    
-    static matrix33 create_from_orientation (const quaternion& q) { return matrix33 ().set_from_orientation (q); }
-    static matrix33 create_from_transform (const matrix43& m) { return matrix33 ().set_from_transform (m); }
-    static matrix33 create_from_transform (const matrix44& m) { return matrix33 ().set_from_transform (m); }
+    matrix33& set_as_scale_from_factors (const vector3& f);
+    matrix33& set_as_rotation_from_x_axis_angle (const float angle);
+    matrix33& set_as_rotation_from_y_axis_angle (const float angle);
+    matrix33& set_as_rotation_from_z_axis_angle (const float angle);
+    matrix33& set_as_rotation_from_euler (const float yaw, const float pitch, const float roll);
+    matrix33& set_as_rotation_from_axis_angle (const vector3& axis, const float angle);
+    matrix33& set_as_rotation_from_orientation (const quaternion&);
+    matrix33& set_as_rotation_from_transform (const matrix43& m);
+    matrix33& set_as_rotation_from_transform (const matrix44& m);
     
     static matrix33 const zero, identity;
 };
@@ -280,10 +280,6 @@ struct matrix43 {
     matrix43& set_rotation_component (const quaternion&);
     
     matrix43& set_from_transform (const matrix44&);
-    
-    static matrix43 create_from_rotation (const matrix33& m) { return matrix43 ().set_rotation_component (m); }
-    static matrix43 create_from_orientation (const quaternion& q) { return matrix43 ().set_rotation_component (q); }
-    static matrix43 create_from_transform (const matrix44& m) { return matrix43 ().set_from_transform (m); }
     
     static matrix43 const zero, identity;
 };
@@ -333,9 +329,6 @@ struct matrix44 {
     
     matrix44& set_rotation_component (const matrix33& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;return *this; }
     matrix44& set_rotation_component (const quaternion&);
-    
-    static matrix44 create_from_rotation (const matrix33& m) { return matrix44 ().set_rotation_component (m); }
-    static matrix44 create_from_orientation (const quaternion& q) { return matrix44 ().set_rotation_component (q); }
     
     static matrix44 const zero, identity;
 };
@@ -389,6 +382,7 @@ inline float   operator|(const vector2& l, const vector2& r) { return l.x * r.x 
 
 inline vector2 normalise (const vector2& v) { return v / v.length (); }
 inline float distance (const vector2& l, const vector2& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y)); }
+inline float distance_sq (const vector2& l, const vector2& r) { return (l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y); }
 
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -428,6 +422,7 @@ inline vector3 operator^(const vector3& l, const vector3& r) { return vector3 (l
 
 inline vector3 normalise (const vector3& v) { return v / v.length (); }
 inline float   distance (const vector3& l, const vector3& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z)); }
+inline float   distance_sq (const vector3& l, const vector3& r) { return (l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z); }
 
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -444,6 +439,7 @@ inline float   operator|(const vector4& l, const vector4& r) { return l.x * r.x 
 
 inline vector4 normalise (const vector4& v) { return v / v.length (); }
 inline float   distance (const vector4& l, const vector4& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z) + (l.w-r.w)*(l.w-r.w)); }
+inline float   distance_sq (const vector4& l, const vector4& r) { return (l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z) + (l.w-r.w)*(l.w-r.w); }
 
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -460,21 +456,26 @@ inline quaternion operator-(const quaternion& l, const quaternion& r) { return q
 inline quaternion operator*(const quaternion& v, const float f) { return quaternion (v.i * f, v.j * f, v.k * f, v.u * f); }
 inline quaternion operator/(const quaternion& v, const float f) { return v * (1.0f / f); }
 inline float      operator|(const quaternion& l, const quaternion& r) { return l.i * r.i + l.j * r.j + l.k * r.k + l.u * r.u; } // dot
+inline quaternion operator*(const quaternion& l, const quaternion& r) { return quaternion (l.i * r.i, l.j * r.j, l.k * r.k, l.u * r.u); }
 
 inline quaternion normalise (const quaternion& v) { return v / v.length (); }
 
-inline void quaternion::get_axis_angle(vector3& axis, float& angle) const {
+inline void quaternion::get_axis_angle(vector3& axis, float& angle) const { // radians
+    assert (is_unit());
     const float cos_angle = u;
-    angle = acos(cos_angle);
+    angle = 2.0f * acos(cos_angle); // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
     float sin_angle = sqrt(1.0f - cos_angle * cos_angle);
-    if (fabs(sin_angle) < EPSILON)
+    if (is_zero (sin_angle))
         sin_angle = 1.0f;
     axis.x = i / sin_angle;
     axis.y = j / sin_angle;
-    axis.z = i / sin_angle;
+    axis.z = k / sin_angle;
+    axis.normalise();
+    assert (axis.is_unit());
 }
 
-inline void quaternion::get_yaw_pitch_roll (vector3& angles) const {
+inline void quaternion::get_yaw_pitch_roll (vector3& angles) const { // radians
+    assert (is_unit());
     // roll (x-axis rotation)
     const float sinr_cosp = 2 * (u * k + i * j);
     const float cosr_cosp = 1 - 2 * (k * k + i * i);
@@ -503,7 +504,7 @@ inline quaternion& quaternion::set_from_axis_angle (const vector3& axis, const f
     return *this;
 }
 
-inline quaternion& quaternion::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) {
+inline quaternion& quaternion::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { // radians
     const float y = yaw * 0.5f;
     const float p = pitch * 0.5f;
     const float r = roll * 0.5f;
@@ -570,21 +571,101 @@ inline bool matrix33::is_orthonormal () const {
     } return true;
 }
 
-inline matrix33& matrix33::set_from_transform (const matrix43& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2; return *this; }
-inline matrix33& matrix33::set_from_transform (const matrix44& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2; return *this; }
-    
-inline matrix33& matrix33::set_from_orientation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+inline matrix33& matrix33::set_as_scale_from_factors (const vector3& f) {
+    r0c0 = f.x;  r0c1 = 0.0f; r0c2 = 0.0f;
+    r1c0 = 0.0f; r1c1 = f.y;  r1c2 = 0.0f;
+    r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = f.z;
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_x_axis_angle (const float theta) {
+    const float s = sin (theta);
+    const float c = cos (theta);
+    r0c0 = 1.0f; r0c1 = 0.0f; r0c2 = 0.0f;
+    r1c0 = 0.0f; r1c1 = c;    r1c2 = -s;
+    r2c0 = 0.0f; r2c1 = s;    r2c2 =  c;
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_y_axis_angle (const float theta) {
+    const float s = sin (theta);
+    const float c = cos (theta);
+    r0c0 =  c;   r0c1 = 0.0f; r0c2 = s;
+    r1c0 = 0.0f; r1c1 = 1.0f; r1c2 = 0.0f;
+    r2c0 = -s;   r2c1 = 0.0f; r2c2 = c;
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_z_axis_angle (const float theta) {
+    const float s = sin (theta);
+    const float c = cos (theta);
+    r0c0 = c;    r0c1 = -s;   r0c2 = 0.0f;
+    r1c0 = s;    r1c1 =  c;   r1c2 = 0.0f;
+    r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = 1.0f;
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_euler (const float yaw, const float pitch, const float roll) {
+    const float cx = cos (pitch);
+    const float sx = sin (pitch);
+    const float cy = cos (yaw);
+    const float sy = sin (yaw);
+    const float cz = cos (roll);
+    const float sz = sin (roll);
+    r0c0 =  (cy * cz);
+    r0c1 = -(cy * sz);
+    r0c2 =  sy;
+    r1c0 =  (sx * sy * cz) + (cx * sz);
+    r1c1 = -(sx * sy * sz) + (cx * cz);
+    r1c2 = -(sx * cy);
+    r2c0 = -(cx * sy * cz) + (sx * sz);
+    r2c1 =  (cx * sy * sz) + (sx * cz);
+    r2c2 =  (cx * cy);
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_axis_angle (const vector3& axis, const float angle) {
+    assert (axis.is_unit());
+    const float c = cos (angle);
+    const float s = sin (angle);
+    const float t = 1.0f - c;
+    const float tx  = t  * axis.x; const float ty  = t  * axis.y; const float tz  = t  * axis.z;
+    const float sx  = s  * axis.x; const float sy  = s  * axis.y; const float sz  = s  * axis.z;
+    const float txy = tx * axis.y; const float tyz = tx * axis.z; const float txz = tx * axis.z;
+    r0c0 = tx * axis.x + c;
+    r0c1 = txy - sz;
+    r0c2 = txz + sy;
+    r1c0 = txy + sz;
+    r1c1 = ty * axis.y + c;
+    r1c2 = tyz - sx;
+    r2c0 = txz - sy;
+    r2c1 = tyz + sx;
+    r2c2 = tz * axis.z + c;
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_transform (const matrix43& m) {
+    r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_transform (const matrix44& m) {
+    r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;
+    assert (is_orthonormal());
+    return *this;
+}
+inline matrix33& matrix33::set_as_rotation_from_orientation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
     assert (q.is_unit());
-    (*this)[0][0] = 1.0f - 2.0f* q.j*q.j - 2.0f* q.k*q.k;
-    (*this)[1][0] = 2.0f* q.i*q.j - 2.0f* q.u*q.k;
-    (*this)[2][0] = 2.0f* q.i*q.k + 2.0f* q.u*q.j;
-    (*this)[0][1] = 2.0f* q.i*q.j + 2.0f* q.u*q.k;
-    (*this)[1][1] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.k*q.k;
-    (*this)[2][1] = 2.0f* q.j*q.k - 2.0f* q.u*q.i;
-    (*this)[0][2] = 2.0f* q.i*q.k - 2.0f* q.u*q.j;
-    (*this)[1][2] = 2.0f* q.j*q.k + 2.0f* q.u*q.i;
-    (*this)[2][2] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.j*q.j;
-    orthonormalise (); // would prefer to just assert here, but I keep hitting it :/
+    r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
+    r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
+    r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
+    r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
+    r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
+    r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
+    r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
+    r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
+    r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
+    assert (is_orthonormal());
+    //orthonormalise (); // would prefer to just assert here, but I keep hitting it :/
     return *this;
 }
     
@@ -601,21 +682,21 @@ inline matrix43& matrix43::set_from_transform (const matrix44& m) { r0c0=m.r0c0;
     
 inline matrix43& matrix43::set_rotation_component (const quaternion& q) {
     assert (q.is_unit());
-    (*this)[0][0] = 1.0f - 2.0f* q.j*q.j - 2.0f* q.k*q.k;
-    (*this)[1][0] = 2.0f* q.i*q.j - 2.0f* q.u*q.k;
-    (*this)[2][0] = 2.0f* q.i*q.k + 2.0f* q.u*q.j;
-    (*this)[3][0] = 0.0f;
-    (*this)[0][1] = 2.0f* q.i*q.j + 2.0f* q.u*q.k;
-    (*this)[1][1] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.k*q.k;
-    (*this)[2][1] = 2.0f* q.j*q.k - 2.0f* q.u*q.i;
-    (*this)[3][1] = 0.0f;
-    (*this)[0][2] = 2.0f* q.i*q.k - 2.0f* q.u*q.j;
-    (*this)[1][2] = 2.0f* q.j*q.k + 2.0f* q.u*q.i;
-    (*this)[2][2] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.j*q.j;
-    (*this)[3][2] = 0.0f;
+    r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
+    r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
+    r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
+    r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
+    r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
+    r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
+    r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
+    r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
+    r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
+    r3c0 = 0.0f;
+    r3c1 = 0.0f;
+    r3c2 = 0.0f;
     return *this;
 }
-    
+
 
 // ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 4x4 inline
@@ -646,22 +727,22 @@ inline matrix44 operator*(const matrix44& l, const matrix44& r) { return matrix4
 
 inline matrix44& matrix44::set_rotation_component (const quaternion& q) {
     assert (q.is_unit());
-    (*this)[0][0] = 1.0f - 2.0f* q.j*q.j - 2.0f* q.k*q.k;
-    (*this)[1][0] = 2.0f* q.i*q.j - 2.0f* q.u*q.k;
-    (*this)[2][0] = 2.0f* q.i*q.k + 2.0f* q.u*q.j;
-    (*this)[3][0] = 0.0f;
-    (*this)[0][1] = 2.0f* q.i*q.j + 2.0f* q.u*q.k;
-    (*this)[1][1] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.k*q.k;
-    (*this)[2][1] = 2.0f* q.j*q.k - 2.0f* q.u*q.i;
-    (*this)[3][1] = 0.0f;
-    (*this)[0][2] = 2.0f* q.i*q.k - 2.0f* q.u*q.j;
-    (*this)[1][2] = 2.0f* q.j*q.k + 2.0f* q.u*q.i;
-    (*this)[2][2] = 1.0f - 2.0f* q.i*q.i - 2.0f* q.j*q.j;
-    (*this)[3][2] = 0.0f;
-    (*this)[0][3] = 0.0f;
-    (*this)[1][3] = 0.0f;
-    (*this)[2][3] = 0.0f;
-    (*this)[3][3] = 1.0f;
+    r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
+    r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
+    r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
+    r0c3 = 0.0f;
+    r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
+    r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
+    r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
+    r1c3 = 0.0f;
+    r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
+    r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
+    r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
+    r2c3 = 0.0f;
+    r3c0 = 0.0f;
+    r3c1 = 0.0f;
+    r3c2 = 0.0f;
+    r3c3 = 1.0f;
     return *this;
 }
 

@@ -52,8 +52,7 @@ void initialise () {
 
 void start (const sge::app::api& sge) {
     sge.freecam.set_enabled (true);
-    sge.freecam.position = { 0.62f, 0.53f, -2.65f };
-    sge.freecam.orientation = { 0.09f, -0.10f, -0.01f, 0.99f };
+    sge.freecam.position = { 2.0f, 1.50f, 2.5f };
 }
 
 void stop (const sge::app::api& sge) {}

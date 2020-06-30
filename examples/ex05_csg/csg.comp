@@ -552,11 +552,11 @@ vec3 calculateLighting (vec3 surfacePosition, vec3 surfaceNormal, int materialID
 vec4 run(vec2 uv) {
 
     const float sh = sin (radians (ubo_camera.fov)  / 2.0);
-    const vec3 nnw = vec3 ( ubo_camera.near * sh * ubo_camera.aspect,  ubo_camera.near * sh, ubo_camera.near);
-    const vec3 nse = vec3 (-ubo_camera.near * sh * ubo_camera.aspect, -ubo_camera.near * sh, ubo_camera.near);
-    const vec3 fnw = vec3 (  ubo_camera.far * sh * ubo_camera.aspect,   ubo_camera.far * sh, ubo_camera.far);
-    const vec3 fsw = vec3 (- ubo_camera.far * sh * ubo_camera.aspect, - ubo_camera.far * sh, ubo_camera.far);
-    const Ray ray = Ray (
+    const vec3 nnw = vec3 (-ubo_camera.near * sh * ubo_camera.aspect,  ubo_camera.near * sh, -ubo_camera.near);
+    const vec3 nse = vec3 ( ubo_camera.near * sh * ubo_camera.aspect, -ubo_camera.near * sh, -ubo_camera.near);
+    const vec3 fnw = vec3 ( -ubo_camera.far * sh * ubo_camera.aspect,  ubo_camera.far  * sh, -ubo_camera.far);
+    const vec3 fsw = vec3 (  ubo_camera.far * sh * ubo_camera.aspect, -ubo_camera.far  * sh, -ubo_camera.far);
+    const Ray ray = Ray ( // RIGHT HANDED !
         ubo_camera.position + qtransform (mix (nnw, nse, vec3 (uv, 0.0)), ubo_camera.orientation),
         normalize(qtransform (mix (fnw - nnw, fsw - nse, vec3 (uv, 0.0)), ubo_camera.orientation)));
 

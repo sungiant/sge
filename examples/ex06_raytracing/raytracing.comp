@@ -249,11 +249,11 @@ vec3 renderScene(inout vec3 rayO, inout vec3 rayD, in vec3 lightPos, inout int i
 
 vec4 run (vec2 uv, float aspect) {
     const float sh = sin (radians (ubo.fov)  / 2.0);
-    const vec3 nnw = vec3 ( CAM_NEAR * sh * aspect,  CAM_NEAR * sh, CAM_NEAR);
-    const vec3 nse = vec3 (-CAM_NEAR * sh * aspect, -CAM_NEAR * sh, CAM_NEAR);
-    const vec3 fnw = vec3 (  CAM_FAR * sh * aspect,   CAM_FAR * sh, CAM_FAR);
-    const vec3 fsw = vec3 (- CAM_FAR * sh * aspect, - CAM_FAR * sh, CAM_FAR);
-    const Ray ray = Ray (
+    const vec3 nnw = vec3 (-CAM_NEAR * sh * aspect,  CAM_NEAR * sh, -CAM_NEAR);
+    const vec3 nse = vec3 ( CAM_NEAR * sh * aspect, -CAM_NEAR * sh, -CAM_NEAR);
+    const vec3 fnw = vec3 ( -CAM_FAR * sh * aspect,  CAM_FAR  * sh, -CAM_FAR);
+    const vec3 fsw = vec3 (  CAM_FAR * sh * aspect, -CAM_FAR  * sh, -CAM_FAR);
+    const Ray ray = Ray ( // RIGHT HANDED !
         ubo.position + qtransform (mix (nnw, nse, vec3 (uv, 0.0)), ubo.orientation),
         normalize (qtransform (mix (fnw - nnw, fsw - nse, vec3 (uv, 0.0)), ubo.orientation)));
 
