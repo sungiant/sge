@@ -508,7 +508,10 @@ void engine::setup (
     
     for (auto& kvp : engine_extensions) {
         const size_t id = kvp.first;
-        debug_fns.emplace_back ([this, id]() { engine_extensions[id]->debug_ui (); });
+        debug_fns.emplace_back ([this, id]() {
+            if (engine_extensions[id]->is_enabled())
+                engine_extensions[id]->debug_ui ();
+        });
     }
     
     user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
@@ -549,7 +552,8 @@ void engine::update (container_state& z_container, input_state& z_input) {
 
     // update all registered extensions
     for (auto& kvp : engine_extensions) {
-        kvp.second->update ();
+        if (kvp.second->is_enabled())
+            kvp.second->update ();
     }
 
     // update the user's app

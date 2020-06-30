@@ -54,4 +54,4 @@ foreach (_source IN ITEMS ${SOURCE_LIST})
     source_group ("${_group_path}" FILES "${_source}")
 endforeach ()
 
-target_link_libraries (sge Vulkan::Vulkan imgui)
+target_link_libraries (sge Vulkan::Vulkan imgui imguizmo)

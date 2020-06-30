@@ -1,7 +1,5 @@
 #include <sge_app.hh>
 
-#include "../ex_common/free_camera.hh"
-
 //todo: this demo is placeholder and is almost entirely a clone of sascha's compute raytracer.
 //      i've added it for now to try and help illustrate and debug a molten vk issue relating to
 //      more than a single SBO in a compute shader.
@@ -73,8 +71,6 @@ Plane newPlane(sge::math::vector3 normal, float distance, sge::math::vector3 dif
     return plane;
 }
 
-free_camera camera;
-
 void initialise () {
     config.app_name = "Raytracing";
     config.app_width = 1280;
@@ -93,9 +89,6 @@ void initialise () {
     sbo_planes.push_back(newPlane(sge::math::vector3 { -1.0f, 0.0f, 0.0f}, roomDim, sge::math::vector3 { 1.0f, 0.0f, 0.0f }, 32.0f));
     sbo_planes.push_back(newPlane(sge::math::vector3 { 1.0f, 0.0f, 0.0f }, roomDim, sge::math::vector3 { 0.0f, 1.0f, 0.0f }, 32.0f));
 
-    camera.position = ubo.position;
-    camera.orientation = ubo.orientation;
-
     computation.shader_path = "raytracing.comp.spv";
     computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
     computation.uniforms = { sge::dataspan { &ubo, sizeof (UBO) }, };
@@ -107,6 +100,14 @@ void initialise () {
 
 void terminate () {}
 
+void start (const sge::app::api& sge) {
+    sge.freecam.set_enabled (true);
+    sge.freecam.position = ubo.position;
+    sge.freecam.orientation = ubo.orientation;
+}
+
+void stop (const sge::app::api& sge) {}
+
 void update (sge::app::response& r, const sge::app::api& sge) {
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
@@ -114,11 +115,9 @@ void update (sge::app::response& r, const sge::app::api& sge) {
 
     UBO u = ubo;
 
-    camera.update (sge.instrumentation.dt(), sge.input);
-
-    u.position = camera.position;
-    u.orientation = camera.orientation;
-    u.fov = camera.fov;
+    u.position = sge.freecam.position;
+    u.orientation = sge.freecam.orientation;
+    u.fov = sge.freecam.fov;
     if (u != ubo) {
         ubo = u;
         r.uniform_changes[0] = true;
@@ -132,11 +131,7 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     UBO u = ubo;
     ImGui::Begin ("Raytracing");
     {
-        ImGui::Text("camera position (x:%.2f, y:%.2f, z:%.2f)", camera.position.x, camera.position.y, camera.position.z);
-        ImGui::Text("camera orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera.orientation.i, camera.orientation.j, camera.orientation.k, camera.orientation.u);
-        ImGui::SliderFloat ("camera fov", &camera.fov, 0.0, 90.0f);
         ImGui::SliderFloat("gamma", &u.gamma, 0, 4.0f);
-
         ImGui::ColorEdit3("fog colour", &u.fog_colour.x);
     }
     ImGui::End();
@@ -156,10 +151,10 @@ void               initialise          ()                              { ::initi
 configuration&     get_configuration   ()                              { return ::config; }
 content&           get_content         ()                              { return ::computation; }
 extensions&        get_extensions      ()                              { return ::extensions; }
-void               start               (const api& sge)                {}
+void               start               (const api& sge)                { ::start (sge); }
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }
-void               stop                (const api& sge)                {}
+void               stop                (const api& sge)                { ::stop (sge); }
 void               terminate           ()                              { ::terminate (); }
 
 }

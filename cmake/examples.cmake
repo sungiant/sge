@@ -54,7 +54,7 @@ set_target_properties(${PROJ} PROPERTIES
     FOLDER Examples
     RESOURCE ${RESOURCES})
 
-target_link_libraries (${PROJ} sge imgui imguizmo)
+target_link_libraries (${PROJ} sge imgui)
 
 ################################################################################
 

@@ -33,7 +33,6 @@ const vector4 vector4::unit_w = vector4 (0.0f, 0.0f, 0.0f, 1.0f);
     
 const quaternion quaternion::zero = quaternion (0.0f, 0.0f, 0.0f, 0.0f);
 const quaternion quaternion::identity = quaternion (0.0f, 0.0f, 0.0f, 1.0f);
-    
 
 const matrix33 matrix33::zero = matrix33 (0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 const matrix33 matrix33::identity = matrix33 (1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);

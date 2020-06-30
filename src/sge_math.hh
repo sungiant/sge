@@ -29,6 +29,7 @@ inline float min (float l, float r) { if (l < r) return l; else return r; }
 
 struct point2; struct rect; struct vector2; struct vector3; struct vector4; struct quaternion; struct matrix33; struct matrix43; struct matrix44;
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct point2 {
     int x = 0, y = 0;
     
@@ -53,6 +54,7 @@ struct point2 {
     static const point2 zero, one, unit_x, unit_y;
 };
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct rect {
     point2 location;
     point2 extent;
@@ -60,6 +62,7 @@ struct rect {
     bool operator != (const rect& r) const { return !(*this == r); }
 };
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct vector2 {
     float x, y = 0.0f;
     
@@ -90,6 +93,7 @@ struct vector2 {
     static const vector2 zero, one, unit_x, unit_y;
 };
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct vector3 {
     float x = 0.0f, y = 0.0f, z = 0.0f;
     
@@ -119,7 +123,7 @@ struct vector3 {
         x = xx; y = yx; z = zx; return *this;
     }
     
-    bool    is_unit    () const { return is_zero (1.0f - x*x - y*y - z*z); }
+    bool     is_unit   () const { return is_zero (1.0f - x*x - y*y - z*z); }
     float    length    () const { return sqrt (x*x + y*y + z*z); }
     float    length_sq () const { return x*x + y*y + z*z; }
     vector3& normalise ()       { const float l = length (); x /= l; y /= l; z /= l; return *this; }
@@ -127,6 +131,7 @@ struct vector3 {
     static const vector3 zero, one, unit_x, unit_y, unit_z, unit_w, right, up, backward, left, down, forward;
 };
     
+// ------------------------------------------------------------------------------------------------------------------ //
 struct vector4 {
     float x = 0.0f, y = 0.0f, z = 0.0f, w = 0.0f;
     
@@ -158,6 +163,7 @@ struct vector4 {
     static const vector4 zero, one, unit_x, unit_y, unit_z, unit_w;
 };
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct quaternion {
     float i = 0.0f, j = 0.0f, k = 0.0f; // vector
     float u = 1.0f; // scalar
@@ -201,6 +207,7 @@ struct quaternion {
     static quaternion const zero, identity;
 };
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct matrix33 {
     float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f;
     matrix33 () = default;
@@ -245,6 +252,7 @@ struct matrix33 {
     static matrix33 const zero, identity;
 };
 
+// ------------------------------------------------------------------------------------------------------------------ //
 struct matrix43 {
     float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f, r3c0 = 0.0f, r3c1 = 0.0f, r3c2 = 0.0f;
     matrix43 () = default;
@@ -280,6 +288,7 @@ struct matrix43 {
     static matrix43 const zero, identity;
 };
     
+// ------------------------------------------------------------------------------------------------------------------ //
 struct matrix44 {
     float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r0c3 = 0.0f, r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r1c3 = 0.0f, r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f, r2c3 = 0.0f, r3c0 = 0.0f, r3c1 = 0.0f, r3c2 = 0.0f, r3c3 = 1.0f;
     matrix44 () = default;
@@ -331,6 +340,24 @@ struct matrix44 {
     static matrix44 const zero, identity;
 };
 
+/*          _            _.,----,
+ __  _.-._ / '-.        -  ,._  \) 
+|  `-)_   '-.   \       / < _ )/" }
+/__    '-.   \   '-, ___(c-(6)=(6)
+ , `'.    `._ '.  _,'   >\    "  )
+ :;;,,'-._   '---' (  ( "/`. -='/
+;:;;:;;,  '..__    ,`-.`)'- '--'
+;';:;;;;;'-._ /'._|   Y/   _/' \
+      '''"._ F    |  _/ _.'._   `\
+             L    \   \/     '._  \
+      .-,-,_ |     `.  `'---,  \_ _|
+      //    'L    /  \,   ("--',=`)7
+     | `._       : _,  \  /'`-._L,_'-._
+     '--' '-.\__/ _L   .`'         './/
+                 [ (  /
+                  ) `{
+                  \__)*/
+// ------------------------------------------------------------------------------------------------------------------ //
 // Point 2 inline
 // ------------------------------------------------------------------------------------------------------------------ //
 inline point2  operator+(const point2& l, const point2& r) { return point2 (l.x + r.x, l.y + r.y); }
@@ -347,6 +374,8 @@ inline float distance (const point2& l, const point2& r) { return sqrt ((float)(
 inline int manhattan_distance (const point2& l, const point2& r) { return (l.x-r.x) + (l.y-r.y); }
 inline int chebyshev_distance (const point2& l, const point2& r) { return max (l.x-r.x, l.y-r.y); }
 
+
+// ------------------------------------------------------------------------------------------------------------------ //
 // Vector 2 inline
 // ------------------------------------------------------------------------------------------------------------------ //
 inline vector2 operator+(const vector2& l, const vector2& r) { return vector2 (l.x + r.x, l.y + r.y); }
@@ -361,6 +390,8 @@ inline float   operator|(const vector2& l, const vector2& r) { return l.x * r.x 
 inline vector2 normalise (const vector2& v) { return v / v.length (); }
 inline float distance (const vector2& l, const vector2& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y)); }
 
+
+// ------------------------------------------------------------------------------------------------------------------ //
 // Vector 3 inline
 // ------------------------------------------------------------------------------------------------------------------ //
 inline vector3& vector3::operator*= (const quaternion& q) {
@@ -398,6 +429,8 @@ inline vector3 operator^(const vector3& l, const vector3& r) { return vector3 (l
 inline vector3 normalise (const vector3& v) { return v / v.length (); }
 inline float   distance (const vector3& l, const vector3& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z)); }
 
+
+// ------------------------------------------------------------------------------------------------------------------ //
 // Vector 4 inline
 // ------------------------------------------------------------------------------------------------------------------ //
 inline vector4 operator+(const vector4& l, const vector4& r) { return vector4 (l.x + r.x, l.y + r.y, l.z + r.z, l.w + r.w); }
@@ -412,6 +445,8 @@ inline float   operator|(const vector4& l, const vector4& r) { return l.x * r.x 
 inline vector4 normalise (const vector4& v) { return v / v.length (); }
 inline float   distance (const vector4& l, const vector4& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z) + (l.w-r.w)*(l.w-r.w)); }
 
+
+// ------------------------------------------------------------------------------------------------------------------ //
 // Quaternion inline
 // ------------------------------------------------------------------------------------------------------------------ //
 inline quaternion operator~(const quaternion& v) { return quaternion { - v.i, - v.j, - v.k, v.u }; } // conjugate (inverse)
@@ -510,9 +545,9 @@ inline quaternion& quaternion::set_from_rotation (const matrix33& m) {
     return *this;
 }
 
+// ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 3x3 inline
 // ------------------------------------------------------------------------------------------------------------------ //
-
 inline matrix33 operator+(const matrix33& l, const matrix33& r) { return matrix33 (l[0] + r[0], l[1] + r[1], l[2] + r[2], l[3] + r[3]); }
 inline matrix33 operator-(const matrix33& v) { return matrix33 (-v[0], -v[1], -v[2], -v[3]); }
 inline matrix33 operator-(const matrix33& l, const matrix33& r) { return matrix33 (l[0] - r[0], l[1] - r[1], l[2] - r[2], l[3] - r[3]); }
@@ -553,9 +588,9 @@ inline matrix33& matrix33::set_from_orientation (const quaternion& q) { // http:
     return *this;
 }
     
+// ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 4x3 inline
 // ------------------------------------------------------------------------------------------------------------------ //
-
 inline matrix43 operator+(const matrix43& l, const matrix43& r) { return matrix43 (l[0] + r[0], l[1] + r[1], l[2] + r[2], l[3] + r[3]); }
 inline matrix43 operator-(const matrix43& v) { return matrix43 (-v[0], -v[1], -v[2], -v[3]); }
 inline matrix43 operator-(const matrix43& l, const matrix43& r) { return matrix43 (l[0] - r[0], l[1] - r[1], l[2] - r[2], l[3] - r[3]); }
@@ -581,9 +616,10 @@ inline matrix43& matrix43::set_rotation_component (const quaternion& q) {
     return *this;
 }
     
+
+// ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 4x4 inline
 // ------------------------------------------------------------------------------------------------------------------ //
-
 inline matrix44 operator+(const matrix44& l, const matrix44& r) { return matrix44 (l[0] + r[0], l[1] + r[1], l[2] + r[2], l[3] + r[3]); }
 inline matrix44 operator-(const matrix44& v) { return matrix44 (-v[0], -v[1], -v[2], -v[3]); }
 inline matrix44 operator-(const matrix44& l, const matrix44& r) { return matrix44 (l[0] - r[0], l[1] - r[1], l[2] - r[2], l[3] - r[3]); }

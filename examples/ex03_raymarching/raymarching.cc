@@ -1,16 +1,8 @@
 #include <sge_app.hh>
 
-#include "../ex_common/free_camera.hh"
-
 sge::app::configuration config = {};
 sge::app::content computation = {};
-sge::app::extensions extensions = { sge::app::extensions {
-    { { sge::runtime::type_id<free_camera>(), [] (const sge::runtime::api& x) { return new free_camera (x); }}, },
-    {}
-}
-};
-free_camera* camera = nullptr;
-
+sge::app::extensions extensions = {};
 
 struct PUSH {
     float time;
@@ -94,13 +86,10 @@ void initialise () {
 void terminate () {}
 
 void start (const sge::app::api& sge) {
-    assert (!camera);
-    camera = &sge.ext <free_camera>();
-    assert (camera);
-    
+    sge.freecam.set_enabled (true);
 }
 
-void stop (const sge::app::api& sge) { camera = nullptr; }
+void stop (const sge::app::api& sge) {}
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
@@ -112,11 +101,11 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
 
     UBO_CAMERA uc = ubo_camera;
-    uc.position = camera->position;
-    uc.orientation = camera->orientation;
-    uc.fov = camera->fov;
-    uc.near = camera->near;
-    uc.far = camera->far;
+    uc.position = sge.freecam.position;
+    uc.orientation = sge.freecam.orientation;
+    uc.fov = sge.freecam.fov;
+    uc.near = sge.freecam.near;
+    uc.far = sge.freecam.far;
     uc.aspect = (float) res_x / (float)res_y;
     if (uc != ubo_camera) {
         ubo_camera = uc;
@@ -152,17 +141,6 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     ImGui::Begin ("SDF (static)");
     {
         UBO_SETTINGS us = ubo_settings;
-
-        ImGui::Text("displaying: %s", display_mode_text[us.display_mode]);
-        ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", camera->position.x, camera->position.y, camera->position.z);
-        ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera->orientation.i, camera->orientation.j, camera->orientation.k, camera->orientation.u);
-        
-        if (ImGui::Button("reset camera")) camera->reset();
-        
-        ImGui::SliderFloat("fov", &camera->fov, free_camera::FOV_MIN, free_camera::FOV_MAX);
-        ImGui::SliderFloat("near", &camera->near, 0.0f, 1000.0f);
-        ImGui::SliderFloat("far", &camera->far, 0.0f, 1000.0f);
-
         ImGui::SliderInt("display mode", &us.display_mode, 0, 7);
         ImGui::SliderFloat("gamma", &us.gamma, 0, 4.0f);
         ImGui::SliderInt("iterations", &us.iterations, 1, 256);

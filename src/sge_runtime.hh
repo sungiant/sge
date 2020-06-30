@@ -91,8 +91,11 @@ public:
     virtual void update () {};
     virtual void debug_ui () {};
     virtual ~extension () {};
+    bool is_enabled () { return enabled; }
+    void set_enabled (const bool v) { enabled = v; }
 protected:
     extension () {};
+    bool enabled = true;
 };
 
 // runtime views have readonly (const) access to the runtime api.

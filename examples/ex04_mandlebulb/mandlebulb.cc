@@ -1,7 +1,5 @@
 #include <sge_app.hh>
 
-#include "../ex_common/free_camera.hh"
-
 sge::app::configuration config = {};
 sge::app::content computation = {};
 sge::app::extensions extensions = {};
@@ -41,8 +39,6 @@ struct UBO {
     bool operator != (const UBO& ubo) const { return !(*this == ubo); }
 } ubo;
 
-free_camera camera;
-
 void initialise () {
     config.app_name = "mandlebulb";
     config.app_width = 1280;
@@ -52,10 +48,15 @@ void initialise () {
     computation.shader_path = "mandlebulb.comp.spv";
     computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
     computation.uniforms = { sge::dataspan { &ubo, sizeof (UBO) }, };
-
-    camera.position = { 0.62f, 0.53f, -2.65f };
-    camera.orientation = { 0.09f, -0.10f, -0.01f, 0.99f };
 }
+
+void start (const sge::app::api& sge) {
+    sge.freecam.set_enabled (true);
+    sge.freecam.position = { 0.62f, 0.53f, -2.65f };
+    sge.freecam.orientation = { 0.09f, -0.10f, -0.01f, 0.99f };
+}
+
+void stop (const sge::app::api& sge) {}
 
 void terminate () {}
 
@@ -66,10 +67,8 @@ void update (sge::app::response& r, const sge::app::api& sge) {
 
     UBO u = ubo;
 
-    camera.update (sge.instrumentation.dt(), sge.input);
-
-    u.position = camera.position;
-    u.orientation = camera.orientation;
+    u.position = sge.freecam.position;
+    u.orientation = sge.freecam.orientation;
     if (u != ubo) {
         ubo = u;
         r.uniform_changes[0] = true;
@@ -83,9 +82,6 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     UBO u = ubo;
     ImGui::Begin ("Mandlebulb");
     {
-        ImGui::Text("camera position (x:%.2f, y:%.2f, z:%.2f)", camera.position.x, camera.position.y, camera.position.z);
-        ImGui::Text("camera orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera.orientation.i, camera.orientation.j, camera.orientation.k, camera.orientation.u);
-        ImGui::SliderFloat ("camera sensitivity", &camera.traverse_sensitivity, 1, 1000); // todo: automatically adjusted this based on proximity to surface - need info back from the compute shader for this.
         ImGui::SliderFloat("gamma", &u.gamma, 0, 4.0f);
         ImGui::SliderInt("marching step limit", &u.marching_step_limit, 1, 1024);
         ImGui::SliderInt("fractal step limit", &u.fractal_step_limit, 1, 32);
@@ -117,10 +113,10 @@ void               initialise          ()                              { ::initi
 configuration&     get_configuration   ()                              { return ::config; }
 content&           get_content         ()                              { return ::computation; }
 extensions&        get_extensions      ()                              { return ::extensions; }
-void               start               (const api& sge)                {}
+void               start               (const api& sge)                { ::start (sge); }
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }
-void               stop                (const api& sge)                {}
+void               stop                (const api& sge)                { ::stop (sge); }
 void               terminate           ()                              { ::terminate (); }
 
 }

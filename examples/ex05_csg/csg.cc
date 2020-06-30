@@ -1,7 +1,5 @@
 #include <sge_app.hh>
 
-#include "../ex_common/free_camera.hh"
-
 #ifdef TARGET_MACOSX
 #define USE_SBO_MATERIALS 1
 #define USE_SBO_LIGHTS 0
@@ -77,7 +75,6 @@ struct UBO_SETTINGS {
 sge::app::configuration config = {};
 sge::app::content computation = {};
 sge::app::extensions extensions = {};
-free_camera camera;
 
 PUSH push;
 UBO_CAMERA ubo_camera;
@@ -257,6 +254,12 @@ void initialise () {
 
 void terminate () {}
 
+void start (const sge::app::api& sge) {
+    sge.freecam.set_enabled (true);
+}
+
+void stop (const sge::app::api& sge) {}
+
 bool has_local_blob_change = false;
 
 void update (sge::app::response& r, const sge::app::api& sge) {
@@ -265,17 +268,15 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
 
-    camera.update (sge.instrumentation.dt(), sge.input);
-
     int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
     int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
 
     UBO_CAMERA uc = ubo_camera;
-    uc.position = camera.position;
-    uc.orientation = camera.orientation;
-    uc.fov = camera.fov;
-    uc.near = camera.near;
-    uc.far = camera.far;
+    uc.position = sge.freecam.position;
+    uc.orientation = sge.freecam.orientation;
+    uc.fov = sge.freecam.fov;
+    uc.near = sge.freecam.near;
+    uc.far = sge.freecam.far;
     uc.aspect = (float) res_x / (float)res_y;
     if (uc != ubo_camera) {
         ubo_camera = uc;
@@ -326,13 +327,6 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         UBO_SETTINGS us = ubo_settings;
 
         ImGui::Text("displaying: %s", display_mode_text[us.display_mode]);
-        ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", camera.position.x, camera.position.y, camera.position.z);
-        ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", camera.orientation.i, camera.orientation.j, camera.orientation.k, camera.orientation.u);
-
-        ImGui::SliderFloat("fov", &camera.fov, free_camera::FOV_MIN, free_camera::FOV_MAX);
-        ImGui::SliderFloat("near", &camera.near, 0.0f, 1000.0f);
-        ImGui::SliderFloat("far", &camera.far, 0.0f, 1000.0f);
-
         ImGui::SliderInt("display mode", &us.display_mode, 0, 7);
         ImGui::SliderFloat("gamma", &us.gamma, 0, 4.0f);
         ImGui::SliderInt("iterations", &us.iterations, 1, 256);
@@ -479,10 +473,10 @@ void               initialise          ()                              { ::initi
 configuration&     get_configuration   ()                              { return ::config; }
 content&           get_content         ()                              { return ::computation; }
 extensions&        get_extensions      ()                              { return ::extensions; }
-void               start               (const api& sge)                {}
+void               start               (const api& sge)                { ::start (sge); }
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ::debug_ui (r, sge); }
-void               stop                (const api& sge)                {}
+void               stop                (const api& sge)                { ::stop (sge); }
 void               terminate           ()                              { ::terminate (); }
 
 }

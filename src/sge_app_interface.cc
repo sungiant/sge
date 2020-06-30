@@ -28,6 +28,7 @@ extensions& get_standard_extensions () {
             { sge::runtime::type_id<sge::ext::mouse>(), [] (const sge::runtime::api& x) { return new sge::ext::mouse (x); }},
             { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
             { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
+            { sge::runtime::type_id<sge::ext::freecam>(), [] (const sge::runtime::api& x) { return new sge::ext::freecam (x); }},
         };
         standard_extensions->systems = {};
     }

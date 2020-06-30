@@ -8,6 +8,7 @@
 #include "ext_mouse.hh"
 #include "ext_gamepad.hh"
 #include "ext_instrumentation.hh"
+#include "ext_freecam.hh"
 
 
 namespace sge::app {
@@ -23,6 +24,7 @@ struct api { // used by an SGE app to interact with SGE
     } input;
 
     sge::ext::instrumentation& instrumentation;
+    sge::ext::freecam& freecam;
 
     api (runtime::api& z_api)
         : runtime (z_api)
@@ -32,6 +34,7 @@ struct api { // used by an SGE app to interact with SGE
             ext <sge::ext::gamepad>(),
         })
         , instrumentation (ext <sge::ext::instrumentation>())
+        , freecam (ext <sge::ext::freecam>())
     {
     }
     
