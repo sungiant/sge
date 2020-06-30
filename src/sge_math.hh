@@ -465,13 +465,17 @@ inline void quaternion::get_axis_angle(vector3& axis, float& angle) const { // r
     const float cos_angle = u;
     angle = 2.0f * acos(cos_angle); // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
     float sin_angle = sqrt(1.0f - cos_angle * cos_angle);
-    if (is_zero (sin_angle))
+    if (is_zero (sin_angle)) {
         sin_angle = 1.0f;
-    axis.x = i / sin_angle;
-    axis.y = j / sin_angle;
-    axis.z = k / sin_angle;
-    axis.normalise();
-    assert (axis.is_unit());
+        axis = vector3::up;
+    }
+    else {
+        axis.x = i / sin_angle;
+        axis.y = j / sin_angle;
+        axis.z = k / sin_angle;
+        axis.normalise ();
+        assert (axis.is_unit ());
+    }
 }
 
 inline void quaternion::get_yaw_pitch_roll (vector3& angles) const { // radians

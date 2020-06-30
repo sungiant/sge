@@ -13,7 +13,7 @@ struct PUSH { float time = 0.0f; } push;
 struct UBO {
     sge::math::vector3          position        = { 0.0f, 0.0f, 4.0f };
     float                       gamma           = 1.2f;
-    sge::math::quaternion       orientation     = { 0.0f, 1.0f, 0.0f, 0.0f };
+    sge::math::quaternion       orientation     = { 0.0f, 0.0f, 0.0f, 1.0f };
     sge::math::vector3          fog_colour      = { 0.3f, 0.1f, 0.3f };
     float                       fov             = 100.0f;
 

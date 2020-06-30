@@ -126,7 +126,7 @@ struct freecam : public runtime::view {
         const int gizmo_size = 64;
         
         math::matrix33 cameraRotLH = math::matrix33().set_as_rotation_from_orientation(orientation);
-        cameraRotLH[0] = -cameraRotLH[0];
+        //cameraRotLH[0] = -cameraRotLH[0];
         //cameraRotLH.orthonormalise();
         math::matrix44 gizmoView = math::matrix44().set_rotation_component (cameraRotLH);
         ImGuizmo::ViewManipulate(&gizmoView[0][0], position.length(), ImVec2(screen_w - gizmo_size, 0), ImVec2(gizmo_size, gizmo_size), 0x10101010);
@@ -134,8 +134,8 @@ struct freecam : public runtime::view {
         
         if (gizmoRotLH != cameraRotLH) {
             math::matrix33 cameraRotRH = gizmoRotLH;
-            cameraRotRH[0] = -cameraRotRH[0];
-            cameraRotRH.orthonormalise();
+            //cameraRotRH[0] = -cameraRotRH[0];
+            cameraRotRH.orthonormalise ();
             orientation.set_from_rotation(cameraRotRH);
         }
         
