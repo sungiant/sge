@@ -66,6 +66,16 @@ struct free_camera : public sge::runtime::view {
             eulerAngles.y += dt * look_rate * rxy;
         }
 
+        // ROLL
+        float rz = 0.0f;
+        if (keyboard.is_key_down(sge::runtime::keyboard_key::q)) { rz = -1.0f; }
+        if (keyboard.is_key_down(sge::runtime::keyboard_key::e)) { rz = +1.0f; }
+        if (gamepad.is_button_down(sge::runtime::gamepad_button::left_shoulder)) { rz = -1.0f; }
+        if (gamepad.is_button_down(sge::runtime::gamepad_button::right_shoulder)) { rz = +1.0f; }
+        if (!sge::math::is_zero (rz)) {
+            eulerAngles.z += dt * look_rate * rz;
+        }
+
         orientation = sge::math::quaternion::create_from_yaw_pitch_roll(eulerAngles.x, eulerAngles.y, eulerAngles.z);
 
         // LEFT/RIGHT
@@ -113,11 +123,33 @@ struct free_camera : public sge::runtime::view {
         
         if (!orientation.is_unit())
             orientation.normalise();
-        auto cameraView = sge::math::matrix44::create_from_rotation(orientation);
         
-        float camDistance = 8.f;
-        ImGuizmo::SetID(0);
-        ImGuizmo::ViewManipulate(&cameraView[0][0], camDistance, ImVec2(screen_w - 128, 0), ImVec2(128, 128), 0x10101010);
+        sge::math::matrix33 cameraRotationLH = sge::math::matrix33::create_from_orientation(orientation);
+        // imguizmo looks to be using a left handed coordinate system.
+        cameraRotationLH.r2c0 = -cameraRotationLH.r2c0;
+        cameraRotationLH.r2c1 = -cameraRotationLH.r2c1;
+        cameraRotationLH.r2c2 = -cameraRotationLH.r2c2;
+        cameraRotationLH.orthonormalise();
+        
+        const sge::math::matrix44 gizmoView = sge::math::matrix44::create_from_rotation(cameraRotationLH);
+        
+        auto gizmoViewDelta = gizmoView;
+               
+        const int gizmo_size = 64;
+        ImGuizmo::ViewManipulate(&gizmoViewDelta[0][0], position.length(), ImVec2(screen_w - gizmo_size, 0), ImVec2(gizmo_size, gizmo_size), 0x10101010);
+        
+        if (gizmoViewDelta != gizmoView) {
+            sge::math::matrix33 new_rotation;
+            gizmoViewDelta.get_rotation_component (new_rotation);
+
+            // and back to right handed!
+            new_rotation.r2c0 = -new_rotation.r2c0;
+            new_rotation.r2c1 = -new_rotation.r2c1;
+            new_rotation.r2c2 = -new_rotation.r2c2;
+            
+            new_rotation.orthonormalise();
+            orientation = sge::math::quaternion::create_from_rotation(new_rotation);
+        }
     }
 
     sge::math::vector3 position;
