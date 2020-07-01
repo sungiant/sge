@@ -18,7 +18,7 @@ public:
     inline bool is_button_just_released    (runtime::mouse_button z)   const { return is_button_up (z) && was_button_down (z); }
     inline math::point2 position           ()                          const { return position_current; }
     inline math::point2 position_delta     ()                          const { return position_current - position_previous; }
-    inline math::vector2 velocity          ()                          const { return position_delta () / current_dt; }
+    inline math::vector2 velocity          ()                          const { return math::vector2(position_delta ()) / current_dt; }
     
     inline math::vector2 position          (proportion p)              const { math::point2 d = position (); return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }
     inline math::vector2 position_delta    (proportion p)              const { math::point2 d = position_delta (); return sge::math::vector2 { (float) d.x / current_screenwidth, (float)d.y / current_screenheight }; }

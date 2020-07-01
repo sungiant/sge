@@ -2,6 +2,8 @@
 
 #include "sge.hh"
 
+#include "imgui_ext.hh"
+
 // OVERLAY
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -22,6 +24,7 @@ public:
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
+            imgui::ext::test(sge);
             int y = 20;
             int* py = &y;
             const int line_spacing = 14;
@@ -48,8 +51,7 @@ public:
         ImGui::End ();
 
         ImGui::PopStyleColor ();
-
-        /*
+/*
         ImGui::Begin ("Tools");
         {
             if (ImGui::Button ("Toggle Fullscreen")) {

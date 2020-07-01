@@ -16,6 +16,8 @@
 
 namespace sge::math {
 
+struct tests { tests (); ~tests (); };
+    
 const float PI = atan (1.0f) * 4.0f;
 const float TAU = 2.0f * PI;
 const float EPSILON = 0.000001f;
@@ -53,6 +55,16 @@ struct point2 {
     point2& operator/= (const point2& v) { x/=v.x; y/=v.y; return *this; }
     point2& operator/= (const int i)     { x/=i;   y/=i;   return *this; }
     
+    float  length       () const { return sqrt (x*x + y*y); }
+    float  length_sq    () const { return x*x + y*y; }
+    point2& negate      ()       { x=-x;y=-y; return *this; }
+    
+    float  distance     (const point2& v) const { return sqrt ((x-v.x)*(x-v.x) + (y-v.y)*(y-v.y)); }
+    float  distance_sq  (const point2& v) const { return (x-v.x)*(x-v.x) + (y-v.y)*(y-v.y); }
+    
+    int manhattan_distance (const point2& v) const { return (x-v.x) + (y-v.y); }
+    int chebyshev_distance (const point2& v) const { return max (x-v.x, y-v.y); }
+    
     static const point2 zero, one, unit_x, unit_y;
 };
 
@@ -87,10 +99,16 @@ struct vector2 {
     vector2& operator/= (const vector2& v) { x/=v.x; y/=v.y; return *this; }
     vector2& operator/= (const float f)    { x/=f;   y/=f;   return *this; }
     
-    bool     is_unit   () const { return is_zero (1.0f - x*x - y*y); }
-    float    length    () const { return sqrt (x*x + y*y); }
-    float    length_sq () const { return x*x + y*y; }
-    vector2& normalise ()       { const float l = length (); x /= l; y /= l; return *this; }
+    bool   is_unit      () const { return is_zero (1.0f - x*x - y*y); }
+    float  length       () const { return sqrt (x*x + y*y); }
+    float  length_sq    () const { return x*x + y*y; }
+    
+    float  distance     (const vector2& v) const { return sqrt ((x-v.x)*(x-v.x) + (y-v.y)*(y-v.y)); }
+    float  distance_sq  (const vector2& v) const { return (x-v.x)*(x-v.x) + (y-v.y)*(y-v.y); }
+    float  dot          (const vector2& v) const { return x * v.x + y * v.y; }
+    
+    vector2& normalise  ()       { const float l = length (); x /= l; y /= l; return *this; }
+    vector2& negate     ()       { x=-x;y=-y; return *this; }
     
     static const vector2 zero, one, unit_x, unit_y;
 };
@@ -116,20 +134,23 @@ struct vector3 {
     vector3& operator*= (const float f)    { x*=f;   y*=f;   z*=f;   return *this; }
     vector3& operator*= (const quaternion&);
     vector3& operator*= (const matrix33&);
+    vector3& operator*= (const matrix43&);
+    vector3& operator*= (const matrix44&);
     vector3& operator/= (const vector3& v) { x/=v.x; y/=v.y; z/=v.z; return *this; }
     vector3& operator/= (const float f)    { x/=f;   y/=f;   z/=f;   return *this; }
-    vector3& operator^= (const vector3& v) { // cross
-        float const xx = y*v.z - z*v.y;
-        float const yx = z*v.x - x*v.z;
-        float const zx = x*v.y - y*v.x;
-        x = xx; y = yx; z = zx; return *this;
-    }
     
-    bool     is_unit   () const { return is_zero (1.0f - x*x - y*y - z*z); }
-    float    length    () const { return sqrt (x*x + y*y + z*z); }
-    float    length_sq () const { return x*x + y*y + z*z; }
-    vector3& normalise ()       { const float l = length (); x /= l; y /= l; z /= l; return *this; }
+    bool   is_unit      () const { return is_zero (1.0f - x*x - y*y - z*z); }
+    float  length       () const { return sqrt (x*x + y*y + z*z); }
+    float  length_sq    () const { return x*x + y*y + z*z; }
     
+    float  distance     (const vector3& v) const { return sqrt ((x-v.x)*(x-v.x) + (y-v.y)*(y-v.y) + (z-v.z)*(z-v.z)); }
+    float  distance_sq  (const vector3& v) const { return (x-v.x)*(x-v.x) + (y-v.y)*(y-v.y) + (z-v.z)*(z-v.z); }
+    float  dot          (const vector3& v) const { return x * v.x + y * v.y + z * v.z; }
+
+    vector3& normalise  ()       { const float l = length (); x /= l; y /= l; z /= l; return *this; }
+    vector3& negate     ()       { x=-x;y=-y;z=-z; return *this; }
+    vector3& cross      (const vector3& v) { const vector3 t = *this; x=t.y*v.z-t.z*v.y;y=t.z*v.x-t.x*v.z;z=t.x*v.y-t.y*v.x; return *this; }
+
     static const vector3 zero, one, unit_x, unit_y, unit_z, unit_w, right, up, backward, left, down, forward;
 };
     
@@ -157,10 +178,14 @@ struct vector4 {
     vector4& operator/= (const vector4& v) { x/=v.x; y/=v.y; z/=v.z; w/=v.w; return *this; }
     vector4& operator/= (const float f)    { x/=f;   y/=f;   z/=f;   w/=f;   return *this; }
     
-    bool     is_unit   () const { return is_zero (1.0f - x*x - y*y - z*z - w*w); }
-    float    length    () const { return sqrt (x*x + y*y + z*z + w*w); }
-    float    length_sq () const { return x*x + y*y + z*z + w*w; }
-    vector4& normalise ()       { const float l = length (); x /= l; y /= l; z /= l; w /= l; return *this; }
+    bool   is_unit      () const { return is_zero (1.0f - x*x - y*y - z*z - w*w); }
+    float  length       () const { return sqrt (x*x + y*y + z*z + w*w); }
+    float  length_sq    () const { return x*x + y*y + z*z + w*w; }
+    
+    vector4& normalise  ()       { const float l = length (); x /= l; y /= l; z /= l; w /= l; return *this; }
+    vector4& negate     ()       { x=-x;y=-y;z=-z;w=-w; return *this; }
+    
+    float    dot        (const vector4& v) const { return x * v.x + y * v.y + z * v.z + w * v.w; }
     
     static const vector4 zero, one, unit_x, unit_y, unit_z, unit_w;
 };
@@ -182,18 +207,15 @@ struct quaternion {
     quaternion& operator-= (const float f)       { i-=f;   j-=f;   k-=f;   u-=f;   return *this; }
     quaternion& operator*= (const float f)       { i*=f;   j*=f;   k*=f;   u*=f;   return *this; }
     quaternion& operator/= (const float f)       { i/=f;   j/=f;   k/=f;   u/=f;   return *this; }
-    quaternion& operator&= (const quaternion& v) { // concatenate (chain rotations)
-        const float ix = u*v.i + i*v.u + k*v.j - j*v.k;
-        const float jx = u*v.j + j*v.u + i*v.k - k*v.i;
-        const float kx = u*v.k + k*v.u + j*v.i - i*v.j;
-        const float ux = u*v.u - k*v.k - i*v.i + j*v.j;
-        i = ix; j = jx; k = kx; u = ux; return *this;
-    }
-    
+
     bool        is_unit   () const { return is_zero (1.0f - i*i - j*j - k*k - u*u); }
     float       length    () const { return sqrt (i*i + j*j + k*k + u*u); }
     float       length_sq () const { return i*i + j*j + k*k + u*u; }
+
     quaternion& normalise ()       { const float l = length (); i /= l; j /= l; k /= l; u /= l; return *this; }
+    quaternion& negate    ()       { i=-i;j=-j;k=-k;u=-u; return *this; }
+    quaternion& conjugate ()       { i=-i;j=-j;k=-k; return *this; } // inverse
+    quaternion& concatenate (const quaternion& v);
 
     void        get_axis_angle (vector3&, float&) const;
     void        get_yaw_pitch_roll (vector3&) const;
@@ -232,12 +254,13 @@ struct matrix33 {
     matrix33& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    return *this; }
     matrix33& operator-= (const matrix33& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; return *this; }
     matrix33& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    return *this; }
-    matrix33& operator*= (const matrix33& v) { assert (false); return *this; } // todo
+    matrix33& operator*= (const matrix33& v);
     matrix33& operator*= (const float f)     { (*this)[0]*=f;    (*this)[1]*=f;    (*this)[2]*=f;    return *this; }
     matrix33& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
     bool is_orthonormal () const;
     matrix33& orthonormalise ();
+    matrix33& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); return *this; }
     
     matrix33& set_as_scale_from_factors (const vector3& f);
     matrix33& set_as_rotation_from_x_axis_angle (const float angle);
@@ -269,13 +292,16 @@ struct matrix43 {
     matrix43& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    (*this)[3]+=f;    return *this; }
     matrix43& operator-= (const matrix43& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
     matrix43& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    (*this)[3]-=f;    return *this; }
-    matrix43& operator*= (const matrix43& v) { assert (false); return *this; } // todo
-    matrix43& operator*= (const matrix33& v) { assert (false); return *this; } // todo
+    matrix43& operator*= (const matrix43& v);
+    matrix43& operator*= (const matrix33& v);
     matrix43& operator*= (const float f)     { (*this)[0]*=f;    (*this)[1]*=f;    (*this)[2]*=f;    (*this)[3]*=f;    return *this; }
     matrix43& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
+    matrix43& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); (*this)[3]=(*this)[3].negate(); return *this; }
+    
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0]; m[1] = (*this)[1]; m[2] = (*this)[2]; }
     
+    matrix43& set_position_component (const vector3& v) { r3c0 = v.x; r3c1 = v.y; r3c2 = v.z; return *this; }
     matrix43& set_rotation_component (const matrix33& m) { (*this)[0] = m[0]; (*this)[1] = m[1]; (*this)[2] = m[2]; return *this; }
     matrix43& set_rotation_component (const quaternion&);
     
@@ -301,37 +327,36 @@ struct matrix44 {
     matrix44& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    (*this)[3]+=f;    return *this; }
     matrix44& operator-= (const matrix44& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
     matrix44& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    (*this)[3]-=f;    return *this; }
-    matrix44& operator*= (const matrix44& v) {
-        r0c0 = r0c0*v.r0c0 + r0c1*v.r1c0 + r0c2*v.r2c0 + r0c3*v.r3c0;
-        r0c1 = r0c0*v.r0c1 + r0c1*v.r1c1 + r0c2*v.r2c1 + r0c3*v.r3c1;
-        r0c2 = r0c0*v.r0c2 + r0c1*v.r1c2 + r0c2*v.r2c2 + r0c3*v.r3c2;
-        r0c3 = r0c0*v.r0c3 + r0c1*v.r1c3 + r0c2*v.r2c3 + r0c3*v.r3c3;
-        r1c0 = r1c0*v.r0c0 + r1c1*v.r1c0 + r1c2*v.r2c0 + r1c3*v.r3c0;
-        r1c1 = r1c0*v.r0c1 + r1c1*v.r1c1 + r1c2*v.r2c1 + r1c3*v.r3c1;
-        r1c2 = r1c0*v.r0c2 + r1c1*v.r1c2 + r1c2*v.r2c2 + r1c3*v.r3c2;
-        r1c3 = r1c0*v.r0c3 + r1c1*v.r1c3 + r1c2*v.r2c3 + r1c3*v.r3c3;
-        r2c0 = r2c0*v.r0c0 + r2c1*v.r1c0 + r2c2*v.r2c0 + r2c3*v.r3c0;
-        r2c1 = r2c0*v.r0c1 + r2c1*v.r1c1 + r2c2*v.r2c1 + r2c3*v.r3c1;
-        r2c2 = r2c0*v.r0c2 + r2c1*v.r1c2 + r2c2*v.r2c2 + r2c3*v.r3c2;
-        r2c3 = r2c0*v.r0c3 + r2c1*v.r1c3 + r2c2*v.r2c3 + r2c3*v.r3c3;
-        r3c0 = r3c0*v.r0c0 + r3c1*v.r1c0 + r3c2*v.r2c0 + r3c3*v.r3c0;
-        r3c1 = r3c0*v.r0c1 + r3c1*v.r1c1 + r3c2*v.r2c1 + r3c3*v.r3c1;
-        r3c2 = r3c0*v.r0c2 + r3c1*v.r1c2 + r3c2*v.r2c2 + r3c3*v.r3c2;
-        r3c3 = r3c0*v.r0c3 + r3c1*v.r1c3 + r3c2*v.r2c3 + r3c3*v.r3c3;
-        return *this;
-    }
-    matrix44& operator*= (const matrix43& v) { assert (false); return *this; } // todo
-    matrix44& operator*= (const matrix33& v) { assert (false); return *this; } // todo
+    matrix44& operator*= (const matrix33& v);
+    matrix44& operator*= (const matrix43& v);
+    matrix44& operator*= (const matrix44& v);
     matrix44& operator*= (const float f)     { (*this)[0]*=f; (*this)[1]*=f; (*this)[2]*=f; (*this)[3]*=f; return *this; }
     matrix44& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
+    matrix44& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); (*this)[3]=(*this)[3].negate(); return *this; }
+    matrix44& transpose ();
+    matrix44& invert ();
+    matrix44& decompose ();
+    float determinant () const;
+    
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0].xyz(); m[1] = (*this)[1].xyz(); m[2] = (*this)[2].xyz(); }
     
+    matrix44& set_position_component (const vector3& v) { r3c0=v.x;r3c1=v.y;r3c2=v.z; return *this; }
     matrix44& set_rotation_component (const matrix33& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;return *this; }
     matrix44& set_rotation_component (const quaternion&);
     
+    matrix44& set_as_perspective_from_field_of_view (const float fov, const float aspect, const float near, const float far);
+    matrix44& set_as_view_transform_from_look_at_target (vector3 position, vector3 target, vector3 up); // view direction is negative Z (positive Z is the back of the camera)
+    matrix44& set_as_view_frame_from_look_at_target (vector3 position, vector3 target, vector3 up); // view direction is negative Z (positive Z is the back of the camera)
+    
     static matrix44 const zero, identity;
 };
+    
+    
+    
+
+    
+    
 
 /*          _            _.,----,
  __  _.-._ / '-.        -  ,._  \) 
@@ -351,403 +376,127 @@ struct matrix44 {
                   ) `{
                   \__)*/
 // ------------------------------------------------------------------------------------------------------------------ //
-// Point 2 inline
+// Point 2 extras
 // ------------------------------------------------------------------------------------------------------------------ //
-inline point2  operator+(const point2& l, const point2& r) { return point2 (l.x + r.x, l.y + r.y); }
-inline point2  operator-(const point2& p) { return point2 (-p.x, -p.y); }
-inline point2  operator-(const point2& l, const point2& r) { return point2 (l.x - r.x, l.y - r.y); }
-inline point2  operator*(const point2& l, const point2& r) { return point2 (l.x * r.x, l.y * r.y); }
-inline point2  operator*(const point2& p, const int i) { return point2 (p.x * i, p.y * i); }
-inline vector2 operator*(const point2& p, const float f) { return vector2 ((float) p.x * f, (float) p.y * f); }
-inline point2  operator/(const point2& l, const point2& r) { return point2 (l.x / r.x, l.y / r.y); }
-inline point2  operator/(const point2& p, const int i) { return point2 (p.x / i, p.y / i); }
-inline vector2 operator/(const point2& p, const float f) { return vector2 ((float) p.x / f, (float) p.y / f); }
+inline point2  operator-(const point2& v)                       { auto cp = v; return cp.negate(); }
+inline point2  operator-(const point2& l, const point2& r)      { auto cp = l; return cp-=r; }
+inline point2  operator+(const point2& l, const point2& r)      { auto cp = l; return cp+=r; }
+inline point2  operator*(const point2& v, const int f)          { auto cp = v; return cp*=f; }
+inline point2  operator*(const point2& l, const point2& r)      { auto cp = l; return cp*=r; }
+inline point2  operator/(const point2& v, const int f)          { auto cp = v; return cp/=f; }
+inline point2  operator/(const point2& l, const point2& r)      { auto cp = l; return cp/=r; }
 
-inline float distance (const point2& l, const point2& r) { return sqrt ((float)((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y))); }
-inline int manhattan_distance (const point2& l, const point2& r) { return (l.x-r.x) + (l.y-r.y); }
-inline int chebyshev_distance (const point2& l, const point2& r) { return max (l.x-r.x, l.y-r.y); }
-
-
-// ------------------------------------------------------------------------------------------------------------------ //
-// Vector 2 inline
-// ------------------------------------------------------------------------------------------------------------------ //
-inline vector2 operator+(const vector2& l, const vector2& r) { return vector2 (l.x + r.x, l.y + r.y); }
-inline vector2 operator-(const vector2& v) { return vector2 (-v.x, -v.y); }
-inline vector2 operator-(const vector2& l, const vector2& r) { return vector2 (l.x - r.x, l.y - r.y); }
-inline vector2 operator*(const vector2& l, const vector2& r) { return vector2 (l.x * r.x, l.y * r.y); }
-inline vector2 operator*(const vector2& v, const float f) { return vector2 (v.x * f, v.y * f); }
-inline vector2 operator/(const vector2& l, const vector2& r) { return vector2 (l.x / r.x, l.y / r.y); }
-inline vector2 operator/(const vector2& v, const float f) { return v * (1.0f / f); }
-inline float   operator|(const vector2& l, const vector2& r) { return l.x * r.x + l.y * r.y; } // dot
-
-inline vector2 normalise (const vector2& v) { return v / v.length (); }
-inline float distance (const vector2& l, const vector2& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y)); }
-inline float distance_sq (const vector2& l, const vector2& r) { return (l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y); }
+inline float   distance (const point2& l, const point2& r)           { return l.distance(r); }
+inline float   distance_sq (const point2& l, const point2& r)        { return l.distance_sq(r); }
+inline int     manhattan_distance (const point2& l, const point2& r) { return l.manhattan_distance(r); }
+inline int     chebyshev_distance (const point2& l, const point2& r) { return l.chebyshev_distance(r); }
 
 
 // ------------------------------------------------------------------------------------------------------------------ //
-// Vector 3 inline
+// Vector 2 extras
 // ------------------------------------------------------------------------------------------------------------------ //
-inline vector3& vector3::operator*= (const quaternion& q) {
-    float const xx = x - (2.0f * x * (q.j*q.j + q.k*q.k)) + (2.0f * y * (q.i*q.j - q.u*q.k)) + (2.0f * z * (q.i*q.k + q.u*q.j));
-    float const yx = y + (2.0f * x * (q.i*q.j + q.u*q.k)) - (2.0f * y * (q.i*q.i + q.k*q.k)) + (2.0f * z * (q.j*q.k - q.u*q.i));
-    float const zx = z + (2.0f * x * (q.i*q.k - q.u*q.j)) + (2.0f * y * (q.j*q.k + q.u*q.i)) - (2.0f * z * (q.i*q.i + q.j*q.j));
-    x = xx; y = yx; z = zx; return *this;
-}
-inline vector3& vector3::operator*= (const matrix33& m) {
-    float const xx = x*m[0][0] + y*m[1][0] + z*m[2][0];
-    float const yx = x*m[0][1] + y*m[1][1] + z*m[2][1];
-    float const zx = x*m[0][2] + y*m[1][2] + z*m[2][2];
-    x = xx; y = yx; z = zx; return *this;
-}
-inline vector3 operator+(const vector3& l, const vector3& r) { return vector3 (l.x + r.x, l.y + r.y, l.z + r.z); }
-inline vector3 operator-(const vector3& v) { return vector3 (-v.x, -v.y, -v.z); }
-inline vector3 operator-(const vector3& l, const vector3& r) { return vector3 (l.x - r.x, l.y - r.y, l.z - r.z); }
-inline vector3 operator*(const vector3& l, const vector3& r) { return vector3 (l.x * r.x, l.y * r.y, l.z * r.z); }
-inline vector3 operator*(const vector3& v, const float f) { return vector3 (v.x * f, v.y * f, v.z * f); }
-inline vector3 operator*(const vector3& v, const quaternion& q) { return vector3 (
-    v.x - (2.0f * v.x * (q.j*q.j + q.k*q.k)) + (2.0f * v.y * (q.i*q.j - q.u*q.k)) + (2.0f * v.z * (q.i*q.k + q.u*q.j)),
-    v.y + (2.0f * v.x * (q.i*q.j + q.u*q.k)) - (2.0f * v.y * (q.i*q.i + q.k*q.k)) + (2.0f * v.z * (q.j*q.k - q.u*q.i)),
-    v.z + (2.0f * v.x * (q.i*q.k - q.u*q.j)) + (2.0f * v.y * (q.j*q.k + q.u*q.i)) - (2.0f * v.z * (q.i*q.i + q.j*q.j)));
-}
-inline vector3 operator*(const vector3& v, const matrix33& m) { return vector3 {
-    v.x*m[0][0] + v.y*m[1][0] + v.z*m[2][0],
-    v.x*m[0][1] + v.y*m[1][1] + v.z*m[2][1],
-    v.x*m[0][2] + v.y*m[1][2] + v.z*m[2][2] };
-}
-inline vector3 operator/(const vector3& l, const vector3& r) { return vector3 (l.x / r.x, l.y / r.y, l.z / r.z); }
-inline vector3 operator/(const vector3& v, const float f) { return v * (1.0f / f); }
-inline float   operator|(const vector3& l, const vector3& r) { return l.x * r.x + l.y * r.y + l.z * r.z; } // dot
-inline vector3 operator^(const vector3& l, const vector3& r) { return vector3 (l.y*r.z - l.z*r.y, l.z*r.x - l.x*r.z, l.x*r.y - l.y*r.x); } // cross
+inline vector2 operator-(const vector2& v)                      { auto cp = v; return cp.negate(); }
+inline vector2 operator-(const vector2& l, const vector2& r)    { auto cp = l; return cp-=r; }
+inline vector2 operator+(const vector2& l, const vector2& r)    { auto cp = l; return cp+=r; }
+inline vector2 operator*(const vector2& v, const float f)       { auto cp = v; return cp*=f; }
+inline vector2 operator*(const vector2& l, const vector2& r)    { auto cp = l; return cp*=r; }
+inline vector2 operator/(const vector2& v, const float f)       { auto cp = v; return cp/=f; }
+inline vector2 operator/(const vector2& l, const vector2& r)    { auto cp = l; return cp/=r; }
+inline float   operator|(const vector2& l, const vector2& r)    { return l.dot(r); }
+inline vector2 operator~(const vector2& v)                      { auto cp = v; return cp.normalise(); }
 
-inline vector3 normalise (const vector3& v) { return v / v.length (); }
-inline float   distance (const vector3& l, const vector3& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z)); }
-inline float   distance_sq (const vector3& l, const vector3& r) { return (l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z); }
+inline float   dot (const vector2& l, const vector2& r)         { return l.dot(r); }
+inline vector2 normalise(const vector2& v)                      { auto cp = v; return cp.normalise(); }
+inline float   distance (const vector2& l, const vector2& r)    { return l.distance(r); }
+inline float   distance_sq (const vector2& l, const vector2& r) { return l.distance_sq(r); }
 
 
 // ------------------------------------------------------------------------------------------------------------------ //
-// Vector 4 inline
+// Vector 3 extras
 // ------------------------------------------------------------------------------------------------------------------ //
-inline vector4 operator+(const vector4& l, const vector4& r) { return vector4 (l.x + r.x, l.y + r.y, l.z + r.z, l.w + r.w); }
-inline vector4 operator-(const vector4& v) { return vector4 (-v.x, -v.y, -v.z, -v.w); }
-inline vector4 operator-(const vector4& l, const vector4& r) { return vector4 (l.x - r.x, l.y - r.y, l.z - r.z, l.w - r.w); }
-inline vector4 operator*(const vector4& l, const vector4& r) { return vector4 (l.x * r.x, l.y * r.y, l.z * r.z, l.w * r.w); }
-inline vector4 operator*(const vector4& v, const float f) { return vector4 (v.x * f, v.y * f, v.z * f, v.w * f); }
-inline vector4 operator/(const vector4& l, const vector4& r) { return vector4 (l.x / r.x, l.y / r.y, l.z / r.z, l.w / r.w); }
-inline vector4 operator/(const vector4& v, const float f) { return v * (1.0f / f); }
-inline float   operator|(const vector4& l, const vector4& r) { return l.x * r.x + l.y * r.y + l.z * r.z + l.w * r.w; } // dot
+inline vector3 operator-(const vector3& v)                      { auto cp = v; return cp.negate(); }
+inline vector3 operator-(const vector3& l, const vector3& r)    { auto cp = l; return cp-=r; }
+inline vector3 operator+(const vector3& l, const vector3& r)    { auto cp = l; return cp+=r; }
+inline vector3 operator*(const vector3& v, const float f)       { auto cp = v; return cp*=f; }
+inline vector3 operator*(const vector3& l, const vector3& r)    { auto cp = l; return cp*=r; }
+inline vector3 operator*(const vector3& l, const quaternion& r) { auto cp = l; return cp*=r; }
+inline vector3 operator*(const vector3& l, const matrix33& r)   { auto cp = l; return cp*=r; }
+inline vector3 operator*(const vector3& l, const matrix43& r)   { auto cp = l; return cp*=r; }
+inline vector3 operator*(const vector3& l, const matrix44& r)   { auto cp = l; return cp*=r; }
+inline vector3 operator/(const vector3& v, const float f)       { auto cp = v; return cp/=f; }
+inline vector3 operator/(const vector3& l, const vector3& r)    { auto cp = l; return cp/=r; }
+inline float   operator|(const vector3& l, const vector3& r)    { return l.dot(r); }
+inline vector3 operator^(const vector3& l, const vector3& r)    { auto cp = l; return cp.cross(r); }
+inline vector3 operator~(const vector3& v)                      { auto cp = v; return cp.normalise(); }
 
-inline vector4 normalise (const vector4& v) { return v / v.length (); }
-inline float   distance (const vector4& l, const vector4& r) { return sqrt ((l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z) + (l.w-r.w)*(l.w-r.w)); }
-inline float   distance_sq (const vector4& l, const vector4& r) { return (l.x-r.x)*(l.x-r.x) + (l.y-r.y)*(l.y-r.y) + (l.z-r.z)*(l.z-r.z) + (l.w-r.w)*(l.w-r.w); }
-
-
-// ------------------------------------------------------------------------------------------------------------------ //
-// Quaternion inline
-// ------------------------------------------------------------------------------------------------------------------ //
-inline quaternion operator~(const quaternion& v) { return quaternion { - v.i, - v.j, - v.k, v.u }; } // conjugate (inverse)
-inline quaternion operator&(const quaternion& l, const quaternion& r) { return quaternion { // concatenate (chain rotations)
-    l.u*r.i + l.i*r.u + l.k*r.j - l.j*r.k, l.u*r.j + l.j*r.u + l.i*r.k - l.k*r.i,
-    l.u*r.k + l.k*r.u + l.j*r.i - l.i*r.j, l.u*r.u - l.k*r.k - l.i*r.i + l.j*r.j };
-}
-inline quaternion operator+(const quaternion& l, const quaternion& r) { return quaternion (l.i + r.i, l.j + r.j, l.k + r.k, l.u + r.u); }
-inline quaternion operator-(const quaternion& v) { return quaternion (-v.i, -v.j, -v.k, -v.u); }
-inline quaternion operator-(const quaternion& l, const quaternion& r) { return quaternion (l.i - r.i, l.j - r.j, l.k - r.k, l.u - r.u); }
-inline quaternion operator*(const quaternion& v, const float f) { return quaternion (v.i * f, v.j * f, v.k * f, v.u * f); }
-inline quaternion operator/(const quaternion& v, const float f) { return v * (1.0f / f); }
-inline float      operator|(const quaternion& l, const quaternion& r) { return l.i * r.i + l.j * r.j + l.k * r.k + l.u * r.u; } // dot
-inline quaternion operator*(const quaternion& l, const quaternion& r) { return quaternion (l.i * r.i, l.j * r.j, l.k * r.k, l.u * r.u); }
-
-inline quaternion normalise (const quaternion& v) { return v / v.length (); }
-
-inline void quaternion::get_axis_angle(vector3& axis, float& angle) const { // radians
-    assert (is_unit());
-    const float cos_angle = u;
-    angle = 2.0f * acos(cos_angle); // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
-    float sin_angle = sqrt(1.0f - cos_angle * cos_angle);
-    if (is_zero (sin_angle)) {
-        sin_angle = 1.0f;
-        axis = vector3::up;
-    }
-    else {
-        axis.x = i / sin_angle;
-        axis.y = j / sin_angle;
-        axis.z = k / sin_angle;
-        axis.normalise ();
-        assert (axis.is_unit ());
-    }
-}
-
-inline void quaternion::get_yaw_pitch_roll (vector3& angles) const { // radians
-    assert (is_unit());
-    // roll (x-axis rotation)
-    const float sinr_cosp = 2 * (u * k + i * j);
-    const float cosr_cosp = 1 - 2 * (k * k + i * i);
-    angles.z = atan2 (sinr_cosp, cosr_cosp);
-    // pitch (y-axis rotation)
-    const float sinp = 2 * (u * i - j * k);
-    if (abs (sinp) >= 1)
-        angles.y = copysign (PI / 2, sinp); // use 90 degrees if out of range
-    else
-        angles.y = asin (sinp);
-    // yaw (z-axis rotation)
-    const float siny_cosp = 2 * (u * j + k * i);
-    const float cosy_cosp = 1 - 2 * (i * i + j * j);
-    angles.x = atan2 (siny_cosp, cosy_cosp);
-}
-
-inline quaternion& quaternion::set_from_axis_angle (const vector3& axis, const float angle) {
-    const float half_angle = angle / 2.0f;
-    const float s = sin(half_angle);
-    const float c = cos(half_angle);
-    i = s * axis.x;
-    j = s * axis.y;
-    k = s * axis.z;
-    u = c;
-    assert (is_unit());
-    return *this;
-}
-
-inline quaternion& quaternion::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { // radians
-    const float y = yaw * 0.5f;
-    const float p = pitch * 0.5f;
-    const float r = roll * 0.5f;
-    const float sy = sin (y);
-    const float cy = cos (y);
-    const float sp = sin (p);
-    const float cp = cos (p);
-    const float sr = sin (r);
-    const float cr = cos (r);
-    i = (cy * sp * cr) + (sy * cp * sr);
-    j = (sy * cp * cr) - (cy * sp * sr);
-    k = (cy * cp * sr) - (sy * sp * cr);
-    u = (cy * cp * cr) + (sy * sp * sr);
-    assert (is_unit());
-    return *this;
-}
-
-inline quaternion& quaternion::set_from_rotation (const matrix33& m) {
-    assert (m.is_orthonormal());
-    const float tr = m.r0c0 + m.r1c1 + m.r2c2;
-    if (tr > 0.0f) {
-        const float s = sqrt (tr + 1.0f) * 2.0f;
-        u = 0.25f * s; i = (m.r1c2 - m.r2c1) / s; j = (m.r2c0 - m.r0c2) / s; k = (m.r0c1 - m.r1c0) / s;
-    }
-    else if ((m.r0c0 >= m.r1c1) && (m.r0c0 >= m.r2c2)) {
-        const float s = sqrt (1.0f + m.r0c0 - m.r1c1 - m.r2c2) * 2.0f;
-        u = (m.r1c2 - m.r2c1) / s; i = 0.25f * s; j = (m.r0c1 + m.r1c0) / s; k = (m.r0c2 + m.r2c0) / s;
-    }
-    else if (m.r1c1 > m.r2c2) {
-        const float s = sqrt (1.0f + m.r1c1 - m.r0c0 - m.r2c2) * 2.0f;
-        u = (m.r2c0 - m.r0c2) / s; i = (m.r1c0 + m.r0c1) / s; j = 0.25f * s; k = (m.r2c1 + m.r1c2) / s;
-    }
-    else {
-        const float s = sqrt (1.0f + m.r2c2 - m.r0c0 - m.r1c1) * 2.0f;
-        u = (m.r0c1 - m.r1c0) / s; i = (m.r2c0 + m.r0c2) / s; j = (m.r2c1 + m.r1c2) / s; k = 0.25f * s;
-    }
-    
-    assert (is_unit());
-    return *this;
-}
+inline float   dot (const vector3& l, const vector3& r)         { return l.dot(r); }
+inline vector3 cross(const vector3& l, const vector3& r)        { auto cp = l; return cp.cross(r); }
+inline vector3 normalise(const vector3& v)                      { auto cp = v; return cp.normalise(); }
+inline float   distance (const vector3& l, const vector3& r)    { return l.distance(r); }
+inline float   distance_sq (const vector3& l, const vector3& r) { return l.distance_sq(r); }
 
 // ------------------------------------------------------------------------------------------------------------------ //
-// Matrix 3x3 inline
+// Vector 4 extras
 // ------------------------------------------------------------------------------------------------------------------ //
-inline matrix33 operator+(const matrix33& l, const matrix33& r) { return matrix33 (l[0] + r[0], l[1] + r[1], l[2] + r[2], l[3] + r[3]); }
-inline matrix33 operator-(const matrix33& v) { return matrix33 (-v[0], -v[1], -v[2], -v[3]); }
-inline matrix33 operator-(const matrix33& l, const matrix33& r) { return matrix33 (l[0] - r[0], l[1] - r[1], l[2] - r[2], l[3] - r[3]); }
-inline matrix33 operator*(const matrix33& v, const float f) { return matrix33 (v[0] * f, v[1] * f, v[2] * f, v[3] * f); }
-inline matrix33 operator/(const matrix33& v, const float f) { return v * (1.0f / f); }
+inline vector4 operator-(const vector4& v)                   { auto cp = v; return cp.negate(); }
+inline vector4 operator-(const vector4& l, const vector4& r) { auto cp = l; return cp-=r; }
+inline vector4 operator+(const vector4& l, const vector4& r) { auto cp = l; return cp+=r; }
+inline vector4 operator*(const vector4& v, const float f)    { auto cp = v; return cp*=f; }
+inline vector4 operator*(const vector4& l, const vector4& r) { auto cp = l; return cp*=r; }
+inline vector4 operator/(const vector4& v, const float f)    { auto cp = v; return cp/=f; }
+inline vector4 operator/(const vector4& l, const vector4& r) { auto cp = l; return cp/=r; }
+inline float   operator|(const vector4& l, const vector4& r) { return l.dot(r); }
+inline vector4 operator~(const vector4& v)                   { auto cp = v; return cp.normalise(); }
 
-inline matrix33& matrix33::orthonormalise() {
-    up() = normalise (up());
-    right() = normalise (up() ^ backward());
-    backward() = right() ^ up();
-    assert (backward().is_unit());
-    assert (is_orthonormal());
-    return *this;
-}
-    
-inline bool matrix33::is_orthonormal () const {
-    for (int i = 0; i < 3; ++i) {
-        if (!(*this)[i].is_unit()) return false;
-        if (((*this)[i] | (*this)[(i+1) % 3]) > EPSILON) return false;
-    } return true;
-}
+inline vector4 normalise(const vector4& v)                   { auto cp = v; return cp.normalise(); }
 
-inline matrix33& matrix33::set_as_scale_from_factors (const vector3& f) {
-    r0c0 = f.x;  r0c1 = 0.0f; r0c2 = 0.0f;
-    r1c0 = 0.0f; r1c1 = f.y;  r1c2 = 0.0f;
-    r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = f.z;
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_x_axis_angle (const float theta) {
-    const float s = sin (theta);
-    const float c = cos (theta);
-    r0c0 = 1.0f; r0c1 = 0.0f; r0c2 = 0.0f;
-    r1c0 = 0.0f; r1c1 = c;    r1c2 = -s;
-    r2c0 = 0.0f; r2c1 = s;    r2c2 =  c;
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_y_axis_angle (const float theta) {
-    const float s = sin (theta);
-    const float c = cos (theta);
-    r0c0 =  c;   r0c1 = 0.0f; r0c2 = s;
-    r1c0 = 0.0f; r1c1 = 1.0f; r1c2 = 0.0f;
-    r2c0 = -s;   r2c1 = 0.0f; r2c2 = c;
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_z_axis_angle (const float theta) {
-    const float s = sin (theta);
-    const float c = cos (theta);
-    r0c0 = c;    r0c1 = -s;   r0c2 = 0.0f;
-    r1c0 = s;    r1c1 =  c;   r1c2 = 0.0f;
-    r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = 1.0f;
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_euler (const float yaw, const float pitch, const float roll) {
-    const float cx = cos (pitch);
-    const float sx = sin (pitch);
-    const float cy = cos (yaw);
-    const float sy = sin (yaw);
-    const float cz = cos (roll);
-    const float sz = sin (roll);
-    r0c0 =  (cy * cz);
-    r0c1 = -(cy * sz);
-    r0c2 =  sy;
-    r1c0 =  (sx * sy * cz) + (cx * sz);
-    r1c1 = -(sx * sy * sz) + (cx * cz);
-    r1c2 = -(sx * cy);
-    r2c0 = -(cx * sy * cz) + (sx * sz);
-    r2c1 =  (cx * sy * sz) + (sx * cz);
-    r2c2 =  (cx * cy);
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_axis_angle (const vector3& axis, const float angle) {
-    assert (axis.is_unit());
-    const float c = cos (angle);
-    const float s = sin (angle);
-    const float t = 1.0f - c;
-    const float tx  = t  * axis.x; const float ty  = t  * axis.y; const float tz  = t  * axis.z;
-    const float sx  = s  * axis.x; const float sy  = s  * axis.y; const float sz  = s  * axis.z;
-    const float txy = tx * axis.y; const float tyz = tx * axis.z; const float txz = tx * axis.z;
-    r0c0 = tx * axis.x + c;
-    r0c1 = txy - sz;
-    r0c2 = txz + sy;
-    r1c0 = txy + sz;
-    r1c1 = ty * axis.y + c;
-    r1c2 = tyz - sx;
-    r2c0 = txz - sy;
-    r2c1 = tyz + sx;
-    r2c2 = tz * axis.z + c;
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_transform (const matrix43& m) {
-    r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_transform (const matrix44& m) {
-    r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;
-    assert (is_orthonormal());
-    return *this;
-}
-inline matrix33& matrix33::set_as_rotation_from_orientation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
-    assert (q.is_unit());
-    r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
-    r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
-    r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
-    r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
-    r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
-    r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
-    r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
-    r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
-    r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
-    assert (is_orthonormal());
-    //orthonormalise (); // would prefer to just assert here, but I keep hitting it :/
-    return *this;
-}
+// ------------------------------------------------------------------------------------------------------------------ //
+// Quaternion extras
+// ------------------------------------------------------------------------------------------------------------------ //
+inline quaternion operator-(const quaternion& v)                      { auto cp = v; return cp.negate(); }
+inline quaternion operator-(const quaternion& l, const quaternion& r) { auto cp = l; return cp-=r; }
+inline quaternion operator+(const quaternion& l, const quaternion& r) { auto cp = l; return cp+=r; }
+inline quaternion operator*(const quaternion& v, const float f)       { auto cp = v; return cp*=f; }
+inline quaternion operator/(const quaternion& v, const float f)       { auto cp = v; return cp/=f; }
+inline quaternion operator&(const quaternion& l, const quaternion& r) { auto cp = l; return cp.concatenate(r); }
+inline quaternion operator~(const quaternion& v)                      { auto cp = v; return cp.normalise(); }
+inline quaternion operator!(const quaternion& v)                      { auto cp = v; return cp.conjugate(); }
+
+inline quaternion concatenate(const quaternion& l, const quaternion& r) { auto cp = l; return cp.concatenate(r); }
+inline quaternion normalise(const quaternion& v)                      { auto cp = v; return cp.normalise(); }
+inline quaternion conjugate(const quaternion& v)                      { auto cp = v; return cp.conjugate(); }
+
+// ------------------------------------------------------------------------------------------------------------------ //
+// Matrix 3x3 extras
+// ------------------------------------------------------------------------------------------------------------------ //
+inline matrix33 operator-(const matrix33& v)                    { auto cp = v; return cp.negate(); }
+inline matrix33 operator-(const matrix33& l, const matrix33& r) { auto cp = l; return cp-=r; }
+inline matrix33 operator+(const matrix33& l, const matrix33& r) { auto cp = l; return cp+=r; }
+inline matrix33 operator*(const matrix33& v, const float f)     { auto cp = v; return cp*=f; }
+inline matrix33 operator*(const matrix33& l, const matrix33& r) { auto cp = l; return cp*=r; }
+inline matrix33 operator/(const matrix33& v, const float f)     { auto cp = v; return cp/=f; }
     
 // ------------------------------------------------------------------------------------------------------------------ //
-// Matrix 4x3 inline
+// Matrix 4x3 extras
 // ------------------------------------------------------------------------------------------------------------------ //
-inline matrix43 operator+(const matrix43& l, const matrix43& r) { return matrix43 (l[0] + r[0], l[1] + r[1], l[2] + r[2], l[3] + r[3]); }
-inline matrix43 operator-(const matrix43& v) { return matrix43 (-v[0], -v[1], -v[2], -v[3]); }
-inline matrix43 operator-(const matrix43& l, const matrix43& r) { return matrix43 (l[0] - r[0], l[1] - r[1], l[2] - r[2], l[3] - r[3]); }
-inline matrix43 operator*(const matrix43& v, const float f) { return matrix43 (v[0] * f, v[1] * f, v[2] * f, v[3] * f); }
-inline matrix43 operator/(const matrix43& v, const float f) { return v * (1.0f / f); }
-
-inline matrix43& matrix43::set_from_transform (const matrix44& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;r3c0=m.r3c0;r3c1=m.r3c1;r3c2=m.r3c2; return *this; }
-    
-inline matrix43& matrix43::set_rotation_component (const quaternion& q) {
-    assert (q.is_unit());
-    r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
-    r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
-    r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
-    r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
-    r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
-    r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
-    r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
-    r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
-    r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
-    r3c0 = 0.0f;
-    r3c1 = 0.0f;
-    r3c2 = 0.0f;
-    return *this;
-}
-
+inline matrix43 operator-(const matrix43& v)                    { auto cp = v; return cp.negate(); }
+inline matrix43 operator-(const matrix43& l, const matrix43& r) { auto cp = l; return cp-=r; }
+inline matrix43 operator+(const matrix43& l, const matrix43& r) { auto cp = l; return cp+=r; }
+inline matrix43 operator*(const matrix43& v, const float f)     { auto cp = v; return cp*=f; }
+inline matrix43 operator*(const matrix43& l, const matrix33& r) { auto cp = l; return cp*=r; }
+inline matrix43 operator*(const matrix43& l, const matrix43& r) { auto cp = l; return cp*=r; }
+inline matrix43 operator/(const matrix43& v, const float f)     { auto cp = v; return cp/=f; }
 
 // ------------------------------------------------------------------------------------------------------------------ //
-// Matrix 4x4 inline
+// Matrix 4x4 extras
 // ------------------------------------------------------------------------------------------------------------------ //
-inline matrix44 operator+(const matrix44& l, const matrix44& r) { return matrix44 (l[0] + r[0], l[1] + r[1], l[2] + r[2], l[3] + r[3]); }
-inline matrix44 operator-(const matrix44& v) { return matrix44 (-v[0], -v[1], -v[2], -v[3]); }
-inline matrix44 operator-(const matrix44& l, const matrix44& r) { return matrix44 (l[0] - r[0], l[1] - r[1], l[2] - r[2], l[3] - r[3]); }
-inline matrix44 operator*(const matrix44& v, const float f) { return matrix44 (v[0] * f, v[1] * f, v[2] * f, v[3] * f); }
-inline matrix44 operator/(const matrix44& v, const float f) { return v * (1.0f / f); }
-inline matrix44 operator*(const matrix44& l, const matrix44& r) { return matrix44 (
-    l.r0c0*r.r0c0 + l.r0c1*r.r1c0 + l.r0c2*r.r2c0 + l.r0c3*r.r3c0,
-    l.r0c0*r.r0c1 + l.r0c1*r.r1c1 + l.r0c2*r.r2c1 + l.r0c3*r.r3c1,
-    l.r0c0*r.r0c2 + l.r0c1*r.r1c2 + l.r0c2*r.r2c2 + l.r0c3*r.r3c2,
-    l.r0c0*r.r0c3 + l.r0c1*r.r1c3 + l.r0c2*r.r2c3 + l.r0c3*r.r3c3,
-    l.r1c0*r.r0c0 + l.r1c1*r.r1c0 + l.r1c2*r.r2c0 + l.r1c3*r.r3c0,
-    l.r1c0*r.r0c1 + l.r1c1*r.r1c1 + l.r1c2*r.r2c1 + l.r1c3*r.r3c1,
-    l.r1c0*r.r0c2 + l.r1c1*r.r1c2 + l.r1c2*r.r2c2 + l.r1c3*r.r3c2,
-    l.r1c0*r.r0c3 + l.r1c1*r.r1c3 + l.r1c2*r.r2c3 + l.r1c3*r.r3c3,
-    l.r2c0*r.r0c0 + l.r2c1*r.r1c0 + l.r2c2*r.r2c0 + l.r2c3*r.r3c0,
-    l.r2c0*r.r0c1 + l.r2c1*r.r1c1 + l.r2c2*r.r2c1 + l.r2c3*r.r3c1,
-    l.r2c0*r.r0c2 + l.r2c1*r.r1c2 + l.r2c2*r.r2c2 + l.r2c3*r.r3c2,
-    l.r2c0*r.r0c3 + l.r2c1*r.r1c3 + l.r2c2*r.r2c3 + l.r2c3*r.r3c3,
-    l.r3c0*r.r0c0 + l.r3c1*r.r1c0 + l.r3c2*r.r2c0 + l.r3c3*r.r3c0,
-    l.r3c0*r.r0c1 + l.r3c1*r.r1c1 + l.r3c2*r.r2c1 + l.r3c3*r.r3c1,
-    l.r3c0*r.r0c2 + l.r3c1*r.r1c2 + l.r3c2*r.r2c2 + l.r3c3*r.r3c2,
-    l.r3c0*r.r0c3 + l.r3c1*r.r1c3 + l.r3c2*r.r2c3 + l.r3c3*r.r3c3);
-}
-
-inline matrix44& matrix44::set_rotation_component (const quaternion& q) {
-    assert (q.is_unit());
-    r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
-    r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
-    r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
-    r0c3 = 0.0f;
-    r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
-    r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
-    r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
-    r1c3 = 0.0f;
-    r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
-    r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
-    r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
-    r2c3 = 0.0f;
-    r3c0 = 0.0f;
-    r3c1 = 0.0f;
-    r3c2 = 0.0f;
-    r3c3 = 1.0f;
-    return *this;
-}
+inline matrix44 operator-(const matrix44& v)                    { auto cp = v; return cp.negate(); }
+inline matrix44 operator-(const matrix44& l, const matrix44& r) { auto cp = l; return cp-=r; }
+inline matrix44 operator+(const matrix44& l, const matrix44& r) { auto cp = l; return cp+=r; }
+inline matrix44 operator*(const matrix44& v, const float f)     { auto cp = v; return cp*=f; }
+inline matrix44 operator*(const matrix44& l, const matrix33& r) { auto cp = l; return cp*=r; }
+inline matrix44 operator*(const matrix44& l, const matrix43& r) { auto cp = l; return cp*=r; }
+inline matrix44 operator*(const matrix44& l, const matrix44& r) { auto cp = l; return cp*=r; }
+inline matrix44 operator/(const matrix44& v, const float f)     { auto cp = v; return cp/=f; }
 
 }

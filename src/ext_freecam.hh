@@ -119,9 +119,11 @@ struct freecam : public runtime::view {
     virtual void debug_ui () override {
 
         float screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
+        float screen_h = sge.system__get_state_int(runtime::system_int_state::screenheight);
         
         if (!orientation.is_unit())
             orientation.normalise();
+        
         
         const int gizmo_size = 64;
         
