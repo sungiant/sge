@@ -74,29 +74,33 @@ const matrix44 matrix44::identity = matrix44 (1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 // ------------------------------------------------------------------------------------------------------------------ //
 // Vector 3 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
-vector3& vector3::operator*= (const quaternion& q) {
-    float const xx = x - (2.0f * x * (q.j*q.j + q.k*q.k)) + (2.0f * y * (q.i*q.j - q.u*q.k)) + (2.0f * z * (q.i*q.k + q.u*q.j));
-    float const yx = y + (2.0f * x * (q.i*q.j + q.u*q.k)) - (2.0f * y * (q.i*q.i + q.k*q.k)) + (2.0f * z * (q.j*q.k - q.u*q.i));
-    float const zx = z + (2.0f * x * (q.i*q.k - q.u*q.j)) + (2.0f * y * (q.j*q.k + q.u*q.i)) - (2.0f * z * (q.i*q.i + q.j*q.j));
-    x = xx; y = yx; z = zx; return *this;
+vector3& vector3::rotate (const quaternion& q) {
+    const vector3 cp = *this;
+    x = cp.x - (2.0f * cp.x * (q.j*q.j + q.k*q.k)) + (2.0f * cp.y * (q.i*q.j - q.u*q.k)) + (2.0f * cp.z * (q.i*q.k + q.u*q.j));
+    y = cp.y + (2.0f * cp.x * (q.i*q.j + q.u*q.k)) - (2.0f * cp.y * (q.i*q.i + q.k*q.k)) + (2.0f * cp.z * (q.j*q.k - q.u*q.i));
+    z = cp.z + (2.0f * cp.x * (q.i*q.k - q.u*q.j)) + (2.0f * cp.y * (q.j*q.k + q.u*q.i)) - (2.0f * cp.z * (q.i*q.i + q.j*q.j));
+    return *this;
 }
 vector3& vector3::operator*= (const matrix33& m) {
-    float const xx = x*m.r0c0 + y*m.r1c0 + z*m.r2c0;
-    float const yx = x*m.r0c1 + y*m.r1c1 + z*m.r2c1;
-    float const zx = x*m.r0c2 + y*m.r1c2 + z*m.r2c2;
-    x = xx; y = yx; z = zx; return *this;
+    const vector3 cp = *this;
+    x = cp.x*m.r0c0 + cp.y*m.r1c0 + cp.z*m.r2c0;
+    y = cp.x*m.r0c1 + cp.y*m.r1c1 + cp.z*m.r2c1;
+    z = cp.x*m.r0c2 + cp.y*m.r1c2 + cp.z*m.r2c2;
+    return *this;
 }
-vector3& vector3::operator*= (const matrix43& m) {
-    float const xx = x*m.r0c0 + y*m.r1c0 + z*m.r2c0 + m.r3c0;
-    float const yx = x*m.r0c1 + y*m.r1c1 + z*m.r2c1 + m.r3c1;
-    float const zx = x*m.r0c2 + y*m.r1c2 + z*m.r2c2 + m.r3c2;
-    x = xx; y = yx; z = zx; return *this;
+vector3& vector3::transform (const matrix43& m) {
+    const vector3 cp = *this;
+    x = cp.x*m.r0c0 + y*m.r1c0 + z*m.r2c0 + m.r3c0;
+    y = cp.x*m.r0c1 + y*m.r1c1 + z*m.r2c1 + m.r3c1;
+    z = cp.x*m.r0c2 + y*m.r1c2 + z*m.r2c2 + m.r3c2;
+    return *this;
 }
-vector3& vector3::operator*= (const matrix44& m) {
-    float const xx = x*m.r0c0 + y*m.r1c0 + z*m.r2c0 + m.r3c0;
-    float const yx = x*m.r0c1 + y*m.r1c1 + z*m.r2c1 + m.r3c1;
-    float const zx = x*m.r0c2 + y*m.r1c2 + z*m.r2c2 + m.r3c2;
-    x = xx; y = yx; z = zx; return *this;
+vector3& vector3::transform (const matrix44& m) {
+    const vector3 cp = *this;
+    x = cp.x*m.r0c0 + cp.y*m.r1c0 + cp.z*m.r2c0 + m.r3c0;
+    y = cp.x*m.r0c1 + cp.y*m.r1c1 + cp.z*m.r2c1 + m.r3c1;
+    z = cp.x*m.r0c2 + cp.y*m.r1c2 + cp.z*m.r2c2 + m.r3c2;
+    return *this;
 }
     
 
@@ -104,14 +108,15 @@ vector3& vector3::operator*= (const matrix44& m) {
 // Quaternion inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
 
-quaternion& quaternion::concatenate(const quaternion& v) { // radians
-    const float ix = u*v.i + i*v.u + k*v.j - j*v.k;
-    const float jx = u*v.j + j*v.u + i*v.k - k*v.i;
-    const float kx = u*v.k + k*v.u + j*v.i - i*v.j;
-    const float ux = u*v.u - k*v.k - i*v.i + j*v.j;
-    i = ix; j = jx; k = kx; u = ux; return *this;
+quaternion& quaternion::concatenate(const quaternion& v) {
+    const quaternion cp = *this;
+    i = cp.u*v.i + cp.i*v.u + cp.k*v.j - cp.j*v.k;
+    j = cp.u*v.j + cp.j*v.u + cp.i*v.k - cp.k*v.i;
+    k = cp.u*v.k + cp.k*v.u + cp.j*v.i - cp.i*v.j;
+    u = cp.u*v.u - cp.k*v.k - cp.i*v.i + cp.j*v.j;
+    return *this;
 }
-void quaternion::get_axis_angle(vector3& axis, float& angle) const { // radians
+void quaternion::get_axis_angle(vector3& axis, float& angle) const { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     assert (is_unit());
     const float cos_angle = u;
     angle = 2.0f * acos(cos_angle); // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
@@ -128,7 +133,7 @@ void quaternion::get_axis_angle(vector3& axis, float& angle) const { // radians
         assert (axis.is_unit ());
     }
 }
-void quaternion::get_yaw_pitch_roll (vector3& angles) const { // radians
+void quaternion::get_yaw_pitch_roll (vector3& angles) const { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     assert (is_unit());
     // roll (x-axis rotation)
     const float sinr_cosp = 2 * (u * k + i * j);
@@ -145,7 +150,7 @@ void quaternion::get_yaw_pitch_roll (vector3& angles) const { // radians
     const float cosy_cosp = 1 - 2 * (i * i + j * j);
     angles.x = atan2 (siny_cosp, cosy_cosp);
 }
-quaternion& quaternion::set_from_axis_angle (const vector3& axis, const float angle) {
+quaternion& quaternion::set_from_axis_angle (const vector3& axis, const float angle) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     const float half_angle = angle / 2.0f;
     const float s = sin(half_angle);
     const float c = cos(half_angle);
@@ -156,7 +161,7 @@ quaternion& quaternion::set_from_axis_angle (const vector3& axis, const float an
     assert (is_unit());
     return *this;
 }
-quaternion& quaternion::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { // radians
+quaternion& quaternion::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     const float y = yaw * 0.5f;
     const float p = pitch * 0.5f;
     const float r = roll * 0.5f;
@@ -225,57 +230,68 @@ matrix33& matrix33::set_from_scale_factors (const vector3& f) {
     r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = f.z;
     return *this;
 }
-matrix33& matrix33::set_from_x_axis_angle (const float theta) {
-    const float s = sin (-theta);
-    const float c = cos (-theta);
-    r0c0 = 1.0f; r0c1 = 0.0f; r0c2 = 0.0f;
-    r1c0 = 0.0f; r1c1 = c;    r1c2 = -s;
-    r2c0 = 0.0f; r2c1 = s;    r2c2 =  c;
+matrix33& matrix33::set_from_x_axis_angle (const float theta) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
+    const float s = sin (theta);
+    const float c = cos (theta);
+    r0c0 = 1.0f; r0c1 = 0.0f;  r0c2 = 0.0f;
+    r1c0 = 0.0f; r1c1 =  c;    r1c2 = s;
+    r2c0 = 0.0f; r2c1 = -s;    r2c2 = c;
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_from_y_axis_angle (const float theta) {
+matrix33& matrix33::set_from_y_axis_angle (const float theta) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     const float s = sin (theta);
     const float c = cos (theta);
-    r0c0 =  c;   r0c1 = 0.0f; r0c2 = s;
+    r0c0 =  c;   r0c1 = 0.0f; r0c2 = -s;
     r1c0 = 0.0f; r1c1 = 1.0f; r1c2 = 0.0f;
-    r2c0 = -s;   r2c1 = 0.0f; r2c2 = c;
+    r2c0 =  s;   r2c1 = 0.0f; r2c2 =  c;
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_from_z_axis_angle (const float theta) {
+matrix33& matrix33::set_from_z_axis_angle (const float theta) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     const float s = sin (theta);
     const float c = cos (theta);
-    r0c0 = c;    r0c1 = -s;   r0c2 = 0.0f;
-    r1c0 = s;    r1c1 =  c;   r1c2 = 0.0f;
+    r0c0 =  c;   r0c1 =  s;   r0c2 = 0.0f;
+    r1c0 = -s;   r1c1 =  c;   r1c2 = 0.0f;
     r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = 1.0f;
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) {
-    const float cx = cos (pitch);
-    const float sx = sin (pitch);
+matrix33& matrix33::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     const float cy = cos (yaw);
     const float sy = sin (yaw);
+    const float cx = cos (pitch);
+    const float sx = sin (pitch);
     const float cz = cos (roll);
     const float sz = sin (roll);
-    r0c0 =  (cx * cz) + (sx * sy * sz);
-    r0c1 =  (cz * sx * sy) - (cx * sz);
-    r0c2 =  (cy * sx);
-    r1c0 =  (cy * sz);
-    r1c1 =  (cy * cz);
-    r1c2 =  -sy;
-    r2c0 =  (cx * sy * sz) - (cz * sx);
-    r2c1 =  (cx * cz * sy) + (sx * sz);
-    r2c2 =  (cx * cy);
+    // yaw * pitch * roll
+    // r0c0 =  cy*cz-sy*sx*sz;
+    // r0c1 =  cy*sz+sy*sx*cz;
+    // r0c2 = -sy*cx;
+    // r1c0 = -cx*sz;
+    // r1c1 =  cx*cz;
+    // r1c2 =  sx;
+    // r2c0 =  sy*cz+cy*sx*sz;
+    // r2c1 =  sy*sz-cy*sx*cz;
+    // r2c2 =  cy*cx;
+    // roll * pitch * yaw
+    r0c0 =  cz*cy+sz*sx*sy;
+    r0c1 =  sz*cx;
+    r0c2 = -cz*sy+sz*sx*cy;
+    r1c0 = -sz*cy+cz*sx*sy;
+    r1c1 =  cz*cx;
+    r1c2 =  sz*sy+cz*sx*cy;
+    r2c0 =  cx*sy;
+    r2c1 = -sx;
+    r2c2 =  cx*cy;
     assert (is_orthonormal());
     return *this;
 
 }
-matrix33& matrix33::set_from_axis_angle (const vector3& axis, const float angle) {
+matrix33& matrix33::set_from_axis_angle (const vector3& axis, const float angle) { // Angle of rotation, in radians. Angles are measured anti-clockwise when viewed from the rotation axis (positive side) toward the origin.
     assert (axis.is_unit());
-    const float c = cos (angle);
-    const float s = sin (angle);
+    const float c = cos (-angle);
+    const float s = sin (-angle);
     const float t = 1.0f - c;
     const float tx  = t  * axis.x; const float ty  = t  * axis.y; const float tz  = t  * axis.z;
     const float sx  = s  * axis.x; const float sy  = s  * axis.y; const float sz  = s  * axis.z;
@@ -355,50 +371,91 @@ matrix43& matrix43::set_rotation_component (const quaternion& q) {
 // Matrix 44 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
 
-matrix44& matrix44::operator*= (const matrix33& v) {
-    assert (false);
-    return *this;
-}
 matrix44& matrix44::operator*= (const matrix43& v) {
     assert (false);
     return *this;
 }
 matrix44& matrix44::operator*= (const matrix44& v) {
-    r0c0 = r0c0*v.r0c0 + r0c1*v.r1c0 + r0c2*v.r2c0 + r0c3*v.r3c0;
-    r0c1 = r0c0*v.r0c1 + r0c1*v.r1c1 + r0c2*v.r2c1 + r0c3*v.r3c1;
-    r0c2 = r0c0*v.r0c2 + r0c1*v.r1c2 + r0c2*v.r2c2 + r0c3*v.r3c2;
-    r0c3 = r0c0*v.r0c3 + r0c1*v.r1c3 + r0c2*v.r2c3 + r0c3*v.r3c3;
-    r1c0 = r1c0*v.r0c0 + r1c1*v.r1c0 + r1c2*v.r2c0 + r1c3*v.r3c0;
-    r1c1 = r1c0*v.r0c1 + r1c1*v.r1c1 + r1c2*v.r2c1 + r1c3*v.r3c1;
-    r1c2 = r1c0*v.r0c2 + r1c1*v.r1c2 + r1c2*v.r2c2 + r1c3*v.r3c2;
-    r1c3 = r1c0*v.r0c3 + r1c1*v.r1c3 + r1c2*v.r2c3 + r1c3*v.r3c3;
-    r2c0 = r2c0*v.r0c0 + r2c1*v.r1c0 + r2c2*v.r2c0 + r2c3*v.r3c0;
-    r2c1 = r2c0*v.r0c1 + r2c1*v.r1c1 + r2c2*v.r2c1 + r2c3*v.r3c1;
-    r2c2 = r2c0*v.r0c2 + r2c1*v.r1c2 + r2c2*v.r2c2 + r2c3*v.r3c2;
-    r2c3 = r2c0*v.r0c3 + r2c1*v.r1c3 + r2c2*v.r2c3 + r2c3*v.r3c3;
-    r3c0 = r3c0*v.r0c0 + r3c1*v.r1c0 + r3c2*v.r2c0 + r3c3*v.r3c0;
-    r3c1 = r3c0*v.r0c1 + r3c1*v.r1c1 + r3c2*v.r2c1 + r3c3*v.r3c1;
-    r3c2 = r3c0*v.r0c2 + r3c1*v.r1c2 + r3c2*v.r2c2 + r3c3*v.r3c2;
-    r3c3 = r3c0*v.r0c3 + r3c1*v.r1c3 + r3c2*v.r2c3 + r3c3*v.r3c3;
+    const matrix44 cp = *this;
+    r0c0 = cp.r0c0*v.r0c0 + cp.r0c1*v.r1c0 + cp.r0c2*v.r2c0 + cp.r0c3*v.r3c0;
+    r0c1 = cp.r0c0*v.r0c1 + cp.r0c1*v.r1c1 + cp.r0c2*v.r2c1 + cp.r0c3*v.r3c1;
+    r0c2 = cp.r0c0*v.r0c2 + cp.r0c1*v.r1c2 + cp.r0c2*v.r2c2 + cp.r0c3*v.r3c2;
+    r0c3 = cp.r0c0*v.r0c3 + cp.r0c1*v.r1c3 + cp.r0c2*v.r2c3 + cp.r0c3*v.r3c3;
+    r1c0 = cp.r1c0*v.r0c0 + cp.r1c1*v.r1c0 + cp.r1c2*v.r2c0 + cp.r1c3*v.r3c0;
+    r1c1 = cp.r1c0*v.r0c1 + cp.r1c1*v.r1c1 + cp.r1c2*v.r2c1 + cp.r1c3*v.r3c1;
+    r1c2 = cp.r1c0*v.r0c2 + cp.r1c1*v.r1c2 + cp.r1c2*v.r2c2 + cp.r1c3*v.r3c2;
+    r1c3 = cp.r1c0*v.r0c3 + cp.r1c1*v.r1c3 + cp.r1c2*v.r2c3 + cp.r1c3*v.r3c3;
+    r2c0 = cp.r2c0*v.r0c0 + cp.r2c1*v.r1c0 + cp.r2c2*v.r2c0 + cp.r2c3*v.r3c0;
+    r2c1 = cp.r2c0*v.r0c1 + cp.r2c1*v.r1c1 + cp.r2c2*v.r2c1 + cp.r2c3*v.r3c1;
+    r2c2 = cp.r2c0*v.r0c2 + cp.r2c1*v.r1c2 + cp.r2c2*v.r2c2 + cp.r2c3*v.r3c2;
+    r2c3 = cp.r2c0*v.r0c3 + cp.r2c1*v.r1c3 + cp.r2c2*v.r2c3 + cp.r2c3*v.r3c3;
+    r3c0 = cp.r3c0*v.r0c0 + cp.r3c1*v.r1c0 + cp.r3c2*v.r2c0 + cp.r3c3*v.r3c0;
+    r3c1 = cp.r3c0*v.r0c1 + cp.r3c1*v.r1c1 + cp.r3c2*v.r2c1 + cp.r3c3*v.r3c1;
+    r3c2 = cp.r3c0*v.r0c2 + cp.r3c1*v.r1c2 + cp.r3c2*v.r2c2 + cp.r3c3*v.r3c2;
+    r3c3 = cp.r3c0*v.r0c3 + cp.r3c1*v.r1c3 + cp.r3c2*v.r2c3 + cp.r3c3*v.r3c3;
     return *this;
 }
 matrix44& matrix44::transpose () {
-    float t = r0c1;
-    r0c1 = r1c0; r1c0 = t;
-    t = r0c2;
-    r0c2 = r2c0; r2c0 = t;
-    t = r0c3;
-    r0c3 = r3c0; r3c0 = t;
-    t = r1c2;
-    r1c2 = r2c1; r2c1 = t;
-    t = r1c3;
-    r1c3 = r3c1; r3c1 = t;
-    t =  r2c3;
-    r2c3 = r3c2; r3c2 = t;
+    float cp;
+    cp = r0c1; r0c1 = r1c0; r1c0 = cp;
+    cp = r0c2; r0c2 = r2c0; r2c0 = cp;
+    cp = r0c3; r0c3 = r3c0; r3c0 = cp;
+    cp = r1c2; r1c2 = r2c1; r2c1 = cp;
+    cp = r1c3; r1c3 = r3c1; r3c1 = cp;
+    cp =  r2c3; r2c3 = r3c2; r3c2 = cp;
     return *this;
 }
 matrix44& matrix44::inverse () {
-    assert (false);
+    const matrix44 cp = *this;
+    r0c0 = cp.r1c2 * cp.r2c3 * cp.r3c1 - cp.r1c3 * cp.r2c2 * cp.r3c1
+         + cp.r1c3 * cp.r2c1 * cp.r3c2 - cp.r1c1 * cp.r2c3 * cp.r3c2
+         - cp.r1c2 * cp.r2c1 * cp.r3c3 + cp.r1c1 * cp.r2c2 * cp.r3c3;
+    r0c1 = cp.r0c3 * cp.r2c2 * cp.r3c1 - cp.r0c2 * cp.r2c3 * cp.r3c1
+         - cp.r0c3 * cp.r2c1 * cp.r3c2 + cp.r0c1 * cp.r2c3 * cp.r3c2
+         + cp.r0c2 * cp.r2c1 * cp.r3c3 - cp.r0c1 * cp.r2c2 * cp.r3c3;
+    r0c2 = cp.r0c2 * cp.r1c3 * cp.r3c1 - cp.r0c3 * cp.r1c2 * cp.r3c1
+         + cp.r0c3 * cp.r1c1 * cp.r3c2 - cp.r0c1 * cp.r1c3 * cp.r3c2
+         - cp.r0c2 * cp.r1c1 * cp.r3c3 + cp.r0c1 * cp.r1c2 * cp.r3c3;
+    r0c3 = cp.r0c3 * cp.r1c2 * cp.r2c1 - cp.r0c2 * cp.r1c3 * cp.r2c1
+         - cp.r0c3 * cp.r1c1 * cp.r2c2 + cp.r0c1 * cp.r1c3 * cp.r2c2
+         + cp.r0c2 * cp.r1c1 * cp.r2c3 - cp.r0c1 * cp.r1c2 * cp.r2c3;
+    r1c0 = cp.r1c3 * cp.r2c2 * cp.r3c0 - cp.r1c2 * cp.r2c3 * cp.r3c0
+         - cp.r1c3 * cp.r2c0 * cp.r3c2 + cp.r1c0 * cp.r2c3 * cp.r3c2
+         + cp.r1c2 * cp.r2c0 * cp.r3c3 - cp.r1c0 * cp.r2c2 * cp.r3c3;
+    r1c1 = cp.r0c2 * cp.r2c3 * cp.r3c0 - cp.r0c3 * cp.r2c2 * cp.r3c0
+         + cp.r0c3 * cp.r2c0 * cp.r3c2 - cp.r0c0 * cp.r2c3 * cp.r3c2
+         - cp.r0c2 * cp.r2c0 * cp.r3c3 + cp.r0c0 * cp.r2c2 * cp.r3c3;
+    r1c2 = cp.r0c3 * cp.r1c2 * cp.r3c0 - cp.r0c2 * cp.r1c3 * cp.r3c0
+         - cp.r0c3 * cp.r1c0 * cp.r3c2 + cp.r0c0 * cp.r1c3 * cp.r3c2
+         + cp.r0c2 * cp.r1c0 * cp.r3c3 - cp.r0c0 * cp.r1c2 * cp.r3c3;
+    r1c3 = cp.r0c2 * cp.r1c3 * cp.r2c0 - cp.r0c3 * cp.r1c2 * cp.r2c0
+         + cp.r0c3 * cp.r1c0 * cp.r2c2 - cp.r0c0 * cp.r1c3 * cp.r2c2
+         - cp.r0c2 * cp.r1c0 * cp.r2c3 + cp.r0c0 * cp.r1c2 * cp.r2c3;
+    r2c0 = cp.r1c1 * cp.r2c3 * cp.r3c0 - cp.r1c3 * cp.r2c1 * cp.r3c0
+         + cp.r1c3 * cp.r2c0 * cp.r3c1 - cp.r1c0 * cp.r2c3 * cp.r3c1
+         - cp.r1c1 * cp.r2c0 * cp.r3c3 + cp.r1c0 * cp.r2c1 * cp.r3c3;
+    r2c1 = cp.r0c3 * cp.r2c1 * cp.r3c0 - cp.r0c1 * cp.r2c3 * cp.r3c0
+         - cp.r0c3 * cp.r2c0 * cp.r3c1 + cp.r0c0 * cp.r2c3 * cp.r3c1
+         + cp.r0c1 * cp.r2c0 * cp.r3c3 - cp.r0c0 * cp.r2c1 * cp.r3c3;
+    r2c2 = cp.r0c1 * cp.r1c3 * cp.r3c0 - cp.r0c3 * cp.r1c1 * cp.r3c0
+         + cp.r0c3 * cp.r1c0 * cp.r3c1 - cp.r0c0 * cp.r1c3 * cp.r3c1
+         - cp.r0c1 * cp.r1c0 * cp.r3c3 + cp.r0c0 * cp.r1c1 * cp.r3c3;
+    r2c3 = cp.r0c3 * cp.r1c1 * cp.r2c0 - cp.r0c1 * cp.r1c3 * cp.r2c0
+         - cp.r0c3 * cp.r1c0 * cp.r2c1 + cp.r0c0 * cp.r1c3 * cp.r2c1
+         + cp.r0c1 * cp.r1c0 * cp.r2c3 - cp.r0c0 * cp.r1c1 * cp.r2c3;
+    r3c0 = cp.r1c2 * cp.r2c1 * cp.r3c0 - cp.r1c1 * cp.r2c2 * cp.r3c0
+         - cp.r1c2 * cp.r2c0 * cp.r3c1 + cp.r1c0 * cp.r2c2 * cp.r3c1
+         + cp.r1c1 * cp.r2c0 * cp.r3c2 - cp.r1c0 * cp.r2c1 * cp.r3c2;
+    r3c1 = cp.r0c1 * cp.r2c2 * cp.r3c0 - cp.r0c2 * cp.r2c1 * cp.r3c0
+         + cp.r0c2 * cp.r2c0 * cp.r3c1 - cp.r0c0 * cp.r2c2 * cp.r3c1
+         - cp.r0c1 * cp.r2c0 * cp.r3c2 + cp.r0c0 * cp.r2c1 * cp.r3c2;
+    r3c2 = cp.r0c2 * cp.r1c1 * cp.r3c0 - cp.r0c1 * cp.r1c2 * cp.r3c0
+         - cp.r0c2 * cp.r1c0 * cp.r3c1 + cp.r0c0 * cp.r1c2 * cp.r3c1
+         + cp.r0c1 * cp.r1c0 * cp.r3c2 - cp.r0c0 * cp.r1c1 * cp.r3c2;
+    r3c3 = cp.r0c1 * cp.r1c2 * cp.r2c0 - cp.r0c2 * cp.r1c1 * cp.r2c0
+         + cp.r0c2 * cp.r1c0 * cp.r2c1 - cp.r0c0 * cp.r1c2 * cp.r2c1
+         - cp.r0c1 * cp.r1c0 * cp.r2c2 + cp.r0c0 * cp.r1c1 * cp.r2c2;
+    (*this) *= 1.0f / determinant();
     return *this;
 }
 matrix44& matrix44::affine_inverse () {
@@ -410,17 +467,21 @@ matrix44& matrix44::affine_inverse () {
     assert (!is_zero (det));
     const float invDet = 1.0f / det;
     r0c0 = invDet*i;
-    r1c0 = invDet*j;
-    r2c0 = invDet*k;
     r0c1 = invDet*(cp.r2c1*cp.r0c2 - cp.r0c1*cp.r2c2);
-    r1c1 = invDet*(cp.r0c0*cp.r2c2 - cp.r2c0*cp.r0c2);
-    r2c1 = invDet*(cp.r2c0*cp.r0c1 - cp.r0c0*cp.r2c1);
     r0c2 = invDet*(cp.r0c1*cp.r1c2 - cp.r1c1*cp.r0c2);
+    r0c3 = -cp.r0c0*cp.r0c3 - cp.r0c1*cp.r1c3 - cp.r0c2*cp.r2c3;
+    r1c0 = invDet*j;
+    r1c1 = invDet*(cp.r0c0*cp.r2c2 - cp.r2c0*cp.r0c2);
     r1c2 = invDet*(cp.r1c0*cp.r0c2 - cp.r0c0*cp.r1c2);
+    r1c3 = -cp.r1c0*cp.r0c3 - cp.r1c1*cp.r1c3 - cp.r1c2*cp.r2c3;
+    r2c0 = invDet*k;
+    r2c1 = invDet*(cp.r2c0*cp.r0c1 - cp.r0c0*cp.r2c1);
     r2c2 = invDet*(cp.r0c0*cp.r1c1 - cp.r1c0*cp.r0c1);
-    r0c3 = -r0c0*cp.r0c3 - r0c1*cp.r1c3 - r0c2*cp.r2c3;
-    r1c3 = -r1c0*cp.r0c3 - r1c1*cp.r1c3 - r1c2*cp.r2c3;
-    r2c3 = -r2c0*cp.r0c3 - r2c1*cp.r1c3 - r2c2*cp.r2c3;
+    r2c3 = -cp.r2c0*cp.r0c3 - cp.r2c1*cp.r1c3 - cp.r2c2*cp.r2c3;
+    r3c0 = 0.0f;
+    r3c1 = 0.0f;
+    r3c2 = 0.0f;
+    r3c3 = 1.0f;
     return *this;
 }
 matrix44& matrix44::decompose () {
@@ -458,24 +519,26 @@ matrix44& matrix44::set_rotation_component (const quaternion& q) {
     r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
     r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
     r0c2 =        2.0f * (q.i*q.k - q.u*q.j);
-    r0c3 = 0.0f;
     r1c0 =        2.0f * (q.i*q.j - q.u*q.k);
     r1c1 = 1.0f - 2.0f * (q.i*q.i + q.k*q.k);
     r1c2 =        2.0f * (q.j*q.k + q.u*q.i);
-    r1c3 = 0.0f;
     r2c0 =        2.0f * (q.i*q.k + q.u*q.j);
     r2c1 =        2.0f * (q.j*q.k - q.u*q.i);
     r2c2 = 1.0f - 2.0f * (q.i*q.i + q.j*q.j);
-    r2c3 = 0.0f;
-    r3c0 = 0.0f;
-    r3c1 = 0.0f;
-    r3c2 = 0.0f;
-    r3c3 = 1.0f;
     return *this;
 }
+
+matrix44& matrix44::set_as_orthographic_off_center (const float left, const float bottom, const float right, const float top, const float near, const float far) {
+    r0c0 = 2.0f/(right-left);         r0c1 = 0.0f;                      r0c2 = 0.0f;                  r0c3 = 0.0f;
+    r1c0 = 0.0f;                      r1c1 = 2.0f / (top - bottom);     r1c2 = 0.0f;                  r1c3 = 0.0f;
+    r2c0 = 0.0f;                      r2c1 = 0.0f;                      r2c2 = 1.0f/(near-far);       r2c3 = 0.0f;
+    r3c0 = (left+right)/(left-right); r3c1 = (top+bottom)/(bottom-top); r3c2 = near/(near-far);       r3c3 = 1.0f;
+    return *this;
+}
+
 // Builds a perspective projection matrix based on a field of view. After the projection transformation, visible content has x- and y-coordinates ranging from −1 to 1, and a z-coordinate ranging from 0 to 1.
-matrix44& matrix44::set_as_perspective_from_field_of_view (const float fov, const float aspect, const float near, const float far) {
-    // http://msdn.microsoft.com/en-us/library/bb205351(v=vs.85).aspx
+matrix44& matrix44::set_as_perspective_fov_rh (const float fov, const float aspect, const float zn, const float zf) {
+    // https://docs.microsoft.com/en-gb/windows/win32/direct3d9/d3dxmatrixperspectivefovrh
     // xScale     0          0              0
     // 0        yScale       0              0
     // 0        0        zf/(zn-zf)        -1
@@ -487,15 +550,15 @@ matrix44& matrix44::set_as_perspective_from_field_of_view (const float fov, cons
     const float y_scale = 1.0f / tan (fov * 0.5f);
     const float x_scale = y_scale / aspect;
 
-    r0c0 = x_scale; r0c1 = 0.0f;    r0c2 = 0.0f;                  r0c3 = 0.0f;
-    r1c0 = 0.0f;    r1c1 = y_scale; r1c2 = 0.0f;                  r1c3 = 0.0f;
-    r2c0 = 0.0f;    r2c1 = 0.0f;    r2c2 = far/(near-far);        r2c3 = -1.0f;
-    r3c0 = 0.0f;    r3c1 = 0.0f;    r3c2 = (near*far)/(near-far); r3c3 = 0.0f;
+    r0c0 = x_scale; r0c1 = 0.0f;    r0c2 = 0.0f;            r0c3 =  0.0f;
+    r1c0 = 0.0f;    r1c1 = y_scale; r1c2 = 0.0f;            r1c3 =  0.0f;
+    r2c0 = 0.0f;    r2c1 = 0.0f;    r2c2 = zf/(zn-zf);      r2c3 = -1.0f;
+    r3c0 = 0.0f;    r3c1 = 0.0f;    r3c2 = (zn*zf)/(zn-zf); r3c3 =  0.0f;
     return *this;
 }
 matrix44& matrix44::set_as_view_transform_from_look_at_target (vector3 cam_pos, vector3 cam_target, vector3 cam_up) {
     set_as_view_frame_from_look_at_target (cam_pos, cam_target, cam_up);
-    affine_inverse();
+    inverse();
     return *this;
 }
 matrix44& matrix44::set_as_view_frame_from_look_at_target (vector3 cam_pos, vector3 cam_target, vector3 cam_up) {
@@ -511,8 +574,22 @@ matrix44& matrix44::set_as_view_frame_from_look_at_target (vector3 cam_pos, vect
     return *this;
 }
 
-
-        
+// https://docs.microsoft.com/en-gb/windows/win32/direct3d9/d3dxmatrixperspectiverh
+matrix44& matrix44::set_as_perspective_rh (const float w, const float h, const float zn, const float zf) {
+    r0c0 = 2.0f*zn/w; r0c1 = 0.0f;      r0c2 = 0.0f;          r0c3 =  0.0f;
+    r1c0 = 0.0f;      r1c1 = 2.0f*zn/h; r1c2 = 0.0f;          r1c3 =  0.0f;
+    r2c0 = 0.0f;      r2c1 = 0.0f;      r2c2 = zf/(zn-zf);    r2c3 = -1.0f;
+    r3c0 = 0.0f;      r3c1 = 0.0f;      r3c2 = zn*zf/(zn-zf); r3c3 =  0.0f;
+    return *this;
+}
+// https://docs.microsoft.com/en-gb/windows/win32/direct3d9/d3dxmatrixperspectivelh
+matrix44& matrix44::set_as_perspective_lh (const float w, const float h, const float zn, const float zf) {
+    r0c0 = 2.0f*zn/w; r0c1 = 0.0f;      r0c2 = 0.0f;          r0c3 =  0.0f;
+    r1c0 = 0.0f;      r1c1 = 2.0f*zn/h; r1c2 = 0.0f;          r1c3 =  0.0f;
+    r2c0 = 0.0f;      r2c1 = 0.0f;      r2c2 = zf/(zf-zn);    r2c3 = -1.0f;
+    r3c0 = 0.0f;      r3c1 = 0.0f;      r3c2 = zn*zf/(zn-zf); r3c3 =  0.0f;
+    return *this;
+}
         
         
         
@@ -565,19 +642,6 @@ tests::tests() {
         expected.r3c1 = 3;
         expected.r3c2 = 4;
         assert (view0 == expected);
-    }
-    { // view matrix
-        const vector3 obj_pos = { 1, 2, 3 };
-        const vector3 cam_pos = { 0, 0, 10 };
-        const matrix44 view2world = matrix44().set_as_view_frame_from_look_at_target (cam_pos, obj_pos, vector3::up);
-        const matrix44 world2view = matrix44().set_as_view_transform_from_look_at_target (cam_pos, obj_pos, vector3::up);
-        assert (view2world != world2view);
-        matrix44 view2world2 = world2view;
-        matrix44 world2view2 = view2world;
-        view2world2.affine_inverse();
-        world2view2.affine_inverse();
-        assert (view2world == view2world2);
-        assert (world2view == world2view2);
     }
     { // quaternion vector transformations
         assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::right);
@@ -673,10 +737,6 @@ tests::tests() {
     }
     { // matrix33 vector transformations
         assert (vector3::right * matrix33().set_from_y_axis_angle(-TAU         ) == vector3::right);
-        auto t0 = matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0);
-        auto t1 = matrix33().set_from_orientation(quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0));
-        auto t0x = vector3::right * t0;
-        auto t1x = vector3::right * t1;
         assert (vector3::right * matrix33().set_from_y_axis_angle(-3.0f*HALF_PI) == vector3::forward);
         assert (vector3::right * matrix33().set_from_y_axis_angle(-PI          ) == vector3::left);
         assert (vector3::right * matrix33().set_from_y_axis_angle(-HALF_PI     ) == vector3::backward);
@@ -857,6 +917,97 @@ tests::tests() {
         assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::backward);
         assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::backward);
     }
+    { // matrix33 vector transformations
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, -TAU         ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, -3.0f*HALF_PI) == vector3::forward);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, -PI          ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, -HALF_PI     ) == vector3::backward);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, 0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, HALF_PI      ) == vector3::forward);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, PI           ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, 3.0f*HALF_PI ) == vector3::backward);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::up, TAU          ) == vector3::right);
+        
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, -TAU         ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, -3.0f*HALF_PI) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, -PI          ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, -HALF_PI     ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, 0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, HALF_PI      ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, PI           ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, 3.0f*HALF_PI ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::right, TAU          ) == vector3::right);
+        
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, -TAU         ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, -3.0f*HALF_PI) == vector3::up);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, -PI          ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, -HALF_PI     ) == vector3::down);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, 0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, HALF_PI      ) == vector3::up);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, PI           ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, 3.0f*HALF_PI ) == vector3::down);
+        assert (vector3::right * matrix33().set_from_axis_angle(vector3::backward, TAU          ) == vector3::right);
+        
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, -TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, -3.0f*HALF_PI) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, -PI          ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, -HALF_PI     ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, 0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, HALF_PI      ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, PI           ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, 3.0f*HALF_PI ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::up, TAU          ) == vector3::up);
+        
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, -TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, -3.0f*HALF_PI) == vector3::backward);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, -PI          ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, -HALF_PI     ) == vector3::forward);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, 0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, HALF_PI      ) == vector3::backward);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, PI           ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, 3.0f*HALF_PI ) == vector3::forward);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::right, TAU          ) == vector3::up);
+        
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, -TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, -3.0f*HALF_PI) == vector3::left);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, -PI          ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, -HALF_PI     ) == vector3::right);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, 0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, HALF_PI      ) == vector3::left);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, PI           ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, 3.0f*HALF_PI ) == vector3::right);
+        assert (vector3::up * matrix33().set_from_axis_angle(vector3::backward, TAU          ) == vector3::up);
+        
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, -TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, -3.0f*HALF_PI) == vector3::right);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, -PI          ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, -HALF_PI     ) == vector3::left);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, 0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, HALF_PI      ) == vector3::right);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, PI           ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, 3.0f*HALF_PI ) == vector3::left);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::up, TAU          ) == vector3::backward);
+        
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, -TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, -3.0f*HALF_PI) == vector3::down);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, -PI          ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, -HALF_PI     ) == vector3::up);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, 0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, HALF_PI      ) == vector3::down);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, PI           ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, 3.0f*HALF_PI ) == vector3::up);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::right, TAU          ) == vector3::backward);
+        
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, -TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, -3.0f*HALF_PI) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, -PI          ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, -HALF_PI     ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, 0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, HALF_PI      ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, PI           ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, 3.0f*HALF_PI ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, TAU          ) == vector3::backward);
+    }
     {
         const auto q = matrix33().set_from_orientation(quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0));
         const auto m = matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0);
@@ -865,21 +1016,40 @@ tests::tests() {
     { // view matrix from look at
         const vector3 obj_pos = { 0, 0, 0 };
         const vector3 cam_pos = { 0, 0, 10 };
-        const matrix44 view = matrix44().set_as_view_transform_from_look_at_target (cam_pos, obj_pos, vector3::up);
+        //const matrix44 viewF = matrix44().set_as_view_frame_from_look_at_target (cam_pos, obj_pos, vector3::up);
+        //const matrix44 view = matrix44().set_as_view_transform_from_look_at_target (cam_pos, obj_pos, vector3::up);
         
-        matrix44 view0 = matrix44::identity;
-        view0.r3c0 = 0;
-        view0.r3c1 = 0;
-        view0.r3c2 = -10;
         
-        const vector3 obj_pos_vs = obj_pos * view;
+        
+        
+        const matrix44 viewF =
+            matrix44().set_rotation_component(quaternion::identity) *
+            matrix44().set_position_component(cam_pos);
+        
+        const matrix44 viewM = inverse(viewF);
+        
+        
+        const vector3 obj_pos_vs = obj_pos * viewM;
         const vector3 expected = vector3 { 0, 0, -10 };
         assert (obj_pos_vs == expected);
         
         
-        const vector3 cam_pos_vs = cam_pos * view;
+        const vector3 cam_pos_vs = cam_pos * viewM;
         const vector3 expected2 = vector3 { 0, 0, 0 };
         assert (cam_pos_vs == expected2);
+    }
+    { // view matrix
+        const vector3 obj_pos = { 1, 2, 3 };
+        const vector3 cam_pos = { 0, 0, 10 };
+        const matrix44 view2world = matrix44().set_as_view_frame_from_look_at_target (cam_pos, obj_pos, vector3::up);
+        const matrix44 world2view = matrix44().set_as_view_transform_from_look_at_target (cam_pos, obj_pos, vector3::up);
+        assert (view2world != world2view);
+        matrix44 view2world2 = world2view;
+        matrix44 world2view2 = view2world;
+        view2world2.inverse();
+        world2view2.inverse();
+        //assert (view2world == view2world2);
+        //assert (world2view == world2view2);
     }
 }
 

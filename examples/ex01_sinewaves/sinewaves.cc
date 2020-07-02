@@ -8,8 +8,8 @@ struct PUSH { float time = 0.0f; } push;
 
 void initialise () {
     config.app_name = "sinewaves";
-    config.app_width = 640;
-    config.app_height = 360;
+    config.app_width = 1280;
+    config.app_height = 720;
     config.enable_console = true;
     
     computation.shader_path = "sinewaves.comp.spv";
@@ -17,6 +17,12 @@ void initialise () {
 }
 
 void terminate () {}
+
+void start (const sge::app::api& sge) {
+    sge.freecam.set_enabled (true);
+}
+
+void stop (const sge::app::api& sge) {}
 
 void update (sge::app::response& r, const sge::app::api& sge) {
 
@@ -41,10 +47,10 @@ void               initialise          ()                              { ::initi
 configuration&     get_configuration   ()                              { return ::config; }
 content&           get_content         ()                              { return ::computation; }
 extensions&        get_extensions      ()                              { return ::extensions; }
-void               start               (const api& sge)                {}
+void               start               (const api& sge)                { ::start (sge); }
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
-void               debug_ui            (response& r, const api& sge)   {}
-void               stop                (const api& sge)                {}
+void               debug_ui            (response& r, const api& sge)   { ; }
+void               stop                (const api& sge)                { ::stop (sge); }
 void               terminate           ()                              { ::terminate (); }
 
 }

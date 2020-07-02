@@ -4,6 +4,8 @@
 #include "sge_math.hh"
 #include "sge_runtime.hh"
 
+#include "ext_freecam.hh"
+
 namespace imgui::ext {
     
     using namespace sge::math;
@@ -35,6 +37,8 @@ namespace imgui::ext {
         return av_col;
     }
     
+    inline bool is_within_ndc (vector3 v) { return v.x >= -1 && v.x <= 1 && v.y >= -1 && v.y <= 1 && v.z >= 0 && v.z <= 1; }
+    
     inline void draw_user_triangles (
         const rect& container,
         const vector3& camera_position,
@@ -48,23 +52,24 @@ namespace imgui::ext {
         const std::optional<float> wireframe_thickness = std::nullopt) {
 
         ImDrawList& drawList = *ImGui::GetWindowDrawList();
+        const ImVec2 im_min = ImVec2(container.location.x, container.location.y);
+        const ImVec2 im_max = ImVec2(container.location.x + container.extent.x, container.location.y + container.extent.y);
         
-        drawList.AddRectFilled(ImVec2(container.location.x, container.location.y), ImVec2 (container.extent.x, container.extent.y), 0xCC333333);
-        
-        //drawList.AddRect(ImVec2(container.location.x, container.location.y), ImVec2 (container.extent.x, container.extent.y), 0xFF00FF00);
-        
-        drawList.PushClipRect (ImVec2(container.location.x, container.location.y), ImVec2 (container.extent.x, container.extent.y));
+        drawList.AddRectFilled(im_min, im_max, 0xCC333333);
+        drawList.AddRect(im_min, im_max,0xFF00FF00);
+        drawList.PushClipRect (im_min, im_max);
 
         const matrix44 view = matrix44()
             .set_as_view_transform_from_look_at_target(camera_position, vector3::zero, vector3::unit_y);
         
-        
+        const matrix44 wv = world * view;
         const float aspect = (float) container.extent.x / (float) container.extent.y;
         
         const matrix44 proj = matrix44()
-            .set_as_perspective_from_field_of_view (camera_fov, aspect, camera_near, camera_far);
-        
-        const matrix44 vp = view * proj;
+            //.set_as_perspective_fov_rh (camera_fov, aspect, camera_near, camera_far);
+            //.set_as_orthographic_off_center (-16.0f, 16.0f, -9.0f, 9.0f, 0, 1000);
+            .set_as_perspective_rh (1.6f * 5.0f, 0.9f * 5.0f, camera_near, camera_far);
+        //const matrix44 vp = view * proj;
         
         
         for (int i = 0; i < indices.size(); i+=3) {
@@ -74,25 +79,10 @@ namespace imgui::ext {
             
             const ImU32 av_col = average_colour (vert0.colour, vert1.colour, vert2.colour);
             
-            // to world space.
-            const vector3 w0 = vert0.position * world;
-            const vector3 w1 = vert1.position * world;
-            const vector3 w2 = vert2.position * world;
-            /*
-            {
-                // face normal
-                const vector3 normal = (w1-w0) ^ (w2-w0);
-                // face center of mass
-                const vector3 centroid = w0 + ((((w1+w2)/2.0f) - w0) * 2.0f / 3.0f);
-                const vector3 centroid_to_camera = camera_position - centroid;
-                if ((normal | centroid_to_camera) > 0.0f)
-                    continue; // cull backfaces.
-            }
-             */
-            // now to view space.
-            const vector3 v0 = w0 * view;
-            const vector3 v1 = w1 * view;
-            const vector3 v2 = w2 * view;
+            // view space.
+            const vector3 v0 = vert0.position * wv;
+            const vector3 v1 = vert1.position * wv;
+            const vector3 v2 = vert2.position * wv;
             const vector3 cam_in_view = camera_position * view;
             {
                 // face normal
@@ -100,23 +90,27 @@ namespace imgui::ext {
                 // face center of mass
                 const vector3 centroid = v0 + ((((v1+v2)/2.0f) - v0) * 2.0f / 3.0f);
                 const vector3 centroid_to_camera = cam_in_view - centroid;
-                if ((normal | centroid_to_camera) > 0.0f)
+                if ((normal | centroid_to_camera) < -0.5f) // https://chortle.ccsu.edu/VectorLessons/vch09/vch09_6.html
                     continue; // cull backfaces.
             }
             
-            // now to projection space. hack as the proj mat is not the right one for us
-            const vector3 temp0 = w0 * vp / 10.0f;
-            const vector3 temp1 = w1 * vp / 10.0f;
-            const vector3 temp2 = w2 * vp / 10.0f;
+            const vector3 temp0 = v0 * proj;
+            const vector3 temp1 = v1 * proj;
+            const vector3 temp2 = v2 * proj;
+            
+            if (!is_within_ndc (temp0) || !is_within_ndc (temp1) || !is_within_ndc (temp2))
+                continue;
+                
+            
             const ImVec2 p0 = ImVec2 (
                 (((temp0.x + 1.0f) / 2.0f) * (float) container.extent.x) + (float) container.location.x,
-                (((temp0.y + 1.0f) / 2.0f) * (float) container.extent.y) + (float) container.location.y);
+                (float) container.extent.y - (((temp0.y + 1.0f) / 2.0f) * (float) container.extent.y) + (float) container.location.y);
             const ImVec2 p1 = ImVec2 (
                 (((temp1.x + 1.0f) / 2.0f) * (float) container.extent.x) + (float) container.location.x,
-                (((temp1.y + 1.0f) / 2.0f) * (float) container.extent.y) + (float) container.location.y);
+                (float) container.extent.y - (((temp1.y + 1.0f) / 2.0f) * (float) container.extent.y) + (float) container.location.y);
             const ImVec2 p2 = ImVec2 (
                 (((temp2.x + 1.0f) / 2.0f) * (float) container.extent.x) + (float) container.location.x,
-                (((temp2.y + 1.0f) / 2.0f) * (float) container.extent.y) + (float) container.location.y);
+                (float) container.extent.y - (((temp2.y + 1.0f) / 2.0f) * (float) container.extent.y) + (float) container.location.y);
             
             // todo - z order sorting.
             if (wireframe_thickness.has_value ())
@@ -127,16 +121,50 @@ namespace imgui::ext {
         
         drawList.PopClipRect();
     }
-    
+
     inline static void test (const sge::runtime::api& sge) {
-        const rect container { { 100, 100 }, { 320, 240 }};
-        const float time = sge.timer__get_time();
-        const quaternion model_orientation = quaternion().set_from_yaw_pitch_roll(time, 2.0 * time, -time);
-        const matrix44 world = matrix44().set_rotation_component(model_orientation);
+
+        static bool flag = false;
+        static rect container { { 100, 100 }, { 320, 180 }};
+        static vector3 cam_pos = vector3 { 0, 0, 15 };
+        static vector3 obj_pos = vector3 { 0, 0, 0 };
+        static float t = 0.0f, zn = -0.5f, zf = -30.0f, fov = 90.0f, speed = 1.0f;
+        
+        
+        const auto freecam = static_cast <sge::ext::freecam*> (sge.extension_get (sge::runtime::type_id<sge::ext::freecam>()));
+        
+        if (flag == false) {
+            flag = true;
+            if (freecam)
+                freecam->position = cam_pos;
+        }
+        
+        if (freecam) {
+            cam_pos = freecam->position;
+        }
+        ImGui::Begin ("Gizmo");
+        ImGui::SliderFloat3("cam_pos", &cam_pos.x, 0.0f, 125.0f);
+        ImGui::SliderFloat3("obj_pos", &obj_pos.x, -5.0f, 5.0f);
+        ImGui::SliderInt2("container_offset", &container.location.x, 0, 300);
+        ImGui::SliderInt2("container_extent", &container.extent.x, 0, 600);
+        ImGui::SliderFloat("near", &zn, -10.0f, 10.0f);
+        ImGui::SliderFloat("far", &zf, -100.0f, 100.0f);
+        ImGui::SliderFloat("fov", &fov, 0.0f, 180.0f);
+        ImGui::SliderFloat("speed", &speed, 0.0f, 2.0f);
+        ImGui::End ();
+        
+        
+        
+        t += sge.timer__get_delta() * speed;
+        const quaternion model_orientation = quaternion().set_from_yaw_pitch_roll(t, 2.0 * t, -t);
+        const matrix44 world = matrix44()
+            .set_position_component(obj_pos)
+            .set_rotation_component(model_orientation);
+        
         draw_user_triangles (
             container,
-            vector3 {0, 0, 15},
+            cam_pos,
             quaternion::identity,
-            57.5f, 0.01f, 100.0f, vs, vi, world);
+            fov * DEG2RAD, zn, zf, vs, vi, world);
     }
 }
