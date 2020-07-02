@@ -127,12 +127,12 @@ struct freecam : public runtime::view {
         
         const int gizmo_size = 64;
         
-        math::matrix33 cameraRotLH = math::matrix33().set_as_rotation_from_orientation(orientation);
+        math::matrix33 cameraRotLH = math::matrix33().set_from_orientation(orientation);
         //cameraRotLH[0] = -cameraRotLH[0];
         //cameraRotLH.orthonormalise();
         math::matrix44 gizmoView = math::matrix44().set_rotation_component (cameraRotLH);
         ImGuizmo::ViewManipulate(&gizmoView[0][0], position.length(), ImVec2(screen_w - gizmo_size, 0), ImVec2(gizmo_size, gizmo_size), 0x10101010);
-        const math::matrix33 gizmoRotLH = math::matrix33().set_as_rotation_from_transform(gizmoView);
+        const math::matrix33 gizmoRotLH = math::matrix33().set_from_transform(gizmoView);
         
         if (gizmoRotLH != cameraRotLH) {
             math::matrix33 cameraRotRH = gizmoRotLH;
@@ -145,7 +145,7 @@ struct freecam : public runtime::view {
             ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", position.x, position.y, position.z);
             ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", orientation.i, orientation.j, orientation.k, orientation.u);
 
-            const math::matrix33 camera_rotation = math::matrix33().set_as_rotation_from_orientation(orientation);
+            const math::matrix33 camera_rotation = math::matrix33().set_from_orientation(orientation);
             ImGui::Text("right (x:%.2f, y:%.2f, z:%.2f)", camera_rotation.r0c0, camera_rotation.r0c1, camera_rotation.r0c2);
             ImGui::Text("up (x:%.2f, y:%.2f, z:%.2f)", camera_rotation.r1c0, camera_rotation.r1c1, camera_rotation.r1c2);
             ImGui::Text("backward (x:%.2f, y:%.2f, z:%.2f)", camera_rotation.r2c0, camera_rotation.r2c1, camera_rotation.r2c2);

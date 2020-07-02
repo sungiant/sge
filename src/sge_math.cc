@@ -219,22 +219,22 @@ bool matrix33::is_orthonormal () const {
         if (((*this)[i] | (*this)[(i+1) % 3]) > EPSILON) return false;
     } return true;
 }
-matrix33& matrix33::set_as_scale_from_factors (const vector3& f) {
+matrix33& matrix33::set_from_scale_factors (const vector3& f) {
     r0c0 = f.x;  r0c1 = 0.0f; r0c2 = 0.0f;
     r1c0 = 0.0f; r1c1 = f.y;  r1c2 = 0.0f;
     r2c0 = 0.0f; r2c1 = 0.0f; r2c2 = f.z;
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_x_axis_angle (const float theta) {
-    const float s = sin (theta);
-    const float c = cos (theta);
+matrix33& matrix33::set_from_x_axis_angle (const float theta) {
+    const float s = sin (-theta);
+    const float c = cos (-theta);
     r0c0 = 1.0f; r0c1 = 0.0f; r0c2 = 0.0f;
     r1c0 = 0.0f; r1c1 = c;    r1c2 = -s;
     r2c0 = 0.0f; r2c1 = s;    r2c2 =  c;
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_y_axis_angle (const float theta) {
+matrix33& matrix33::set_from_y_axis_angle (const float theta) {
     const float s = sin (theta);
     const float c = cos (theta);
     r0c0 =  c;   r0c1 = 0.0f; r0c2 = s;
@@ -243,7 +243,7 @@ matrix33& matrix33::set_as_rotation_from_y_axis_angle (const float theta) {
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_z_axis_angle (const float theta) {
+matrix33& matrix33::set_from_z_axis_angle (const float theta) {
     const float s = sin (theta);
     const float c = cos (theta);
     r0c0 = c;    r0c1 = -s;   r0c2 = 0.0f;
@@ -252,26 +252,27 @@ matrix33& matrix33::set_as_rotation_from_z_axis_angle (const float theta) {
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_euler (const float yaw, const float pitch, const float roll) {
+matrix33& matrix33::set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll) {
     const float cx = cos (pitch);
     const float sx = sin (pitch);
     const float cy = cos (yaw);
     const float sy = sin (yaw);
     const float cz = cos (roll);
     const float sz = sin (roll);
-    r0c0 =  (cy * cz);
-    r0c1 = -(cy * sz);
-    r0c2 =  sy;
-    r1c0 =  (sx * sy * cz) + (cx * sz);
-    r1c1 = -(sx * sy * sz) + (cx * cz);
-    r1c2 = -(sx * cy);
-    r2c0 = -(cx * sy * cz) + (sx * sz);
-    r2c1 =  (cx * sy * sz) + (sx * cz);
+    r0c0 =  (cx * cz) + (sx * sy * sz);
+    r0c1 =  (cz * sx * sy) - (cx * sz);
+    r0c2 =  (cy * sx);
+    r1c0 =  (cy * sz);
+    r1c1 =  (cy * cz);
+    r1c2 =  -sy;
+    r2c0 =  (cx * sy * sz) - (cz * sx);
+    r2c1 =  (cx * cz * sy) + (sx * sz);
     r2c2 =  (cx * cy);
     assert (is_orthonormal());
     return *this;
+
 }
-matrix33& matrix33::set_as_rotation_from_axis_angle (const vector3& axis, const float angle) {
+matrix33& matrix33::set_from_axis_angle (const vector3& axis, const float angle) {
     assert (axis.is_unit());
     const float c = cos (angle);
     const float s = sin (angle);
@@ -291,17 +292,17 @@ matrix33& matrix33::set_as_rotation_from_axis_angle (const vector3& axis, const 
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_transform (const matrix43& m) {
+matrix33& matrix33::set_from_transform (const matrix43& m) {
     r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_transform (const matrix44& m) {
+matrix33& matrix33::set_from_transform (const matrix44& m) {
     r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;
     assert (is_orthonormal());
     return *this;
 }
-matrix33& matrix33::set_as_rotation_from_orientation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+matrix33& matrix33::set_from_orientation (const quaternion& q) { // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
     assert (q.is_unit());
     r0c0 = 1.0f - 2.0f * (q.j*q.j + q.k*q.k);
     r0c1 =        2.0f * (q.i*q.j + q.u*q.k);
@@ -321,15 +322,14 @@ matrix33& matrix33::set_as_rotation_from_orientation (const quaternion& q) { // 
 // Matrix 43 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
     
-matrix43& matrix43::operator*= (const matrix43& v) {
-    assert (false);
-    return *this;
-}
 matrix43& matrix43::operator*= (const matrix33& v) {
     assert (false);
     return *this;
 }
-
+matrix43& matrix43::operator*= (const matrix43& v) {
+    assert (false);
+    return *this;
+}
 matrix43& matrix43::set_from_transform (const matrix44& m) {
     r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;
     r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;r3c0=m.r3c0;r3c1=m.r3c1;r3c2=m.r3c2;
@@ -397,8 +397,30 @@ matrix44& matrix44::transpose () {
     r2c3 = r3c2; r3c2 = t;
     return *this;
 }
-matrix44& matrix44::invert () {
+matrix44& matrix44::inverse () {
     assert (false);
+    return *this;
+}
+matrix44& matrix44::affine_inverse () {
+    const matrix44 cp = *this;
+    const float i = cp.r1c1*cp.r2c2 - cp.r2c1*cp.r1c2;
+    const float j = cp.r2c0*cp.r1c2 - cp.r1c0*cp.r2c2;
+    const float k = cp.r1c0*cp.r2c1 - cp.r2c0*cp.r1c1;
+    const float det = cp.r0c0*i + cp.r0c1*j + cp.r0c2*k;
+    assert (!is_zero (det));
+    const float invDet = 1.0f / det;
+    r0c0 = invDet*i;
+    r1c0 = invDet*j;
+    r2c0 = invDet*k;
+    r0c1 = invDet*(cp.r2c1*cp.r0c2 - cp.r0c1*cp.r2c2);
+    r1c1 = invDet*(cp.r0c0*cp.r2c2 - cp.r2c0*cp.r0c2);
+    r2c1 = invDet*(cp.r2c0*cp.r0c1 - cp.r0c0*cp.r2c1);
+    r0c2 = invDet*(cp.r0c1*cp.r1c2 - cp.r1c1*cp.r0c2);
+    r1c2 = invDet*(cp.r1c0*cp.r0c2 - cp.r0c0*cp.r1c2);
+    r2c2 = invDet*(cp.r0c0*cp.r1c1 - cp.r1c0*cp.r0c1);
+    r0c3 = -r0c0*cp.r0c3 - r0c1*cp.r1c3 - r0c2*cp.r2c3;
+    r1c3 = -r1c0*cp.r0c3 - r1c1*cp.r1c3 - r1c2*cp.r2c3;
+    r2c3 = -r2c0*cp.r0c3 - r2c1*cp.r1c3 - r2c2*cp.r2c3;
     return *this;
 }
 matrix44& matrix44::decompose () {
@@ -472,31 +494,20 @@ matrix44& matrix44::set_as_perspective_from_field_of_view (const float fov, cons
     return *this;
 }
 matrix44& matrix44::set_as_view_transform_from_look_at_target (vector3 cam_pos, vector3 cam_target, vector3 cam_up) {
-    // sge view frame is right handed like OpenGL (so non-standard) which means the camera looks down the negative Z axis.
-    // we invert the view direction as per pg.206 of essential mathematics for games.
-    vector3 back = ~(cam_pos - cam_target);
-    vector3 right = ~(cam_up ^ back);
-    vector3 up = ~(back ^ right);
-    r0c0 = right.x;          r0c1 = up.x;          r0c2 = back.x;          r0c3 = 0.0f;
-    r1c0 = right.y;          r1c1 = up.y;          r1c2 = back.y;          r1c3 = 0.0f;
-    r2c0 = right.z;          r2c1 = up.z;          r2c2 = back.z;          r2c3 = 0.0f;
-    r3c0 = -(right|cam_pos); r3c1 = -(up|cam_pos); r3c2 = -(back|cam_pos);  r3c3 = 1.0f;
-    // http://msdn.microsoft.com/en-us/library/bb205343(v=VS.85).aspx
-    //r3c0 = -cam_pos.x; r3c1 = -cam_pos.y; r3c2 = -cam_pos.z;  r3c3 = 1.0f;
+    set_as_view_frame_from_look_at_target (cam_pos, cam_target, cam_up);
+    affine_inverse();
     return *this;
 }
 matrix44& matrix44::set_as_view_frame_from_look_at_target (vector3 cam_pos, vector3 cam_target, vector3 cam_up) {
-    vector3 back = ~(cam_pos - cam_target);
-    vector3 right = ~(cam_up ^ back);
-    vector3 up = ~(back ^ right);
-    // sge view frame is right handed like OpenGL (so non-standard) which means the camera looks down the negative Z axis.
+    const vector3 view_dir = ~(cam_target - cam_pos); // vector: eye -> target (viewing down the negative Z axis).
+    const vector3 view_right = ~(cam_up ^ -view_dir);
+    const vector3 view_up = ~(view_dir ^ -view_right);
+    // view frame is right handed like OpenGL (non-standard) which means the camera looks down the negative Z axis.
     // we invert the view direction as per pg.206 of essential mathematics for games.
-    r0c0 = right.x;   r0c1 = up.x;      r0c2 = -back.x;    r0c3 = 0.0f;
-    r1c0 = right.y;   r1c1 = up.y;      r1c2 = -back.y;    r1c3 = 0.0f;
-    r2c0 = right.z;   r2c1 = up.z;      r2c2 = -back.z;    r2c3 = 0.0f;
-    r3c0 = cam_pos.x; r3c1 = cam_pos.y; r3c2 = cam_pos.z;  r3c3 = 1.0f;
-    // http://msdn.microsoft.com/en-us/library/bb205343(v=VS.85).aspx
-    //r3c0 = -cam_pos.x; r3c1 = -cam_pos.y; r3c2 = -cam_pos.z;  r3c3 = 1.0f;
+    r0c0 = view_right.x; r0c1 = view_up.x; r0c2 = -view_dir.x; r0c3 = 0.0f;
+    r1c0 = view_right.y; r1c1 = view_up.y; r1c2 = -view_dir.y; r1c3 = 0.0f;
+    r2c0 = view_right.z; r2c1 = view_up.z; r2c2 = -view_dir.z; r2c3 = 0.0f;
+    r3c0 = cam_pos.x;    r3c1 = cam_pos.y; r3c2 = cam_pos.z;   r3c3 = 1.0f;
     return *this;
 }
 
@@ -511,9 +522,39 @@ matrix44& matrix44::set_as_view_frame_from_look_at_target (vector3 cam_pos, vect
 
     
 // ------------------------------------------------------------------------------------------------------------------ //
-
+#if 1
 tests::tests() {
-    return;
+    {   // cross product (right handed)
+        assert ((vector3::up ^ vector3::forward) == vector3::left);
+        assert ((vector3::up ^ vector3::left) == vector3::backward);
+        assert ((vector3::up ^ vector3::backward) == vector3::right);
+        assert ((vector3::up ^ vector3::right) == vector3::forward);
+        
+        assert ((vector3::down ^ vector3::forward) == vector3::right);
+        assert ((vector3::down ^ vector3::left) == vector3::forward);
+        assert ((vector3::down ^ vector3::backward) == vector3::left);
+        assert ((vector3::down ^ vector3::right) == vector3::backward);
+        
+        assert ((vector3::right ^ vector3::forward) == vector3::up);
+        assert ((vector3::right ^ vector3::down) == vector3::forward);
+        assert ((vector3::right ^ vector3::backward) == vector3::down);
+        assert ((vector3::right ^ vector3::up) == vector3::backward);
+        
+        assert ((vector3::left ^ vector3::forward) == vector3::down);
+        assert ((vector3::left ^ vector3::down) == vector3::backward);
+        assert ((vector3::left ^ vector3::backward) == vector3::up);
+        assert ((vector3::left ^ vector3::up) == vector3::forward);
+        
+        assert ((vector3::backward ^ vector3::left) == vector3::down);
+        assert ((vector3::backward ^ vector3::down) == vector3::right);
+        assert ((vector3::backward ^ vector3::right) == vector3::up);
+        assert ((vector3::backward ^ vector3::up) == vector3::left);
+        
+        assert ((vector3::forward ^ vector3::left) == vector3::up);
+        assert ((vector3::forward ^ vector3::down) == vector3::left);
+        assert ((vector3::forward ^ vector3::right) == vector3::down);
+        assert ((vector3::forward ^ vector3::up) == vector3::right);
+    }
     { // fluent chains
          matrix44 view0 = matrix44()
             .set_rotation_component(quaternion::identity)
@@ -526,17 +567,300 @@ tests::tests() {
         assert (view0 == expected);
     }
     { // view matrix
-        const vector3 obj_pos = { 1, 7, 1 };
+        const vector3 obj_pos = { 1, 2, 3 };
         const vector3 cam_pos = { 0, 0, 10 };
         const matrix44 view2world = matrix44().set_as_view_frame_from_look_at_target (cam_pos, obj_pos, vector3::up);
         const matrix44 world2view = matrix44().set_as_view_transform_from_look_at_target (cam_pos, obj_pos, vector3::up);
         assert (view2world != world2view);
         matrix44 view2world2 = world2view;
         matrix44 world2view2 = view2world;
-        view2world2.invert();
-        world2view2.invert();
+        view2world2.affine_inverse();
+        world2view2.affine_inverse();
         assert (view2world == view2world2);
         assert (world2view == world2view2);
+    }
+    { // quaternion vector transformations
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::forward);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::left);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::backward);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0,             0, 0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::forward);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::left);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::backward);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::right);
+        
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0,             0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, PI,            0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::right);
+        
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::up);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::left);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::down);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::right);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::up);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::left);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::down);
+        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::right);
+        
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0,             0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::up);
+        
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::backward);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::down);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::forward);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0,             0) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::backward);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, PI,            0) == vector3::down);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::forward);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::up);
+        
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::left);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::down);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::right);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::up);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::left);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::down);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::right);
+        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::up);
+        
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::right);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::forward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::left);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0,             0, 0) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::right);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::forward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::left);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::backward);
+        
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::down);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::forward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::up);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0,             0) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::down);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, PI,            0) == vector3::forward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::up);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::backward);
+        
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::backward);
+        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::backward);
+        
+    }
+    { // matrix33 vector transformations
+        assert (vector3::right * matrix33().set_from_y_axis_angle(-TAU         ) == vector3::right);
+        auto t0 = matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0);
+        auto t1 = matrix33().set_from_orientation(quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0));
+        auto t0x = vector3::right * t0;
+        auto t1x = vector3::right * t1;
+        assert (vector3::right * matrix33().set_from_y_axis_angle(-3.0f*HALF_PI) == vector3::forward);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(-PI          ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(-HALF_PI     ) == vector3::backward);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(HALF_PI      ) == vector3::forward);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(PI           ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(3.0f*HALF_PI ) == vector3::backward);
+        assert (vector3::right * matrix33().set_from_y_axis_angle(TAU          ) == vector3::right);
+        
+        assert (vector3::right * matrix33().set_from_x_axis_angle(-TAU         ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(-3.0f*HALF_PI) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(-PI          ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(-HALF_PI     ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(HALF_PI      ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(PI           ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(3.0f*HALF_PI ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_x_axis_angle(TAU          ) == vector3::right);
+        
+        assert (vector3::right * matrix33().set_from_z_axis_angle(-TAU         ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(-3.0f*HALF_PI) == vector3::up);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(-PI          ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(-HALF_PI     ) == vector3::down);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(HALF_PI      ) == vector3::up);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(PI           ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(3.0f*HALF_PI ) == vector3::down);
+        assert (vector3::right * matrix33().set_from_z_axis_angle(TAU          ) == vector3::right);
+        
+        assert (vector3::up * matrix33().set_from_y_axis_angle(-TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(-3.0f*HALF_PI) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(-PI          ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(-HALF_PI     ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(HALF_PI      ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(PI           ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(3.0f*HALF_PI ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_y_axis_angle(TAU          ) == vector3::up);
+        
+        assert (vector3::up * matrix33().set_from_x_axis_angle(-TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(-3.0f*HALF_PI) == vector3::backward);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(-PI          ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(-HALF_PI     ) == vector3::forward);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(HALF_PI      ) == vector3::backward);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(PI           ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(3.0f*HALF_PI ) == vector3::forward);
+        assert (vector3::up * matrix33().set_from_x_axis_angle(TAU          ) == vector3::up);
+        
+        assert (vector3::up * matrix33().set_from_z_axis_angle(-TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(-3.0f*HALF_PI) == vector3::left);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(-PI          ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(-HALF_PI     ) == vector3::right);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(HALF_PI      ) == vector3::left);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(PI           ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(3.0f*HALF_PI ) == vector3::right);
+        assert (vector3::up * matrix33().set_from_z_axis_angle(TAU          ) == vector3::up);
+        
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(-TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(-3.0f*HALF_PI) == vector3::right);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(-PI          ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(-HALF_PI     ) == vector3::left);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(HALF_PI      ) == vector3::right);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(PI           ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(3.0f*HALF_PI ) == vector3::left);
+        assert (vector3::backward * matrix33().set_from_y_axis_angle(TAU          ) == vector3::backward);
+        
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(-TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(-3.0f*HALF_PI) == vector3::down);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(-PI          ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(-HALF_PI     ) == vector3::up);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(HALF_PI      ) == vector3::down);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(PI           ) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(3.0f*HALF_PI ) == vector3::up);
+        assert (vector3::backward * matrix33().set_from_x_axis_angle(TAU          ) == vector3::backward);
+        
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(-TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(-3.0f*HALF_PI) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(-PI          ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(-HALF_PI     ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(HALF_PI      ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(PI           ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(3.0f*HALF_PI ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_z_axis_angle(TAU          ) == vector3::backward);
+    }
+    { // matrix33 vector transformations
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::forward);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::left);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::backward);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0,             0, 0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::forward);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::left);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::backward);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::right);
+        
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0,             0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, PI,            0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::right);
+        
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::up);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::down);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::right);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::up);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::left);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::down);
+        assert (vector3::right * matrix33().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::right);
+        
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0,             0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::up);
+        
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::backward);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::down);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::forward);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0,             0) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::backward);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, PI,            0) == vector3::down);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::forward);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::up);
+        
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::left);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::right);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::up);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::left);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::down);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::right);
+        assert (vector3::up * matrix33().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::up);
+        
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::right);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::left);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0,             0, 0) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::right);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::left);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::backward);
+        
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::down);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::up);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0,             0) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::down);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, PI,            0) == vector3::forward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::up);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::backward);
+        
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::backward);
+        assert (vector3::backward * matrix33().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::backward);
+    }
+    {
+        const auto q = matrix33().set_from_orientation(quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0));
+        const auto m = matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0);
+        assert (m == q);
     }
     { // view matrix from look at
         const vector3 obj_pos = { 0, 0, 0 };
@@ -559,11 +883,10 @@ tests::tests() {
     }
 }
 
-tests::~tests() {
-    
-}
+tests::~tests() {}
     
 tests run;
-    
 
+
+#endif
 }

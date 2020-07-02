@@ -17,10 +17,11 @@
 namespace sge::math {
 
 struct tests { tests (); ~tests (); };
-    
-const float PI = atan (1.0f) * 4.0f;
-const float TAU = 2.0f * PI;
-const float EPSILON = 0.000001f;
+
+const float HALF_PI = 1.5707963267948966192313216916398f;
+const float PI      = 3.1415926535897932384626433832795f;
+const float TAU     = 6.2831853071795864769252867665590f;
+const float EPSILON = 1.0e-6f;
 const float RAD2DEG = 180.f / PI;
 const float DEG2RAD = PI / 180.f;
 
@@ -229,7 +230,9 @@ struct quaternion {
 
 // ------------------------------------------------------------------------------------------------------------------ //
 struct matrix33 {
-    float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f;
+    float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f,
+          r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f,
+          r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f;
     matrix33 () = default;
     matrix33 (float z_r0c0, float z_r0c1, float z_r0c2, float z_r1c0, float z_r1c1, float z_r1c2, float z_r2c0, float z_r2c1, float z_r2c2) : r0c0(z_r0c0), r0c1(z_r0c1), r0c2(z_r0c2), r1c0(z_r1c0), r1c1(z_r1c1), r1c2(z_r1c2), r2c0(z_r2c0), r2c1(z_r2c1), r2c2(z_r2c2) {}
     matrix33 (vector3 z_r0, vector3 z_r1, vector3 z_r2, vector3 z_r3) : r0c0(z_r0[0]), r0c1(z_r0[1]), r0c2(z_r0[2]), r1c0(z_r1[0]), r1c1(z_r1[1]), r1c2(z_r1[2]), r2c0(z_r2[0]), r2c1(z_r2[1]), r2c2(z_r2[2]) {}
@@ -246,9 +249,9 @@ struct matrix33 {
     const vector3& right   () const { return (*this)[0]; }
     const vector3& up      () const { return (*this)[1]; }
     const vector3& backward() const { return (*this)[2]; }
-          vector3  left    ()       { return vector3 (-r0c0, -r0c1, -r0c2); }
-          vector3  down    ()       { return vector3 (-r1c0, -r1c1, -r1c2); }
-          vector3  forward ()       { return vector3 (-r2c0, -r2c1, -r2c2); }
+          vector3  left    () const { return vector3 (-r0c0, -r0c1, -r0c2); }
+          vector3  down    () const { return vector3 (-r1c0, -r1c1, -r1c2); }
+          vector3  forward () const { return vector3 (-r2c0, -r2c1, -r2c2); }
     
     matrix33& operator+= (const matrix33& v) { (*this)[0]+=v[0]; (*this)[1]+=v[1]; (*this)[2]+=v[2]; return *this; }
     matrix33& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    return *this; }
@@ -258,26 +261,30 @@ struct matrix33 {
     matrix33& operator*= (const float f)     { (*this)[0]*=f;    (*this)[1]*=f;    (*this)[2]*=f;    return *this; }
     matrix33& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
-    bool is_orthonormal () const;
+    bool      is_orthonormal () const;
     matrix33& orthonormalise ();
-    matrix33& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); return *this; }
+    float     determinant    () const { return r0c0*(r1c1*r2c2 - r1c2*r2c1) - r0c1*(r1c0*r2c2 - r1c2*r2c0) + r0c2*(r1c0*r2c1 - r1c1*r2c0); }
+    matrix33& negate         ()       { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); return *this; }
     
-    matrix33& set_as_scale_from_factors (const vector3& f);
-    matrix33& set_as_rotation_from_x_axis_angle (const float angle);
-    matrix33& set_as_rotation_from_y_axis_angle (const float angle);
-    matrix33& set_as_rotation_from_z_axis_angle (const float angle);
-    matrix33& set_as_rotation_from_euler (const float yaw, const float pitch, const float roll);
-    matrix33& set_as_rotation_from_axis_angle (const vector3& axis, const float angle);
-    matrix33& set_as_rotation_from_orientation (const quaternion&);
-    matrix33& set_as_rotation_from_transform (const matrix43& m);
-    matrix33& set_as_rotation_from_transform (const matrix44& m);
+    matrix33& set_from_scale_factors (const vector3& f);
+    matrix33& set_from_x_axis_angle (const float angle);
+    matrix33& set_from_y_axis_angle (const float angle);
+    matrix33& set_from_z_axis_angle (const float angle);
+    matrix33& set_from_yaw_pitch_roll (const float yaw, const float pitch, const float roll);
+    matrix33& set_from_axis_angle (const vector3& axis, const float angle);
+    matrix33& set_from_orientation (const quaternion&);
+    matrix33& set_from_transform (const matrix43& m);
+    matrix33& set_from_transform (const matrix44& m);
     
     static matrix33 const zero, identity;
 };
 
 // ------------------------------------------------------------------------------------------------------------------ //
 struct matrix43 {
-    float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f, r3c0 = 0.0f, r3c1 = 0.0f, r3c2 = 0.0f;
+    float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f,
+          r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f,
+          r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f,
+          r3c0 = 0.0f, r3c1 = 0.0f, r3c2 = 0.0f;
     matrix43 () = default;
     matrix43 (float z_r0c0, float z_r0c1, float z_r0c2, float z_r1c0, float z_r1c1, float z_r1c2, float z_r2c0, float z_r2c1, float z_r2c2, float z_r3c0, float z_r3c1, float z_r3c2) : r0c0(z_r0c0), r0c1(z_r0c1), r0c2(z_r0c2), r1c0(z_r1c0), r1c1(z_r1c1), r1c2(z_r1c2), r2c0(z_r2c0), r2c1(z_r2c1), r2c2(z_r2c2), r3c0(z_r3c0), r3c1(z_r3c1), r3c2(z_r3c2) {}
     matrix43 (vector3 z_r0, vector3 z_r1, vector3 z_r2, vector3 z_r3) : r0c0(z_r0[0]), r0c1(z_r0[1]), r0c2(z_r0[2]), r1c0(z_r1[0]), r1c1(z_r1[1]), r1c2(z_r1[2]), r2c0(z_r2[0]), r2c1(z_r2[1]), r2c2(z_r2[2]), r3c0(z_r3[0]), r3c1(z_r3[1]), r3c2(z_r3[2]) {}
@@ -288,12 +295,22 @@ struct matrix43 {
           vector3& operator[] (const int i)       { assert (i >=0 && i <= 3); return reinterpret_cast<vector3*>(&r0c0)[i]; }
     const vector3& operator[] (const int i) const { assert (i >=0 && i <= 3); return reinterpret_cast<const vector3*>(&r0c0)[i]; }
     
+          vector3& right   ()       { return (*this)[0]; }
+          vector3& up      ()       { return (*this)[1]; }
+          vector3& backward()       { return (*this)[2]; }
+    const vector3& right   () const { return (*this)[0]; }
+    const vector3& up      () const { return (*this)[1]; }
+    const vector3& backward() const { return (*this)[2]; }
+          vector3  left    () const { return vector3 (-r0c0, -r0c1, -r0c2); }
+          vector3  down    () const { return vector3 (-r1c0, -r1c1, -r1c2); }
+          vector3  forward () const { return vector3 (-r2c0, -r2c1, -r2c2); }
+    
     matrix43& operator+= (const matrix43& v) { (*this)[0]+=v[0]; (*this)[1]+=v[1]; (*this)[2]+=v[2]; (*this)[3]+=v[3]; return *this; }
     matrix43& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    (*this)[3]+=f;    return *this; }
     matrix43& operator-= (const matrix43& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
     matrix43& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    (*this)[3]-=f;    return *this; }
-    matrix43& operator*= (const matrix43& v);
     matrix43& operator*= (const matrix33& v);
+    matrix43& operator*= (const matrix43& v);
     matrix43& operator*= (const float f)     { (*this)[0]*=f;    (*this)[1]*=f;    (*this)[2]*=f;    (*this)[3]*=f;    return *this; }
     matrix43& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
@@ -312,7 +329,10 @@ struct matrix43 {
     
 // ------------------------------------------------------------------------------------------------------------------ //
 struct matrix44 {
-    float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r0c3 = 0.0f, r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r1c3 = 0.0f, r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f, r2c3 = 0.0f, r3c0 = 0.0f, r3c1 = 0.0f, r3c2 = 0.0f, r3c3 = 1.0f;
+    float r0c0 = 1.0f, r0c1 = 0.0f, r0c2 = 0.0f, r0c3 = 0.0f,
+          r1c0 = 0.0f, r1c1 = 1.0f, r1c2 = 0.0f, r1c3 = 0.0f,
+          r2c0 = 0.0f, r2c1 = 0.0f, r2c2 = 1.0f, r2c3 = 0.0f,
+          r3c0 = 0.0f, r3c1 = 0.0f, r3c2 = 0.0f, r3c3 = 1.0f;
     matrix44 () = default;
     matrix44 (float z_r0c0, float z_r0c1, float z_r0c2, float z_r0c3, float z_r1c0, float z_r1c1, float z_r1c2, float z_r1c3, float z_r2c0, float z_r2c1, float z_r2c2, float z_r2c3, float z_r3c0, float z_r3c1, float z_r3c2, float z_r3c3) : r0c0(z_r0c0), r0c1(z_r0c1), r0c2(z_r0c2), r0c3(z_r0c3), r1c0(z_r1c0), r1c1(z_r1c1), r1c2(z_r1c2), r1c3(z_r1c3), r2c0(z_r2c0), r2c1(z_r2c1), r2c2(z_r2c2), r2c3(z_r2c3), r3c0(z_r3c0), r3c1(z_r3c1), r3c2(z_r3c2), r3c3(z_r3c3) {}
     matrix44 (vector4 z_r0, vector4 z_r1, vector4 z_r2, vector4 z_r3) : r0c0(z_r0[0]), r0c1(z_r0[1]), r0c2(z_r0[2]), r0c3(z_r0[3]), r1c0(z_r1[0]), r1c1(z_r1[1]), r1c2(z_r1[2]), r1c3(z_r1[3]), r2c0(z_r2[0]), r2c1(z_r2[1]), r2c2(z_r2[2]), r2c3(z_r2[3]), r3c0(z_r3[0]), r3c1(z_r3[1]), r3c2(z_r3[2]), r3c3(z_r3[3]) {}
@@ -322,6 +342,16 @@ struct matrix44 {
 
           vector4& operator[] (const int i)       { assert (i >=0 && i <= 3); return reinterpret_cast<vector4*>(&r0c0)[i]; }
     const vector4& operator[] (const int i) const { assert (i >=0 && i <= 3); return reinterpret_cast<const vector4*>(&r0c0)[i]; }
+
+          vector3& right   ()       { vector3* p = reinterpret_cast<vector3*>(&r0c0); return *p; }
+          vector3& up      ()       { vector3* p = reinterpret_cast<vector3*>(&r1c0); return *p; }
+          vector3& backward()       { vector3* p = reinterpret_cast<vector3*>(&r2c0); return *p; }
+    const vector3& right   () const { const vector3* p = reinterpret_cast<const vector3*>(&r0c0); return *p; }
+    const vector3& up      () const { const vector3* p = reinterpret_cast<const vector3*>(&r1c0); return *p; }
+    const vector3& backward() const { const vector3* p = reinterpret_cast<const vector3*>(&r2c0); return *p; }
+          vector3  left    () const { return vector3 (-r0c0, -r0c1, -r0c2); }
+          vector3  down    () const { return vector3 (-r1c0, -r1c1, -r1c2); }
+          vector3  forward () const { return vector3 (-r2c0, -r2c1, -r2c2); }
     
     matrix44& operator+= (const matrix44& v) { (*this)[0]+=v[0]; (*this)[1]+=v[1]; (*this)[2]+=v[2]; (*this)[3]+=v[3]; return *this; }
     matrix44& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    (*this)[3]+=f;    return *this; }
@@ -335,9 +365,10 @@ struct matrix44 {
     
     matrix44& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); (*this)[3]=(*this)[3].negate(); return *this; }
     matrix44& transpose ();
-    matrix44& invert ();
+    matrix44& inverse ();
+    matrix44& affine_inverse ();
     matrix44& decompose ();
-    float determinant () const;
+    float     determinant () const;
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0].xyz(); m[1] = (*this)[1].xyz(); m[2] = (*this)[2].xyz(); }
     
@@ -405,9 +436,9 @@ inline vector2 operator/(const vector2& l, const vector2& r)    { auto cp = l; r
 inline float   operator|(const vector2& l, const vector2& r)    { return l.dot(r); }
 inline vector2 operator~(const vector2& v)                      { auto cp = v; return cp.normalise(); }
 
-inline float   dot (const vector2& l, const vector2& r)         { return l.dot(r); }
-inline vector2 normalise(const vector2& v)                      { auto cp = v; return cp.normalise(); }
-inline float   distance (const vector2& l, const vector2& r)    { return l.distance(r); }
+inline float   dot         (const vector2& l, const vector2& r) { return l.dot(r); }
+inline vector2 normalise   (const vector2& v)                   { auto cp = v; return cp.normalise(); }
+inline float   distance    (const vector2& l, const vector2& r) { return l.distance(r); }
 inline float   distance_sq (const vector2& l, const vector2& r) { return l.distance_sq(r); }
 
 
@@ -429,10 +460,10 @@ inline float   operator|(const vector3& l, const vector3& r)    { return l.dot(r
 inline vector3 operator^(const vector3& l, const vector3& r)    { auto cp = l; return cp.cross(r); }
 inline vector3 operator~(const vector3& v)                      { auto cp = v; return cp.normalise(); }
 
-inline float   dot (const vector3& l, const vector3& r)         { return l.dot(r); }
-inline vector3 cross(const vector3& l, const vector3& r)        { auto cp = l; return cp.cross(r); }
-inline vector3 normalise(const vector3& v)                      { auto cp = v; return cp.normalise(); }
-inline float   distance (const vector3& l, const vector3& r)    { return l.distance(r); }
+inline float   dot         (const vector3& l, const vector3& r) { return l.dot(r); }
+inline vector3 cross       (const vector3& l, const vector3& r) { auto cp = l; return cp.cross(r); }
+inline vector3 normalise   (const vector3& v)                   { auto cp = v; return cp.normalise(); }
+inline float   distance    (const vector3& l, const vector3& r) { return l.distance(r); }
 inline float   distance_sq (const vector3& l, const vector3& r) { return l.distance_sq(r); }
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -448,7 +479,7 @@ inline vector4 operator/(const vector4& l, const vector4& r) { auto cp = l; retu
 inline float   operator|(const vector4& l, const vector4& r) { return l.dot(r); }
 inline vector4 operator~(const vector4& v)                   { auto cp = v; return cp.normalise(); }
 
-inline vector4 normalise(const vector4& v)                   { auto cp = v; return cp.normalise(); }
+inline vector4 normalise (const vector4& v)                  { auto cp = v; return cp.normalise(); }
 
 // ------------------------------------------------------------------------------------------------------------------ //
 // Quaternion extras
@@ -457,14 +488,15 @@ inline quaternion operator-(const quaternion& v)                      { auto cp 
 inline quaternion operator-(const quaternion& l, const quaternion& r) { auto cp = l; return cp-=r; }
 inline quaternion operator+(const quaternion& l, const quaternion& r) { auto cp = l; return cp+=r; }
 inline quaternion operator*(const quaternion& v, const float f)       { auto cp = v; return cp*=f; }
+inline vector3    operator*(const quaternion& l, const vector3& r)    { auto cp = r; return cp*=l; }
 inline quaternion operator/(const quaternion& v, const float f)       { auto cp = v; return cp/=f; }
 inline quaternion operator&(const quaternion& l, const quaternion& r) { auto cp = l; return cp.concatenate(r); }
 inline quaternion operator~(const quaternion& v)                      { auto cp = v; return cp.normalise(); }
 inline quaternion operator!(const quaternion& v)                      { auto cp = v; return cp.conjugate(); }
 
 inline quaternion concatenate(const quaternion& l, const quaternion& r) { auto cp = l; return cp.concatenate(r); }
-inline quaternion normalise(const quaternion& v)                      { auto cp = v; return cp.normalise(); }
-inline quaternion conjugate(const quaternion& v)                      { auto cp = v; return cp.conjugate(); }
+inline quaternion normalise  (const quaternion& v)                      { auto cp = v; return cp.normalise(); }
+inline quaternion conjugate  (const quaternion& v)                      { auto cp = v; return cp.conjugate(); }
 
 // ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 3x3 extras
@@ -474,6 +506,7 @@ inline matrix33 operator-(const matrix33& l, const matrix33& r) { auto cp = l; r
 inline matrix33 operator+(const matrix33& l, const matrix33& r) { auto cp = l; return cp+=r; }
 inline matrix33 operator*(const matrix33& v, const float f)     { auto cp = v; return cp*=f; }
 inline matrix33 operator*(const matrix33& l, const matrix33& r) { auto cp = l; return cp*=r; }
+inline vector3  operator*(const matrix33& l, const vector3& r)  { auto cp = r; return cp*=l; }
 inline matrix33 operator/(const matrix33& v, const float f)     { auto cp = v; return cp/=f; }
     
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -485,6 +518,7 @@ inline matrix43 operator+(const matrix43& l, const matrix43& r) { auto cp = l; r
 inline matrix43 operator*(const matrix43& v, const float f)     { auto cp = v; return cp*=f; }
 inline matrix43 operator*(const matrix43& l, const matrix33& r) { auto cp = l; return cp*=r; }
 inline matrix43 operator*(const matrix43& l, const matrix43& r) { auto cp = l; return cp*=r; }
+inline vector3  operator*(const matrix43& l, const vector3& r)  { auto cp = r; return cp*=l; }
 inline matrix43 operator/(const matrix43& v, const float f)     { auto cp = v; return cp/=f; }
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -497,6 +531,7 @@ inline matrix44 operator*(const matrix44& v, const float f)     { auto cp = v; r
 inline matrix44 operator*(const matrix44& l, const matrix33& r) { auto cp = l; return cp*=r; }
 inline matrix44 operator*(const matrix44& l, const matrix43& r) { auto cp = l; return cp*=r; }
 inline matrix44 operator*(const matrix44& l, const matrix44& r) { auto cp = l; return cp*=r; }
+inline vector3  operator*(const matrix44& l, const vector3& r)  { auto cp = r; return cp*=l; }
 inline matrix44 operator/(const matrix44& v, const float f)     { auto cp = v; return cp/=f; }
 
 }
