@@ -378,10 +378,10 @@ struct matrix44 {
     matrix44& decompose ();
     float     determinant () const;
     
-    vector3&    transform (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 1.0f }; multiply (*this, v4, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // matrix * column vector
+    vector3&    transform (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 1.0f }; multiply (v4, *this, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // row vector * matrix
     vector3     transform (const vector3& v) const { vector3 res = v; transform (res); return res; }
     
-    vector3&    rotate (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 0.0f }; multiply (*this, v4, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // matrix * column vector
+    vector3&    rotate (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 0.0f }; multiply (*this, v4, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // row vector * matrix
     vector3     rotate (const vector3& v) const { vector3 res = v; transform (res); return res; }
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0].xyz(); m[1] = (*this)[1].xyz(); m[2] = (*this)[2].xyz(); }
@@ -402,8 +402,8 @@ struct matrix44 {
 
     static void multiply (const matrix44&, const matrix44&, matrix44&); // [4x4] * [4x4] => [4x4]
     static void multiply (const matrix44&, const matrix43&, matrix43&); // [4x4] * [4x3] => [4x3]
-    static void multiply (const matrix44&, const vector4& , vector4& ); // [4*4] * [4x1] => [4x1]
-    static void multiply (const vector4& , const matrix44&, vector4& ); // [1x4] * [4*4] => [1x4]
+    static void multiply (const matrix44&, const vector4& , vector4& ); // [4*4] * [4x1] => [4x1] (column vector * matrix)
+    static void multiply (const vector4& , const matrix44&, vector4& ); // [1x4] * [4*4] => [1x4] (row vector * matrix)
 };
     
     

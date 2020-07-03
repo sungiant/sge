@@ -1079,27 +1079,20 @@ tests::tests() {
     { // view matrix from look at
         const vector3 obj_pos = { 0, 0, 0 };
         const vector3 cam_pos = { 0, 0, 10 };
-        //const matrix44 viewF = matrix44().set_as_view_frame_from_look_at_target (cam_pos, obj_pos, vector3::up);
-        //const matrix44 view = matrix44().set_as_view_transform_from_look_at_target (cam_pos, obj_pos, vector3::up);
-        
-        
-        
-        
+
         const matrix44 viewF =
             matrix44().set_rotation_component(quaternion::identity) *
             matrix44().set_position_component(cam_pos);
         
         const matrix44 viewM = inverse(viewF);
         
+        const vector3 obj_pos_vs = viewM * obj_pos;
+        const vector3 expected = vector3 { 0, 0, -10 };
+        assert (obj_pos_vs == expected);
         
-        //const vector3 obj_pos_vs = obj_pos * viewM;
-        //const vector3 expected = vector3 { 0, 0, -10 };
-        //assert (obj_pos_vs == expected);
-        
-        
-        //const vector3 cam_pos_vs = cam_pos * viewM;
-        //const vector3 expected2 = vector3 { 0, 0, 0 };
-        //assert (cam_pos_vs == expected2);
+        const vector3 cam_pos_vs = viewM * cam_pos;
+        const vector3 expected2 = vector3 { 0, 0, 0 };
+        assert (cam_pos_vs == expected2);
     }
     { // view matrix
         const vector3 obj_pos = { 1, 2, 3 };
