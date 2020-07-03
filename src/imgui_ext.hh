@@ -98,8 +98,8 @@ namespace imgui::ext {
             const vector3 temp1 = v1 * proj;
             const vector3 temp2 = v2 * proj;
             
-            if (!is_within_ndc (temp0) || !is_within_ndc (temp1) || !is_within_ndc (temp2))
-                continue;
+            //if (!is_within_ndc (temp0) || !is_within_ndc (temp1) || !is_within_ndc (temp2))
+            //    continue;
                 
             
             const ImVec2 p0 = ImVec2 (
