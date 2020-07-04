@@ -11,28 +11,27 @@ namespace sge::ext {
 
 class overlay : public runtime::view {
 private:
-    std::vector<data::vertex_pos_norm> obj_verts;
-    std::vector<uint32_t> obj_indices;
-    std::vector<data::vertex_pos_col> obj_verts_temp;
+    std::vector<data::vertex_pos_norm> toy_obj_verts;
+    std::vector<uint32_t> toy_obj_indices;
+    std::vector<data::vertex_pos_col> toy_toy_obj_verts_temp;
 public:
     overlay (const runtime::api& z)
         : runtime::view (z)
     {
-        data::get_torus (obj_verts, obj_indices);
+        data::get_teapot (toy_obj_verts, toy_obj_indices);
         
-        for (auto& v : obj_verts)
-            obj_verts_temp.emplace_back(data::vertex_pos_col {v.position, 0xFFFFFFFF} );
+        for (auto& v : toy_obj_verts)
+            toy_toy_obj_verts_temp.emplace_back(data::vertex_pos_col {v.position, 0xFFFFFFFF} );
     }
 
     virtual void debug_ui () override {
-        static float gizmo_cam_zn = -0.1f, gizmo_cam_zf = -300.0f, gizmo_cam_fov = 45.0f;
-        static math::vector3 gizmo_cam_pos = math::vector3 { 0, 0, 5 };
-        static math::quaternion gizmo_cam_orientation = math::quaternion::identity;
-        static math::rect gizmo_container { { 100, 100 }, { 320, 180 }};
-        static math::vector3 gizmo_obj_pos = math::vector3 { 0, 0.0f, -1 };
-        static math::quaternion gizmo_obj_orientation = math::quaternion::identity;
-        static float gizmo_obj_t = 0.0f, gizmo_obj_speed = 0.3f;
-        const std::span<sge::data::vertex_pos_col> gizmo_vertices = sge::data::unit_cube;
+        static float toy_cam_zn = -0.1f, toy_cam_zf = -300.0f, toy_cam_fov = 45.0f;
+        static math::vector3 toy_cam_pos = math::vector3 { 0, 0, 5 };
+        static math::quaternion toy_cam_orientation = math::quaternion::identity;
+        static math::rect toy_container { { 100, 100 }, { 320, 180 }};
+        static math::vector3 toy_obj_pos = math::vector3 { 0, 0.0f, -1 };
+        static math::quaternion toy_obj_orientation = math::quaternion::identity;
+        static float toy_obj_t = 0.0f, toy_obj_speed = 0.3f;
         
         ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
         ImGui::Begin ("BACKGROUND", NULL,
@@ -44,25 +43,20 @@ public:
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
-            gizmo_obj_t += sge.timer__get_delta() * gizmo_obj_speed;
-            gizmo_obj_orientation = math::quaternion().set_from_yaw_pitch_roll(gizmo_obj_t, 2.0 * gizmo_obj_t, -gizmo_obj_t);
-            std::vector<uint32_t> gizmo_indices (gizmo_vertices.size());
-            std::iota (std::begin(gizmo_indices), std::end(gizmo_indices), 0); // on the stack?! todo
-
+            toy_obj_t += sge.timer__get_delta() * toy_obj_speed;
+            toy_obj_orientation = math::quaternion().set_from_yaw_pitch_roll(toy_obj_t, 2.0 * toy_obj_t, -toy_obj_t);
             
             imgui::ext::draw_user_triangles (
-                gizmo_container,
-                gizmo_cam_pos,
-                gizmo_cam_orientation,
-                gizmo_cam_fov * math::DEG2RAD,
-                gizmo_cam_zn,
-                gizmo_cam_zf,
-                //gizmo_vertices,
-                //gizmo_indices,
-                obj_verts_temp,
-                obj_indices,
-                gizmo_obj_pos,
-                gizmo_obj_orientation,
+                toy_container,
+                toy_cam_pos,
+                toy_cam_orientation,
+                toy_cam_fov * math::DEG2RAD,
+                toy_cam_zn,
+                toy_cam_zf,
+                toy_toy_obj_verts_temp,
+                toy_obj_indices,
+                toy_obj_pos,
+                toy_obj_orientation,
                 true);
             
             int y = 20;
@@ -93,9 +87,9 @@ public:
         ImGui::PopStyleColor ();
         
         ImGui::Begin ("Tools"); {
-            ImGui::SliderFloat("speed", &gizmo_obj_speed, 0.0f, 2.0f);
-            ImGui::SliderInt2("container_offset", &gizmo_container.location.x, 0, 1000);
-            ImGui::SliderInt2("container_extent", &gizmo_container.extent.x, 0, 1000);
+            ImGui::SliderFloat("speed", &toy_obj_speed, 0.0f, 2.0f);
+            ImGui::SliderInt2("container_offset", &toy_container.location.x, 0, 1000);
+            ImGui::SliderInt2("container_extent", &toy_container.extent.x, 0, 1000);
             /*
             if (ImGui::Button ("Toggle Fullscreen")) {
                 sge.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen);

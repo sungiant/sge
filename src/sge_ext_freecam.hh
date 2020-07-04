@@ -13,6 +13,7 @@ struct freecam : public runtime::view {
     freecam (const runtime::api& z) : runtime::view (z) {
         reset();
         enabled = false;
+        sge::data::get_unit_cube(gizmo_vertices);
     }
 
     void reset () {
@@ -173,20 +174,12 @@ struct freecam : public runtime::view {
         ImGui::End ();
         
         
-        
-        
-        auto vport = ImGui::GetWindowViewport();
-
-        
-        
         static float gizmo_cam_zn = -0.1f, gizmo_cam_zf = -300.0f, gizmo_cam_fov = 45.0f;
         static math::vector3 gizmo_cam_pos = math::vector3 { 0, 0, 4.5 };
         static math::quaternion gizmo_cam_orientation = math::quaternion::identity;
-        //static math::rect gizmo_container { { 100, 100 }, { 320, 180 }};
         static math::rect gizmo_container { { screen_w - gizmo_size - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
         static math::vector3 gizmo_obj_pos = math::vector3 { 0, 0.0f, -1 };
         static math::quaternion gizmo_obj_orientation = math::quaternion::identity;
-        const std::span<sge::data::vertex_pos_col> gizmo_vertices = sge::data::unit_cube;
         
         gizmo_obj_orientation = orientation;
         std::vector<uint32_t> gizmo_indices (gizmo_vertices.size());
@@ -249,6 +242,10 @@ struct freecam : public runtime::view {
     constexpr static float LOOK_RATE = 1.20f;
     constexpr static float FAST_LOOK_RATE = 1.70f;
     constexpr static float MOUSE_F = 1.0f / 1.40f; // moving 140% of screen space per second is equivalent to holding a joystick on full
+    
+    
+
+    std::vector<sge::data::vertex_pos_col> gizmo_vertices;
 
 };
 

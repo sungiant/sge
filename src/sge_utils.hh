@@ -31,5 +31,8 @@ template <typename T>
 inline bool contains (std::unordered_set<T> xs, T value) {
     return xs.find (value) != xs.end ();
 }
-
+    
+template <typename T> int sign(T val) {
+    return (T(0) < val) - (val < T(0));
+}
 }
