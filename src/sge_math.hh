@@ -120,6 +120,7 @@ struct vector3 {
     
     vector3 () = default;
     vector3 (const float z_x, const float z_y, const float z_z) : x (z_x), y (z_y), z (z_z) {}
+    vector3 (const vector2& z_v, const float z_z) : x (z_v.x), y (z_v.y), z (z_z){}
     
     bool operator== (const vector3& v) const { return is_zero (x - v.x) && is_zero (y - v.y) && is_zero (z - v.z); }
     bool operator!= (const vector3& v) const { return !(*this == v); }
@@ -159,6 +160,7 @@ struct vector4 {
     
     vector4 () = default;
     vector4 (const float z_x, const float z_y, const float z_z, const float z_w) : x (z_x), y (z_y), z (z_z), w (z_w) {}
+    vector4 (const vector3& z_v, const float z_w) : x (z_v.x), y (z_v.y), z (z_v.z), w (z_w) {}
     
     bool operator == (const vector4& v) const { return is_zero (x - v.x) && is_zero (y - v.y) && is_zero (z - v.z) && is_zero (w - v.w); }
     bool operator != (const vector4& v) const { return !(*this == v); }
@@ -261,7 +263,7 @@ struct matrix33 {
     matrix33& operator-= (const matrix33& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; return *this; }
     matrix33& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    return *this; }
     matrix33& operator*= (const float f)     { (*this)[0]*=f;    (*this)[1]*=f;    (*this)[2]*=f;    return *this; }
-    matrix33& operator*= (const matrix33& v) { multiply (*this, v, *this); return *this;  }
+    matrix33& operator*= (const matrix33& v) { product (*this, v, *this); return *this;  }
     matrix33& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
     bool      is_orthonormal () const;
@@ -281,9 +283,9 @@ struct matrix33 {
     
     static matrix33 const zero, identity;
     
-    static void multiply (const matrix33&, const matrix33&, matrix33&); // [3x3] * [3x3] => [3x3]
-    static void multiply (const vector3& , const matrix33&, vector3& ); // [1x3] * [3x3] => [1x3]
-    static void multiply (const matrix33&, const vector3& , vector3& ); // [3x3] * [3x1] => [3x1]
+    static void product (const matrix33&, const matrix33&, matrix33&); // [3x3] * [3x3] => [3x3]
+    static void product (const vector3& , const matrix33&, vector3& ); // [1x3] * [3x3] => [1x3]
+    static void product (const matrix33&, const vector3& , vector3& ); // [3x3] * [3x1] => [3x1]
 };
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -317,24 +319,26 @@ struct matrix43 {
     matrix43& operator-= (const matrix43& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
     matrix43& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    (*this)[3]-=f;    return *this; }
     matrix43& operator*= (const float f)     { (*this)[0]*=f;    (*this)[1]*=f;    (*this)[2]*=f;    (*this)[3]*=f;    return *this; }
-    matrix43& operator*= (const matrix33& v) { multiply(*this, v, *this); return *this; }
+    matrix43& operator*= (const matrix33& v) { product(*this, v, *this); return *this; }
     matrix43& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
     matrix43& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); (*this)[3]=(*this)[3].negate(); return *this; }
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0]; m[1] = (*this)[1]; m[2] = (*this)[2]; }
+    void get_position_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
     
     matrix43& set_position_component (const vector3& v) { r3c0 = v.x; r3c1 = v.y; r3c2 = v.z; return *this; }
     matrix43& set_rotation_component (const matrix33& m) { (*this)[0] = m[0]; (*this)[1] = m[1]; (*this)[2] = m[2]; return *this; }
     matrix43& set_rotation_component (const quaternion&);
+    matrix43& set_scale_component (const vector3& v) { r0c0 = v.x; r1c1 = v.y; r2c2 = v.z; return *this; }
     
     matrix43& set_from_transform (const matrix44&);
 
     static matrix43 const zero, identity;
 
-    static void multiply (const matrix43&, const matrix33&, matrix43&); // [4x3] * [3x3] => [4x3]
-    static void multiply (const matrix43&, const vector3& , vector4& ); // [4*3] * [3x1] => [4x1]
-    static void multiply (const vector4& , const matrix43&, vector3& ); // [1x4] * [4*3] => [1x3]
+    static void product (const matrix43&, const matrix33&, matrix43&); // [4x3] * [3x3] => [4x3]
+    static void product (const matrix43&, const vector3& , vector4& ); // [4*3] * [3x1] => [4x1]
+    static void product (const vector4& , const matrix43&, vector3& ); // [1x4] * [4*3] => [1x3]
 };
     
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -367,7 +371,7 @@ struct matrix44 {
     matrix44& operator+= (const float f)     { (*this)[0]+=f;    (*this)[1]+=f;    (*this)[2]+=f;    (*this)[3]+=f;    return *this; }
     matrix44& operator-= (const matrix44& v) { (*this)[0]-=v[0]; (*this)[1]-=v[1]; (*this)[2]-=v[2]; (*this)[3]-=v[3]; return *this; }
     matrix44& operator-= (const float f)     { (*this)[0]-=f;    (*this)[1]-=f;    (*this)[2]-=f;    (*this)[3]-=f;    return *this; }
-    matrix44& operator*= (const matrix44& v) { multiply (*this, v, *this); return *this; }
+    matrix44& operator*= (const matrix44& v) { product (*this, v, *this); return *this; }
     matrix44& operator*= (const float f)     { (*this)[0]*=f; (*this)[1]*=f; (*this)[2]*=f; (*this)[3]*=f; return *this; }
     matrix44& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
@@ -378,32 +382,44 @@ struct matrix44 {
     matrix44& decompose ();
     float     determinant () const;
     
-    vector3&    transform (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 1.0f }; multiply (v4, *this, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // row vector * matrix
-    vector3     transform (const vector3& v) const { vector3 res = v; transform (res); return res; }
+    vector3&    transform (vector3&v) const {
+        vector4 v4 = { v.x, v.y, v.z, 1.0f };
+        vector4 r;
+        product (v4, *this, r);
+        v.x = r.x; v.y = r.y; v.z = r.z;
+        return v;
+    } // row vector * matrix
+    vector3     transform (const vector3& v) const {
+        vector3 res = v;
+        transform (res);
+        return res;
+        
+    }
     
-    vector3&    rotate (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 0.0f }; multiply (*this, v4, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // row vector * matrix
+    vector3&    rotate (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 0.0f }; product (*this, v4, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // row vector * matrix
     vector3     rotate (const vector3& v) const { vector3 res = v; transform (res); return res; }
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0].xyz(); m[1] = (*this)[1].xyz(); m[2] = (*this)[2].xyz(); }
+    void get_position_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
     
     matrix44& set_position_component (const vector3& v) { r3c0=v.x;r3c1=v.y;r3c2=v.z; return *this; }
     matrix44& set_rotation_component (const matrix33& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;return *this; }
     matrix44& set_rotation_component (const quaternion&);
+    matrix44& set_scale_component (const vector3& v) { r0c0 = v.x; r1c1 = v.y; r2c2 = v.z; return *this; }
     
     matrix44& set_as_view_transform_from_look_at_target (vector3, vector3, vector3); // view direction is negative Z (positive Z is the back of the camera)
     matrix44& set_as_view_frame_from_look_at_target (vector3, vector3, vector3); // view direction is negative Z (positive Z is the back of the camera)
     
     matrix44& set_as_perspective_rh (const float, const float, const float, const float);
-    matrix44& set_as_perspective_lh (const float, const float, const float, const float);
     matrix44& set_as_perspective_fov_rh (const float, const float, const float, const float);
     matrix44& set_as_orthographic_off_center (const float, const float, const float, const float, const float, const float);
     
     static matrix44 const zero, identity;
 
-    static void multiply (const matrix44&, const matrix44&, matrix44&); // [4x4] * [4x4] => [4x4]
-    static void multiply (const matrix44&, const matrix43&, matrix43&); // [4x4] * [4x3] => [4x3]
-    static void multiply (const matrix44&, const vector4& , vector4& ); // [4*4] * [4x1] => [4x1] (column vector * matrix)
-    static void multiply (const vector4& , const matrix44&, vector4& ); // [1x4] * [4*4] => [1x4] (row vector * matrix)
+    static void product (const matrix44&, const matrix44&, matrix44&); // [4x4] * [4x4] => [4x4]
+    static void product (const matrix44&, const matrix43&, matrix43&); // [4x4] * [4x3] => [4x3]
+    static void product (const matrix44&, const vector4& , vector4& ); // [4*4] * [4x1] => [4x1] (column vector * matrix)
+    static void product (const vector4& , const matrix44&, vector4& ); // [1x4] * [4*4] => [1x4] (row vector * matrix)
 };
     
     
@@ -475,7 +491,7 @@ inline vector3 operator*(const vector3& v, const float f)       { auto cp = v; r
 inline vector3 operator*(const vector3& l, const vector3& r)    { auto cp = l; return cp*=r; }
 inline vector3 operator*(const vector3& l, const quaternion& r) { auto cp = l; return cp*=r; }
 inline vector3 operator*(const vector3& l, const matrix33& r)   { auto cp = l; return cp*=r; }
-inline vector3 operator*(const vector3& l, const matrix44& r)   { return r.transform (l); }
+inline vector3 operator%(const vector3& l, const matrix44& r)   { return r.transform (l); }
 inline vector3 operator/(const vector3& v, const float f)       { auto cp = v; return cp/=f; }
 inline vector3 operator/(const vector3& l, const vector3& r)    { auto cp = l; return cp/=r; }
 inline float   operator|(const vector3& l, const vector3& r)    { return l.dot(r); }
@@ -496,7 +512,8 @@ inline vector4 operator-(const vector4& l, const vector4& r) { auto cp = l; retu
 inline vector4 operator+(const vector4& l, const vector4& r) { auto cp = l; return cp+=r; }
 inline vector4 operator*(const vector4& v, const float f)    { auto cp = v; return cp*=f; }
 inline vector4 operator*(const vector4& l, const vector4& r) { auto cp = l; return cp*=r; }
-inline vector4 operator*(const vector4& l, const matrix44& r){ auto cp = l; return cp*=r; }
+inline vector4 operator*(const vector4& l, const matrix44& r){ vector4 res; matrix44::product (l, r, res); return res; }
+inline vector3 operator*(const vector4& l, const matrix43& r){ vector3 res; matrix43::product (l, r, res); return res; }
 inline vector4 operator/(const vector4& v, const float f)    { auto cp = v; return cp/=f; }
 inline vector4 operator/(const vector4& l, const vector4& r) { auto cp = l; return cp/=r; }
 inline float   operator|(const vector4& l, const vector4& r) { return l.dot(r); }
@@ -529,7 +546,7 @@ inline matrix33 operator-(const matrix33& l, const matrix33& r) { auto cp = l; r
 inline matrix33 operator+(const matrix33& l, const matrix33& r) { auto cp = l; return cp+=r; }
 inline matrix33 operator*(const matrix33& v, const float f)     { auto cp = v; return cp*=f; }
 inline matrix33 operator*(const matrix33& l, const matrix33& r) { auto cp = l; return cp*=r; }
-inline vector3  operator*(const matrix33& l, const vector3& r)  { vector3 res; matrix33::multiply (l, r, res); return res; }
+inline vector3  operator*(const matrix33& l, const vector3& r)  { vector3 res; matrix33::product (l, r, res); return res; }
 inline matrix33 operator/(const matrix33& v, const float f)     { auto cp = v; return cp/=f; }
 
 inline matrix33 orthonormalise(const matrix33& v) { auto cp = v; return cp.orthonormalise(); }
@@ -544,8 +561,8 @@ inline matrix43 operator+(const matrix43& l, const matrix43& r) { auto cp = l; r
 inline matrix43 operator*(const matrix43& v, const float f)     { auto cp = v; return cp*=f; }
 inline matrix43 operator/(const matrix43& v, const float f)     { auto cp = v; return cp/=f; }
 
-inline matrix43 operator*(const matrix43& l, const matrix33& r) { matrix43 res; matrix43::multiply (l, r, res); return res; }
-inline vector4  operator*(const matrix43& l, const vector3& r)  { vector4 res; matrix43::multiply (l, r, res); return res; }
+inline matrix43 operator*(const matrix43& l, const matrix33& r) { matrix43 res; matrix43::product (l, r, res); return res; }
+inline vector4  operator*(const matrix43& l, const vector3& r)  { vector4 res; matrix43::product (l, r, res); return res; }
 
 inline matrix43 negate    (const matrix43& v) { auto cp = v; return cp.negate(); }
 
@@ -557,11 +574,11 @@ inline matrix44 operator-(const matrix44& l, const matrix44& r) { auto cp = l; r
 inline matrix44 operator+(const matrix44& l, const matrix44& r) { auto cp = l; return cp+=r; }
 inline matrix44 operator*(const matrix44& v, const float f)     { auto cp = v; return cp*=f; }
 inline matrix44 operator*(const matrix44& l, const matrix44& r) { auto cp = l; return cp*=r; }
-inline vector3  operator*(const matrix44& l, const vector3& r)  { return l.transform(r); }
+inline vector3  operator%(const matrix44& l, const vector3& r)  { return l.transform(r); }
 inline matrix44 operator/(const matrix44& v, const float f)     { auto cp = v; return cp/=f; }
 
-inline matrix43 operator*(const matrix44& l, const matrix43& r) { matrix43 res; matrix44::multiply (l, r, res); return res; }
-inline vector4  operator*(const matrix44& l, const vector4& r)  { vector4 res; matrix44::multiply (l, r, res); return res; }
+inline matrix43 operator*(const matrix44& l, const matrix43& r) { matrix43 res; matrix44::product (l, r, res); return res; }
+inline vector4  operator*(const matrix44& l, const vector4& r)  { vector4 res; matrix44::product (l, r, res); return res; }
 
 inline matrix44 negate(const matrix44& v) { auto cp = v; return cp.negate(); }
 inline matrix44 transpose(const matrix44& v) { auto cp = v; return cp.transpose(); }

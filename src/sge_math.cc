@@ -75,14 +75,14 @@ const matrix44 matrix44::identity = matrix44 (1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 // Vector 3 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
 
-vector3& vector3::operator*= (const matrix33& m) { matrix33::multiply(*this, m, *this); return *this; }
+vector3& vector3::operator*= (const matrix33& m) { matrix33::product(*this, m, *this); return *this; }
 vector3& vector3::operator*= (const quaternion& q) { return q.rotate(*this); }
 
 // ------------------------------------------------------------------------------------------------------------------ //
 // Vector 4 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
 
-vector4& vector4::operator*= (const matrix44& m) { matrix44::multiply(*this, m, *this); return *this; }
+vector4& vector4::operator*= (const matrix44& m) { matrix44::product(*this, m, *this); return *this; }
 
 // ------------------------------------------------------------------------------------------------------------------ //
 // Quaternion inline definitions
@@ -195,7 +195,7 @@ quaternion& quaternion::set_from_rotation (const matrix33& m) {
 // ------------------------------------------------------------------------------------------------------------------ //
     
 
-void matrix33::multiply (const matrix33& l, const matrix33& r, matrix33& result){ // [3x3] * [3x3] => [3x3]
+void matrix33::product (const matrix33& l, const matrix33& r, matrix33& result){ // [3x3] * [3x3] => [3x3]
     matrix33 t;// incase the result is also a parameter
     t.r0c0 = l.r0c0*r.r0c0 + l.r0c1*r.r1c0 + l.r0c2*r.r2c0;
     t.r1c0 = l.r1c0*r.r0c0 + l.r1c1*r.r1c0 + l.r1c2*r.r2c0;
@@ -208,14 +208,14 @@ void matrix33::multiply (const matrix33& l, const matrix33& r, matrix33& result)
     t.r2c2 = l.r2c0*r.r0c2 + l.r2c1*r.r1c2 + l.r2c2*r.r2c2;
     result = t;
 }
-void matrix33::multiply (const vector3& l,  const matrix33& r, vector3&  result){ // [1x3] * [3x3] => [1x3] - Row vector-matrix multiplication
+void matrix33::product (const vector3& l,  const matrix33& r, vector3&  result){ // [1x3] * [3x3] => [1x3] - Row vector-matrix multiplication
     vector3 t;// incase the result is also a parameter
     t.x = l.x*r.r0c0 + l.y*r.r1c0 + l.z*r.r2c0;
     t.y = l.x*r.r0c1 + l.y*r.r1c1 + l.z*r.r2c1;
     t.z = l.x*r.r0c2 + l.y*r.r1c2 + l.z*r.r2c2;
     result = t;
 }
-void matrix33::multiply (const matrix33& l, const vector3& r,  vector3&  result){ // [3x3] * [3x1] => [3x1] - Matrix-column vector multiplication
+void matrix33::product (const matrix33& l, const vector3& r,  vector3&  result){ // [3x3] * [3x1] => [3x1] - Matrix-column vector multiplication
     vector3 t;// incase the result is also a parameter
     t.x = l.r0c0*r.x + l.r0c1*r.y + l.r0c2*r.z;
     t.y = l.r1c0*r.x + l.r1c1*r.y + l.r1c2*r.z;
@@ -349,7 +349,7 @@ matrix33& matrix33::set_from_orientation (const quaternion& q) { // http://www.e
 // ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 43 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
-void matrix43::multiply (const matrix43& l, const matrix33& r, matrix43& result){ // [4x3] * [3x3] => [4x3]
+void matrix43::product (const matrix43& l, const matrix33& r, matrix43& result){ // [4x3] * [3x3] => [4x3]
     matrix43 t;// incase the result is also a parameter
     t.r0c0 = l.r0c0*r.r0c0 + l.r0c1*r.r1c0 + l.r0c2*r.r2c0;
     t.r0c1 = l.r0c0*r.r0c1 + l.r0c1*r.r1c1 + l.r0c2*r.r2c1;
@@ -365,7 +365,7 @@ void matrix43::multiply (const matrix43& l, const matrix33& r, matrix43& result)
     t.r3c2 = l.r3c0*r.r0c2 + l.r3c1*r.r1c2 + l.r3c2*r.r2c2;
     result = t;
 }
-void matrix43::multiply (const matrix43& l, const vector3&  r, vector4&  result){ // [4*3] * [3x1] => [4x1]
+void matrix43::product (const matrix43& l, const vector3&  r, vector4&  result){ // [4*3] * [3x1] => [4x1]
     vector4 t;// incase the result is also a parameter
     t.x = l.r0c0*r.x + l.r0c1*r.y + l.r0c2*r.z;
     t.y = l.r1c0*r.x + l.r1c1*r.y + l.r1c2*r.z;
@@ -373,7 +373,7 @@ void matrix43::multiply (const matrix43& l, const vector3&  r, vector4&  result)
     t.w = l.r3c0*r.x + l.r3c1*r.y + l.r3c2*r.z;
     result = t;
 }
-void matrix43::multiply (const vector4&  l, const matrix43& r, vector3&  result){ // [1x4] * [4*3] => [1x3]
+void matrix43::product (const vector4&  l, const matrix43& r, vector3&  result){ // [1x4] * [4*3] => [1x3]
     vector3 t;// incase the result is also a parameter
     t.x = l.x*r.r0c0 + l.y*r.r1c0 + l.z*r.r2c0 + l.w*r.r3c0;
     t.y = l.x*r.r0c1 + l.y*r.r1c1 + l.z*r.r2c1 + l.w*r.r3c1;
@@ -405,7 +405,7 @@ matrix43& matrix43::set_rotation_component (const quaternion& q) {
 // Matrix 44 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
 
-void matrix44::multiply (const matrix44& l, const matrix44& r, matrix44& result) { // [4x4] * [4x4] => [4x4]
+void matrix44::product (const matrix44& l, const matrix44& r, matrix44& result) { // [4x4] * [4x4] => [4x4]
     matrix44 t;// incase the result is also a parameter
     t.r0c0 = l.r0c0*r.r0c0 + l.r0c1*r.r1c0 + l.r0c2*r.r2c0 + l.r0c3*r.r3c0;
     t.r0c1 = l.r0c0*r.r0c1 + l.r0c1*r.r1c1 + l.r0c2*r.r2c1 + l.r0c3*r.r3c1;
@@ -425,7 +425,7 @@ void matrix44::multiply (const matrix44& l, const matrix44& r, matrix44& result)
     t.r3c3 = l.r3c0*r.r0c3 + l.r3c1*r.r1c3 + l.r3c2*r.r2c3 + l.r3c3*r.r3c3;
     result = t;
 }
-void matrix44::multiply (const matrix44& l, const matrix43& r, matrix43& result) { // [4x4] * [4x3] => [4x3]
+void matrix44::product (const matrix44& l, const matrix43& r, matrix43& result) { // [4x4] * [4x3] => [4x3]
     matrix43 t;// incase the result is also a parameter
     t.r0c0 = l.r0c0*r.r0c0 + l.r0c1*r.r1c0 + l.r0c2*r.r2c0 + l.r0c3*r.r3c0;
     t.r0c1 = l.r0c0*r.r0c1 + l.r0c1*r.r1c1 + l.r0c2*r.r2c1 + l.r0c3*r.r3c1;
@@ -441,7 +441,7 @@ void matrix44::multiply (const matrix44& l, const matrix43& r, matrix43& result)
     t.r3c2 = l.r3c0*r.r0c2 + l.r3c1*r.r1c2 + l.r3c2*r.r2c2 + l.r3c3*r.r3c2;
     result = t;
 }
-void matrix44::multiply (const matrix44& l, const vector4&  r, vector4&  result) { // [4*4] * [4x1] => [4x1]
+void matrix44::product (const matrix44& l, const vector4&  r, vector4&  result) { // [4*4] * [4x1] => [4x1]
     vector4 t;// incase the result is also a parameter
     t.x = l.r0c0*r.x + l.r0c1*r.y + l.r0c2*r.z + l.r0c3*r.w;
     t.y = l.r1c0*r.x + l.r1c1*r.y + l.r1c2*r.z + l.r1c3*r.w;
@@ -449,7 +449,7 @@ void matrix44::multiply (const matrix44& l, const vector4&  r, vector4&  result)
     t.w = l.r3c0*r.x + l.r3c1*r.y + l.r3c2*r.z + l.r3c3*r.w;
     result = t;
 }
-void matrix44::multiply (const vector4&  l, const matrix44& r, vector4&  result) { // [1x4] * [4*4] => [1x4]
+void matrix44::product (const vector4&  l, const matrix44& r, vector4&  result) { // [1x4] * [4*4] => [1x4]
     vector4 t;// incase the result is also a parameter
     t.x = l.x*r.r0c0 + l.y*r.r1c0 + l.z*r.r2c0 + l.w*r.r3c0;
     t.y = l.x*r.r0c1 + l.y*r.r1c1 + l.z*r.r2c1 + l.w*r.r3c1;
@@ -591,34 +591,6 @@ matrix44& matrix44::set_rotation_component (const quaternion& q) {
     return *this;
 }
 
-matrix44& matrix44::set_as_orthographic_off_center (const float left, const float bottom, const float right, const float top, const float near, const float far) {
-    r0c0 = 2.0f/(right-left);         r0c1 = 0.0f;                      r0c2 = 0.0f;                  r0c3 = 0.0f;
-    r1c0 = 0.0f;                      r1c1 = 2.0f / (top - bottom);     r1c2 = 0.0f;                  r1c3 = 0.0f;
-    r2c0 = 0.0f;                      r2c1 = 0.0f;                      r2c2 = 1.0f/(near-far);       r2c3 = 0.0f;
-    r3c0 = (left+right)/(left-right); r3c1 = (top+bottom)/(bottom-top); r3c2 = near/(near-far);       r3c3 = 1.0f;
-    return *this;
-}
-
-// Builds a perspective projection matrix based on a field of view. After the projection transformation, visible content has x- and y-coordinates ranging from −1 to 1, and a z-coordinate ranging from 0 to 1.
-matrix44& matrix44::set_as_perspective_fov_rh (const float fov, const float aspect, const float zn, const float zf) {
-    // https://docs.microsoft.com/en-gb/windows/win32/direct3d9/d3dxmatrixperspectivefovrh
-    // xScale     0          0              0
-    // 0        yScale       0              0
-    // 0        0        zf/(zn-zf)        -1
-    // 0        0        zn*zf/(zn-zf)      0
-    // where:
-    // yScale = cot(fovY/2)
-    // xScale = yScale / aspect ratio
-    
-    const float y_scale = 1.0f / tan (fov * 0.5f);
-    const float x_scale = y_scale / aspect;
-
-    r0c0 = x_scale; r0c1 = 0.0f;    r0c2 = 0.0f;            r0c3 =  0.0f;
-    r1c0 = 0.0f;    r1c1 = y_scale; r1c2 = 0.0f;            r1c3 =  0.0f;
-    r2c0 = 0.0f;    r2c1 = 0.0f;    r2c2 = zf/(zn-zf);      r2c3 = -1.0f;
-    r3c0 = 0.0f;    r3c1 = 0.0f;    r3c2 = (zn*zf)/(zn-zf); r3c3 =  0.0f;
-    return *this;
-}
 matrix44& matrix44::set_as_view_transform_from_look_at_target (vector3 cam_pos, vector3 cam_target, vector3 cam_up) {
     set_as_view_frame_from_look_at_target (cam_pos, cam_target, cam_up);
     inverse();
@@ -641,20 +613,41 @@ matrix44& matrix44::set_as_view_frame_from_look_at_target (vector3 cam_pos, vect
 matrix44& matrix44::set_as_perspective_rh (const float w, const float h, const float zn, const float zf) {
     r0c0 = 2.0f*zn/w; r0c1 = 0.0f;      r0c2 = 0.0f;          r0c3 =  0.0f;
     r1c0 = 0.0f;      r1c1 = 2.0f*zn/h; r1c2 = 0.0f;          r1c3 =  0.0f;
-    r2c0 = 0.0f;      r2c1 = 0.0f;      r2c2 = zf/(zn-zf);    r2c3 = -1.0f;
-    r3c0 = 0.0f;      r3c1 = 0.0f;      r3c2 = zn*zf/(zn-zf); r3c3 =  0.0f;
+    r2c0 = 0.0f;      r2c1 = 0.0f;      r2c2 = (zn+zf)/(zn-zf);    r2c3 = -1.0f;
+    r3c0 = 0.0f;      r3c1 = 0.0f;      r3c2 = 2.0f*zn*zf/(zn-zf); r3c3 =  1.0f;
     return *this;
 }
-// https://docs.microsoft.com/en-gb/windows/win32/direct3d9/d3dxmatrixperspectivelh
-matrix44& matrix44::set_as_perspective_lh (const float w, const float h, const float zn, const float zf) {
-    r0c0 = 2.0f*zn/w; r0c1 = 0.0f;      r0c2 = 0.0f;          r0c3 =  0.0f;
-    r1c0 = 0.0f;      r1c1 = 2.0f*zn/h; r1c2 = 0.0f;          r1c3 =  0.0f;
-    r2c0 = 0.0f;      r2c1 = 0.0f;      r2c2 = zf/(zf-zn);    r2c3 = -1.0f;
-    r3c0 = 0.0f;      r3c1 = 0.0f;      r3c2 = zn*zf/(zn-zf); r3c3 =  0.0f;
+
+
+matrix44& matrix44::set_as_orthographic_off_center (const float left, const float bottom, const float right, const float top, const float near, const float far) {
+    r0c0 = 2.0f/(right-left);         r0c1 = 0.0f;                      r0c2 = 0.0f;                  r0c3 = 0.0f;
+    r1c0 = 0.0f;                      r1c1 = 2.0f / (top - bottom);     r1c2 = 0.0f;                  r1c3 = 0.0f;
+    r2c0 = 0.0f;                      r2c1 = 0.0f;                      r2c2 = 1.0f/(near-far);       r2c3 = 0.0f;
+    r3c0 = (left+right)/(left-right); r3c1 = (top+bottom)/(bottom-top); r3c2 = near/(near-far);       r3c3 = 1.0f;
     return *this;
 }
-        
-        
+
+// Builds a perspective projection matrix based on a field of view. After the projection transformation, visible content has x- and y-coordinates ranging from −1 to 1, and a z-coordinate ranging from 0 to 1.
+matrix44& matrix44::set_as_perspective_fov_rh (const float fov, const float aspect, const float zn, const float zf) {
+    // https://docs.microsoft.com/en-gb/windows/win32/direct3d9/d3dxmatrixperspectivefovrh
+    // xScale     0          0              0
+    // 0        yScale       0              0
+    // 0        0        zf/(zn-zf)        -1
+    // 0        0        zn*zf/(zn-zf)      0
+    // where:
+    // yScale = cot(fovY/2)
+    // xScale = yScale / aspect ratio
+    
+    //http://www.codinglabs.net/article_world_view_projection_matrix.aspx
+    const float y_scale = 1.0f / tan (fov * 0.5f);
+    const float x_scale = y_scale / aspect;
+
+    r0c0 = x_scale; r0c1 = 0.0f;    r0c2 = 0.0f;            r0c3 =  0.0f;
+    r1c0 = 0.0f;    r1c1 = y_scale; r1c2 = 0.0f;            r1c3 =  0.0f;
+    r2c0 = 0.0f;    r2c1 = 0.0f;    r2c2 = -(zf+zn)/(zf-zn);r2c3 = -1.0f;
+    r3c0 = 0.0f;    r3c1 = 0.0f;    r3c2 = -(2.0f*zn*zf)/(zf-zn); r3c3 =  0.0f;
+    return *this;
+}
         
         
         
@@ -1072,9 +1065,52 @@ tests::tests() {
         assert (vector3::backward * matrix33().set_from_axis_angle(vector3::backward, TAU          ) == vector3::backward);
     }
     {
+        matrix43 m = matrix43().set_position_component(vector3(10, -10, 4));
+        vector4 v = { 1, 3, 4, 1 };
+        vector3 res = v * m;
+        assert (res == vector3(11, -7, 8));
+    }
+    {
+        matrix43 m = matrix43().set_scale_component(vector3(10, -10, 4));
+        vector4 v = { 1, 3, 4, 1 };
+        vector3 res = v * m;
+        assert (res == vector3(10, -30, 16));
+    }
+    {
         const auto q = matrix33().set_from_orientation(quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0));
         const auto m = matrix33().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0);
         assert (m == q);
+    }
+    {
+        const matrix44 a = {-27,36,9,-54,36,3,9,9,9,9,-36,6,-24,9,36,-12};
+        const matrix44 b = {3402,-1269,-2187,2484,-999,1467,351,-1971,-387,81,1674,-693,1584,-621,-1863,1737};
+        assert (a * a == b);
+    }
+    {
+        const vector3 point0 = { 1.5f, 1.0f, 1.5f };
+        const vector3 point1 = { 4.0f, 0.0f, 1.0f };
+        const vector3 point2 = { 1.0f, -1.0f, 2.0f };
+        
+        const vector3 expected1 = { 4.0f, 0.0f, 1.0f };
+        const vector3 expected2 = { 1.0f, -1.0f, 2.0f };
+        
+        const matrix44 m = matrix44()
+            .set_position_component(point0)
+            .set_rotation_component (matrix33().set_from_axis_angle(vector3::unit_y, HALF_PI));
+        
+        const vector3 r1 = point1 % m;
+        const vector3 r2 = point2 % m;
+        //assert (r1 == expected1);
+        //assert (r2 == expected2);
+    }
+    {
+        const vector3 point = { 1.5f, 1.0f, 1.5f };
+        const matrix44 m = matrix44().set_position_component(point);
+        const matrix44 rx = matrix44().set_rotation_component (matrix33().set_from_axis_angle(vector3::unit_x, PI));
+        const matrix44 ry = matrix44().set_rotation_component (matrix33().set_from_axis_angle(vector3::unit_y, HALF_PI));
+        const matrix44 expected = { 0, 0, 1, 0, 0, -1, 0, 0, 1, 0, 0, 0, 1.5f, 1.0f, 1.5f, 1 };
+        const matrix44 res = ry * rx * m;
+        assert (res == expected);
     }
     { // view matrix from look at
         const vector3 obj_pos = { 0, 0, 0 };
@@ -1086,11 +1122,11 @@ tests::tests() {
         
         const matrix44 viewM = inverse(viewF);
         
-        const vector3 obj_pos_vs = viewM * obj_pos;
+        const vector3 obj_pos_vs = viewM % obj_pos;
         const vector3 expected = vector3 { 0, 0, -10 };
         assert (obj_pos_vs == expected);
         
-        const vector3 cam_pos_vs = viewM * cam_pos;
+        const vector3 cam_pos_vs = viewM % cam_pos;
         const vector3 expected2 = vector3 { 0, 0, 0 };
         assert (cam_pos_vs == expected2);
     }

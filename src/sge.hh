@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <utility>
 #include <span>
+#include <numeric>
 
 // ---------------------------------- //
 
