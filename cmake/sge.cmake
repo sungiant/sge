@@ -5,7 +5,7 @@ file (GLOB_RECURSE SOURCES ${G_ROOT_DIR}/src/*.cc ${G_ROOT_DIR}/src/*.c)
 
 set (SOURCE_LIST ${INCLUDES} ${SOURCES})
 
-filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/impl_*") # remove platform specific code
+filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/sge_impl_*") # remove platform specific code
 
 ################################################################################
 

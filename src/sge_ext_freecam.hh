@@ -2,9 +2,10 @@
 
 #include "sge.hh"
 #include "sge_runtime.hh"
-#include "ext_keyboard.hh"
-#include "ext_mouse.hh"
-#include "ext_gamepad.hh"
+#include "sge_ext_keyboard.hh"
+#include "sge_ext_mouse.hh"
+#include "sge_ext_gamepad.hh"
+#include "imgui_ext.hh"
 
 namespace sge::ext {
 
@@ -117,9 +118,10 @@ struct freecam : public runtime::view {
     }
     
     virtual void debug_ui () override {
+        
+        int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
+        int screen_h = sge.system__get_state_int(runtime::system_int_state::screenheight);
 
-        float screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
-        float screen_h = sge.system__get_state_int(runtime::system_int_state::screenheight);
         
         if (!orientation.is_unit())
             orientation.normalise();
@@ -142,9 +144,11 @@ struct freecam : public runtime::view {
         }
         
         ImGui::Begin ("Freecam"); {
+
+            
             ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", position.x, position.y, position.z);
             ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", orientation.i, orientation.j, orientation.k, orientation.u);
-
+            
             const math::matrix33 camera_rotation = math::matrix33().set_from_orientation(orientation);
             ImGui::Text("right (x:%.2f, y:%.2f, z:%.2f)", camera_rotation.r0c0, camera_rotation.r0c1, camera_rotation.r0c2);
             ImGui::Text("up (x:%.2f, y:%.2f, z:%.2f)", camera_rotation.r1c0, camera_rotation.r1c1, camera_rotation.r1c2);
@@ -160,7 +164,6 @@ struct freecam : public runtime::view {
             orientation.get_yaw_pitch_roll(camera_rotation_euler_angles);
             ImGui::Text("euler angles (yaw:%.2f, pitch:%.2f, roll:%.2f)", camera_rotation_euler_angles.x * math::RAD2DEG, camera_rotation_euler_angles.y * math::RAD2DEG, camera_rotation_euler_angles.z * math::RAD2DEG);
             
-            
             if (ImGui::Button("reset")) reset();
             ImGui::SliderFloat("fov", &fov, freecam::FOV_MIN, freecam::FOV_MAX);
             ImGui::SliderFloat("near", &near, 0.0f, 1000.0f);
@@ -168,6 +171,63 @@ struct freecam : public runtime::view {
             ImGui::SliderFloat ("sensitivity", &traverse_sensitivity, 1, 1000); // todo: automatically adjusted this based on proximity to surface - need info back from the compute shader for this.
         }
         ImGui::End ();
+        
+        
+        
+        
+        auto vport = ImGui::GetWindowViewport();
+
+        
+        
+        static float gizmo_cam_zn = -0.1f, gizmo_cam_zf = -300.0f, gizmo_cam_fov = 45.0f;
+        static math::vector3 gizmo_cam_pos = math::vector3 { 0, 0, 5 };
+        static math::quaternion gizmo_cam_orientation = math::quaternion::identity;
+        //static math::rect gizmo_container { { 100, 100 }, { 320, 180 }};
+        static math::rect gizmo_container { { screen_w - gizmo_size - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
+        static math::vector3 gizmo_obj_pos = math::vector3 { 0, 0.0f, -1 };
+        static math::quaternion gizmo_obj_orientation = math::quaternion::identity;
+        const std::span<sge::data::vertex_pos_col> gizmo_vertices = sge::data::unit_cube;
+        
+        gizmo_obj_orientation = orientation;
+        std::vector<uint32_t> gizmo_indices (gizmo_vertices.size());
+        
+        std::iota (std::begin(gizmo_indices), std::end(gizmo_indices), 0); // on the stack?! todo
+       
+        ImGui::Begin ("Freecam Gizmo Debugger");
+        ImGui::Text("cam position (x:%.2f, y:%.2f, z:%.2f)", gizmo_cam_pos.x, gizmo_cam_pos.y, gizmo_cam_pos.z);
+        ImGui::Text("cam orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_cam_orientation.i, gizmo_cam_orientation.j, gizmo_cam_orientation.k, gizmo_cam_orientation.u);
+        ImGui::Text("obj position (x:%.2f, y:%.2f, z:%.2f)", gizmo_obj_pos.x, gizmo_obj_pos.y, gizmo_obj_pos.z);
+        ImGui::Text("obj orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_obj_orientation.i, gizmo_obj_orientation.j, gizmo_obj_orientation.k, gizmo_obj_orientation.u);
+        ImGui::SliderFloat("near", &gizmo_cam_zn, -50.0f, 50.0f);
+        ImGui::SliderFloat("far", &gizmo_cam_zf, -50.0f, 50.0f);
+        ImGui::SliderFloat("fov", &gizmo_cam_fov, 0.0f, 180.0f);
+        ImGui::End ();
+
+
+        ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
+        ImGui::Begin ("Freecam Gizm", NULL,
+            ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
+            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
+            ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
+        ImGui::SetWindowPos (ImVec2 (0, 0), ImGuiCond_FirstUseEver);
+        ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
+        ImGui::SetWindowCollapsed (false);
+        {
+            imgui::ext::draw_user_triangles (
+                gizmo_container,
+                gizmo_cam_pos,
+                gizmo_cam_orientation,
+                gizmo_cam_fov * math::DEG2RAD,
+                gizmo_cam_zn,
+                gizmo_cam_zf,
+                gizmo_vertices,
+                gizmo_indices,
+                gizmo_obj_pos,
+                gizmo_obj_orientation);
+        }
+        ImGui::End ();
+        ImGui::PopStyleColor ();
     }
 
     math::vector3 position;

@@ -1,3 +1,11 @@
+// ===================
+//  |@@@@-----@|--@@|
+//  |@@@-----@@|--@@|
+//  |@@-----@@@|--@@|
+//  |@-----@@@@|--@@|
+//  |@@@@@-----|@--@|
+//  |@@@@-----@|@--@|
+// ===================
 // SGE-MATH - A.J.Pook
 // ---------------------------------- //
 // Stand alone mathematics library.
@@ -10,14 +18,34 @@
 //   /                * Z: backwards
 // +Z
 // ---------------------------------- //
+// Angles of rotation are measured
+// anti-clockwise when viewed from the
+// rotation axis (positive side) toward
+// the origin
+// (right handed rule for rotations).
+// ---------------------------------- //
+// Cameras are aligned with the main
+// coordinate system and look in the
+// direction of their negative Z axis
+// (just like OpenGL).
+// ---------------------------------- //
+// Near and far planes defined as
+// their Z positions in view-space, not
+// as their distance from the camera
+// in view space.  This means they will
+// be negative in the general case.
+// ---------------------------------- //
+// Normalised device coordinates are
+// inline with the main coordinate
+// system and range from -1 to 1 on
+// all axes.
+// ---------------------------------- //
 #pragma once
 
 #include "sge.hh" // (dependencies: math.h, assert.h)
 
 namespace sge::math {
-
-struct tests { tests (); ~tests (); };
-
+    
 const float HALF_PI = 1.5707963267948966192313216916398f;
 const float PI      = 3.1415926535897932384626433832795f;
 const float TAU     = 6.2831853071795864769252867665590f;
@@ -325,9 +353,9 @@ struct matrix43 {
     matrix43& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); (*this)[3]=(*this)[3].negate(); return *this; }
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0]; m[1] = (*this)[1]; m[2] = (*this)[2]; }
-    void get_position_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
+    void get_translation_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
     
-    matrix43& set_position_component (const vector3& v) { r3c0 = v.x; r3c1 = v.y; r3c2 = v.z; return *this; }
+    matrix43& set_translation_component (const vector3& v) { r3c0 = v.x; r3c1 = v.y; r3c2 = v.z; return *this; }
     matrix43& set_rotation_component (const matrix33& m) { (*this)[0] = m[0]; (*this)[1] = m[1]; (*this)[2] = m[2]; return *this; }
     matrix43& set_rotation_component (const quaternion&);
     matrix43& set_scale_component (const vector3& v) { r0c0 = v.x; r1c1 = v.y; r2c2 = v.z; return *this; }
@@ -380,29 +408,25 @@ struct matrix44 {
     matrix44& inverse ();
     matrix44& affine_inverse ();
     matrix44& decompose ();
-    float     determinant () const;
     
-    vector3&    transform (vector3&v) const {
-        vector4 v4 = { v.x, v.y, v.z, 1.0f };
-        vector4 r;
-        product (v4, *this, r);
-        v.x = r.x; v.y = r.y; v.z = r.z;
-        return v;
-    } // row vector * matrix
-    vector3     transform (const vector3& v) const {
-        vector3 res = v;
-        transform (res);
-        return res;
-        
-    }
+    float     determinant ()    const;
+    //matrix44  negate ()         const { matrix44 cp = *this; return cp.negate(); }
+    //matrix44  transpose ()      const { matrix44 cp = *this; return cp.transpose(); }
+    //matrix44  inverse ()        const { matrix44 cp = *this; return cp.inverse(); }
+    //matrix44  affine_inverse () const { matrix44 cp = *this; return cp.affine_inverse(); }
+    //matrix44  decompose ()      const { matrix44 cp = *this; return cp.decompose(); }
+    
+    
+    vector3&    transform (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 1.0f }; product (v4, *this, v4); v.x = v4.x / v4.w; v.y = v4.y / v4.w; v.z = v4.z / v4.w; return v; } // row vector * matrix
+    vector3     transform (const vector3& v) const { vector3 res = v; transform (res); return res; }
     
     vector3&    rotate (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 0.0f }; product (*this, v4, v4); v.x = v4.x; v.y = v4.y; v.z = v4.z; return v; } // row vector * matrix
     vector3     rotate (const vector3& v) const { vector3 res = v; transform (res); return res; }
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0].xyz(); m[1] = (*this)[1].xyz(); m[2] = (*this)[2].xyz(); }
-    void get_position_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
+    void get_translation_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
     
-    matrix44& set_position_component (const vector3& v) { r3c0=v.x;r3c1=v.y;r3c2=v.z; return *this; }
+    matrix44& set_translation_component (const vector3& v) { r3c0=v.x;r3c1=v.y;r3c2=v.z; return *this; }
     matrix44& set_rotation_component (const matrix33& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;return *this; }
     matrix44& set_rotation_component (const quaternion&);
     matrix44& set_scale_component (const vector3& v) { r0c0 = v.x; r1c1 = v.y; r2c2 = v.z; return *this; }

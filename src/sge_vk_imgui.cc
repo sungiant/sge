@@ -329,6 +329,7 @@ void imgui::new_frame (bool update_frame_graph) {
     ImGuizmo::SetOrthographic(false);
 
     for (auto f : debug_uis) { f (); }
+    ImGui::ShowDemoWindow();
     ImGui::Render ();
 }
 
