@@ -59,6 +59,7 @@ namespace imgui::ext {
         std::span<uint32_t> indices,
         const vector3& obj_pos,
         const quaternion& model_orientation,
+        bool lighting = false,
         const std::optional<float> wireframe_thickness = std::nullopt) {
 
         ImDrawList& drawList = *ImGui::GetWindowDrawList();
@@ -66,8 +67,8 @@ namespace imgui::ext {
         const ImVec2 im_min = ImVec2(container.location.x, container.location.y);
         const ImVec2 im_max = ImVec2(container.location.x + container.extent.x, container.location.y + container.extent.y);
         
-        drawList.AddRectFilled(im_min, im_max, 0xCC333333);
-        drawList.AddRect(im_min, im_max,0xFF00FF00);
+        drawList.AddRectFilled(im_min, im_max, 0x11000000);
+        //drawList.AddRect(im_min, im_max,0xFF00FF00);
         drawList.PushClipRect (im_min, im_max);
         
         const float aspect = (float) container.extent.x / (float) container.extent.y;
@@ -113,10 +114,25 @@ namespace imgui::ext {
             const uint32_t av_col = tri_indices[i].get_col (vertices);
             
             tri tri_vs; tri_indices[i].get_tri (vertices, wv, tri_vs);
-
+            
             if ((tri_vs.normal() | -tri_vs.centroid()) < -0.0f) // https://chortle.ccsu.edu/VectorLessons/vch09/vch09_6.html
                 continue; // cull backfaces. https://www.youtube.com/watch?v=zGyfiOqiR4s
-
+            
+            uint32_t tri_col = av_col;
+            if(lighting) {
+                const vector3 light_dir = -vector3::one;
+                const vector3 light_col = vector3 { 0.855f, 0.647f, 0.125f };
+                const vector3 ambient_col = vector3 { 0.5f, 0.5f, 0.5f };
+                const ImColor c = ImColor (av_col);
+                const vector3 tri_albedo = { c.Value.x, c.Value.y, c.Value.z };
+                const vector3 N = ~(tri_vs.normal());
+                const vector3 L = ~(light_dir);
+                const vector3 lighting = light_col * tri_albedo * (N | L) + ambient_col * tri_albedo;
+                const vector3 lighting2 = vector3 {std::clamp (lighting.x, 0.0f, 1.0f), std::clamp (lighting.y, 0.0f, 1.0f), std::clamp (lighting.z, 0.0f, 1.0f)};
+                const ImColor c2 = ImColor (lighting2.x, lighting2.y, lighting2.z);
+                tri_col = c2;
+            }
+            
             const vector3 ndc0 = tri_vs.p0 % proj;
             const vector3 ndc1 = tri_vs.p1 % proj;
             const vector3 ndc2 = tri_vs.p2 % proj;
@@ -128,9 +144,9 @@ namespace imgui::ext {
             const ImVec2 p1 = ndc_to_container_coordinates (ndc1, container);
             const ImVec2 p2 = ndc_to_container_coordinates (ndc2, container);
             if (wireframe_thickness.has_value ())
-                drawList.AddTriangle (p0, p1, p2, av_col, wireframe_thickness.value());
+                drawList.AddTriangle (p0, p1, p2, tri_col, wireframe_thickness.value());
             else
-                drawList.AddTriangleFilled (p0, p1, p2, av_col);
+                drawList.AddTriangleFilled (p0, p1, p2, tri_col);
         }
         
         drawList.PopClipRect();

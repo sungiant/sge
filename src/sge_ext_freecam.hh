@@ -180,7 +180,7 @@ struct freecam : public runtime::view {
         
         
         static float gizmo_cam_zn = -0.1f, gizmo_cam_zf = -300.0f, gizmo_cam_fov = 45.0f;
-        static math::vector3 gizmo_cam_pos = math::vector3 { 0, 0, 5 };
+        static math::vector3 gizmo_cam_pos = math::vector3 { 0, 0, 4.5 };
         static math::quaternion gizmo_cam_orientation = math::quaternion::identity;
         //static math::rect gizmo_container { { 100, 100 }, { 320, 180 }};
         static math::rect gizmo_container { { screen_w - gizmo_size - gizmo_size, 0 }, { gizmo_size, gizmo_size }};

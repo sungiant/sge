@@ -355,6 +355,7 @@ struct matrix43 {
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0]; m[1] = (*this)[1]; m[2] = (*this)[2]; }
     void get_translation_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
     
+    matrix43& set_translation_component (const float zx, const float zy, const float zz) { r3c0 = zx; r3c1 = zy; r3c2 = zz; return *this; }
     matrix43& set_translation_component (const vector3& v) { r3c0 = v.x; r3c1 = v.y; r3c2 = v.z; return *this; }
     matrix43& set_rotation_component (const matrix33& m) { (*this)[0] = m[0]; (*this)[1] = m[1]; (*this)[2] = m[2]; return *this; }
     matrix43& set_rotation_component (const quaternion&);
@@ -426,6 +427,7 @@ struct matrix44 {
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0].xyz(); m[1] = (*this)[1].xyz(); m[2] = (*this)[2].xyz(); }
     void get_translation_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
     
+    matrix44& set_translation_component (const float zx, const float zy, const float zz) { r3c0 = zx; r3c1 = zy; r3c2 = zz; return *this; }
     matrix44& set_translation_component (const vector3& v) { r3c0=v.x;r3c1=v.y;r3c2=v.z; return *this; }
     matrix44& set_rotation_component (const matrix33& m) { r0c0=m.r0c0;r0c1=m.r0c1;r0c2=m.r0c2;r1c0=m.r1c0;r1c1=m.r1c1;r1c2=m.r1c2;r2c0=m.r2c0;r2c1=m.r2c1;r2c2=m.r2c2;return *this; }
     matrix44& set_rotation_component (const quaternion&);

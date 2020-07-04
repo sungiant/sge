@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sge.hh"
-
+#include "sge_data.hh"
 #include "imgui_ext.hh"
 
 // OVERLAY
@@ -10,8 +10,19 @@
 namespace sge::ext {
 
 class overlay : public runtime::view {
+private:
+    std::vector<data::vertex_pos_norm> obj_verts;
+    std::vector<uint32_t> obj_indices;
+    std::vector<data::vertex_pos_col> obj_verts_temp;
 public:
-    overlay (const runtime::api& z) : runtime::view (z) {}
+    overlay (const runtime::api& z)
+        : runtime::view (z)
+    {
+        data::get_torus (obj_verts, obj_indices);
+        
+        for (auto& v : obj_verts)
+            obj_verts_temp.emplace_back(data::vertex_pos_col {v.position, 0xFFFFFFFF} );
+    }
 
     virtual void debug_ui () override {
         static float gizmo_cam_zn = -0.1f, gizmo_cam_zf = -300.0f, gizmo_cam_fov = 45.0f;
@@ -46,10 +57,13 @@ public:
                 gizmo_cam_fov * math::DEG2RAD,
                 gizmo_cam_zn,
                 gizmo_cam_zf,
-                gizmo_vertices,
-                gizmo_indices,
+                //gizmo_vertices,
+                //gizmo_indices,
+                obj_verts_temp,
+                obj_indices,
                 gizmo_obj_pos,
-                gizmo_obj_orientation);
+                gizmo_obj_orientation,
+                true);
             
             int y = 20;
             int* py = &y;
