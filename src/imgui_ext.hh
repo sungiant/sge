@@ -77,15 +77,11 @@ namespace imgui::ext {
             .set_translation_component(obj_pos)
             .set_rotation_component(model_orientation);
         
-        const matrix44 viewF = matrix44()
+        const matrix44 view_frame = matrix44()
             .set_translation_component(camera_position)
             .set_rotation_component(camera_orientation);
         
-        matrix44 view = viewF;
-        view.inverse();
-        
-        const matrix44 view2 = matrix44()
-            .set_as_view_transform_from_look_at_target(camera_position, vector3::zero, vector3::up);
+        matrix44 view = view_frame; view.inverse();
         
         const matrix44 proj = matrix44()
             .set_as_perspective_fov_rh (camera_fov, aspect, camera_near, camera_far);
