@@ -102,9 +102,7 @@ namespace imgui::ext {
             tri tri_r; r.get_tri (vertices, wv, tri_r);
             const float zl = tri_l.centroid().z;
             const float zr = tri_r.centroid().z;
-            if (zl < zr) return -1;
-            if (zl > zr) return  1;
-            return 0;
+            return zl < zr;
         };
         
         // sort groups of indicies in-place by Z
