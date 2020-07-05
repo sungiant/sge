@@ -16,14 +16,6 @@ void initialise () {
     computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
 }
 
-void terminate () {}
-
-void start (const sge::app::api& sge) {
-    sge.freecam.set_enabled (true);
-}
-
-void stop (const sge::app::api& sge) {}
-
 void update (sge::app::response& r, const sge::app::api& sge) {
 
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
@@ -47,10 +39,10 @@ void               initialise          ()                              { ::initi
 configuration&     get_configuration   ()                              { return ::config; }
 content&           get_content         ()                              { return ::computation; }
 extensions&        get_extensions      ()                              { return ::extensions; }
-void               start               (const api& sge)                { ::start (sge); }
+void               start               (const api& sge)                { ; }
 void               update              (response& r, const api& sge)   { ::update (r, sge); }
 void               debug_ui            (response& r, const api& sge)   { ; }
-void               stop                (const api& sge)                { ::stop (sge); }
-void               terminate           ()                              { ::terminate (); }
+void               stop                (const api& sge)                { ; }
+void               terminate           ()                              { ; }
 
 }

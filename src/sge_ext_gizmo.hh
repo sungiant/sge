@@ -6,6 +6,7 @@
 #include "sge_ext_freecam.hh"
 #include "imgui_ext.hh"
 
+
 // INSTRUMENTATION
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -39,31 +40,17 @@ public:
         freecam = static_cast <ext::freecam*> (sge.extension_get (runtime::type_id<ext::freecam>()));
         
     }
+    virtual void update () override {
+        if (!freecam || !freecam->is_enabled()) return;
+        
+        gizmo_obj_orientation = freecam->orientation;
+    }
 
     virtual void debug_ui () override {
-        
-        if (!freecam)
-            return;
+        if (!freecam || !freecam->is_enabled()) return;
         
         int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
 
-        math::matrix33 cameraRotLH = math::matrix33().set_from_orientation(freecam->orientation);
-        //cameraRotLH[0] = -cameraRotLH[0];
-        //cameraRotLH.orthonormalise();
-        math::matrix44 gizmoView = math::matrix44().set_rotation_component (cameraRotLH);
-        ImGuizmo::ViewManipulate(&gizmoView[0][0], freecam->position.length(), ImVec2(screen_w - gizmo_size, 0), ImVec2(gizmo_size, gizmo_size), 0x10101010);
-        const math::matrix33 gizmoRotLH = math::matrix33().set_from_transform(gizmoView);
-        
-        if (gizmoRotLH != cameraRotLH) {
-            math::matrix33 cameraRotRH = gizmoRotLH;
-            //cameraRotRH[0] = -cameraRotRH[0];
-            cameraRotRH.orthonormalise ();
-            freecam->orientation.set_from_rotation(cameraRotRH);
-        }
-        
-        
-        gizmo_obj_orientation = freecam->orientation;
-       
         ImGui::Begin ("Gizmo Debugger");
         ImGui::Text("cam position (x:%.2f, y:%.2f, z:%.2f)", gizmo_cam_pos.x, gizmo_cam_pos.y, gizmo_cam_pos.z);
         ImGui::Text("cam orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_cam_orientation.i, gizmo_cam_orientation.j, gizmo_cam_orientation.k, gizmo_cam_orientation.u);
@@ -84,7 +71,8 @@ public:
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
-            math::rect gizmo_container = { { screen_w - gizmo_size - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
+            math::rect gizmo_container = { { screen_w - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
+
             imgui::ext::draw_user_triangles (
                 gizmo_container,
                 false,

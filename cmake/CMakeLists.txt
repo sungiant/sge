@@ -99,7 +99,6 @@ message ("G_ROOT_DIR: ${G_ROOT_DIR}")
 include_directories (PUBLIC ${G_ROOT_DIR}/contrib/)
 
 include (imgui.cmake)
-include (imguizmo.cmake)
 include (sge.cmake)
 include (examples.cmake)
 
