@@ -41,6 +41,7 @@ public:
             
             imgui::ext::draw_user_triangles (
                 toy_container,
+                true,
                 toy_cam_pos,
                 toy_cam_orientation,
                 toy_cam_fov * math::DEG2RAD,
@@ -50,7 +51,6 @@ public:
                 toy_obj_indices,
                 toy_obj_pos,
                 toy_obj_orientation,
-                true,
                 true);
                 ImGui::SliderFloat("speed", &toy_obj_speed, 0.0f, 2.0f);
         }

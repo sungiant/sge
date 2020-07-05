@@ -49,7 +49,7 @@ namespace sge::math {
 const float HALF_PI = 1.5707963267948966192313216916398f;
 const float PI      = 3.1415926535897932384626433832795f;
 const float TAU     = 6.2831853071795864769252867665590f;
-const float EPSILON = 1.0e-6f;
+const float EPSILON = 1.0e-6f; // FLT_EPSILON;
 const float RAD2DEG = 180.f / PI;
 const float DEG2RAD = PI / 180.f;
 

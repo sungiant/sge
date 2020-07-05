@@ -87,6 +87,7 @@ public:
             math::rect gizmo_container = { { screen_w - gizmo_size - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
             imgui::ext::draw_user_triangles (
                 gizmo_container,
+                false,
                 gizmo_cam_pos,
                 gizmo_cam_orientation,
                 gizmo_cam_fov * math::DEG2RAD,
@@ -95,8 +96,7 @@ public:
                 gizmo_vertices,
                 gizmo_indices,
                 gizmo_obj_pos,
-                gizmo_obj_orientation,
-                false);
+                gizmo_obj_orientation);
         }
         ImGui::End ();
         ImGui::PopStyleColor ();
