@@ -20,12 +20,20 @@ struct tri_positions {
 
 struct tri_index_group {
     uint32_t i0, i1, i2;
+#if USE_SPAN
     inline void get_tri_positions (const std::span<sge::data::vertex_pos_col> vertices, const matrix44& transform, tri_positions& result) const {
+#else
+    inline void get_tri_positions (const std::vector<sge::data::vertex_pos_col>& vertices, const matrix44& transform, tri_positions& result) const {
+#endif
         result.p0 = vertices[i0].position % transform;
         result.p1 = vertices[i1].position % transform;
         result.p2 = vertices[i2].position % transform;
     }
+#if USE_SPAN
     inline uint32_t get_tri_average_colour (const std::span<sge::data::vertex_pos_col> vertices) const {
+#else
+    inline uint32_t get_tri_average_colour (const std::vector<sge::data::vertex_pos_col>& vertices) const {
+#endif
         const ImColor col0 = ImColor (vertices[i0].colour);
         const ImColor col1 = ImColor (vertices[i1].colour);
         const ImColor col2 = ImColor (vertices[i2].colour);
@@ -36,10 +44,18 @@ struct tri_index_group {
             (col0.Value.w + col1.Value.w + col2.Value.w) / 3.0f *255.0f);
         return av_col;
     }
+#if USE_SPAN
     inline void get_tri_colours (const std::span<sge::data::vertex_pos_col> vertices, uint32_t& c0, uint32_t& c1, uint32_t& c2) const {
+#else
+    inline void get_tri_colours (const std::vector<sge::data::vertex_pos_col>& vertices, uint32_t& c0, uint32_t& c1, uint32_t& c2) const {
+#endif
         c0 = vertices[i0].colour; c1 = vertices[i1].colour; c2 = vertices[i2].colour;
     }
+#if USE_SPAN
     inline bool is_tri_multicoloured (const std::span<sge::data::vertex_pos_col> vertices) const {
+#else
+        inline bool is_tri_multicoloured (const std::vector<sge::data::vertex_pos_col>& vertices) const {
+#endif
         return !((vertices[i0].colour == vertices[i1].colour) && (vertices[i1].colour == vertices[i2].colour));
     }
 };
@@ -52,8 +68,13 @@ void draw_user_triangles (
     const float camera_fov,
     const float camera_near,
     const float camera_far,
-    const std::span<sge::data::vertex_pos_col> vertices,
-    std::span<uint32_t> indices,
+    #if USE_SPAN
+        const std::span<sge::data::vertex_pos_col> vertices,
+        std::span<uint32_t> indices, // not const, these indices will be sorted!  allocate and pass in a copy if you don't want this.
+    #else
+        const std::vector<sge::data::vertex_pos_col>& vertices,
+        std::vector<uint32_t>& indices,
+    #endif
     const vector3& obj_pos,
     const quaternion& model_orientation,
     const bool lighting)

@@ -43,7 +43,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <utility>
+#if USE_SPAN
 #include <span>
+#endif
 #include <numeric>
 
 // ---------------------------------- //
