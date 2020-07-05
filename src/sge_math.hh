@@ -247,6 +247,11 @@ struct quaternion {
     quaternion& conjugate ()       { i=-i;j=-j;k=-k; return *this; } // inverse
     quaternion& concatenate (const quaternion&);
     
+    quaternion  normalise   () const { quaternion cp = *this; return cp.normalise(); }
+    quaternion  negate      () const { quaternion cp = *this; return cp.negate(); }
+    quaternion  conjugate   () const { quaternion cp = *this; return cp.conjugate(); }
+    quaternion  concatenate () const { quaternion cp = *this; return cp.concatenate(); }
+    
     vector3&    rotate (vector3&) const;
     vector3     rotate (const vector3& v) const { vector3 res = v; rotate (res); return res; }
     
@@ -294,10 +299,15 @@ struct matrix33 {
     matrix33& operator*= (const matrix33& v) { product (*this, v, *this); return *this;  }
     matrix33& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
-    bool      is_orthonormal () const;
     matrix33& orthonormalise ();
-    float     determinant    () const { return r0c0*(r1c1*r2c2 - r1c2*r2c1) - r0c1*(r1c0*r2c2 - r1c2*r2c0) + r0c2*(r1c0*r2c1 - r1c1*r2c0); }
+    matrix33& transpose      ();
     matrix33& negate         ()       { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); return *this; }
+    
+    bool      is_orthonormal () const;
+    float     determinant    () const { return r0c0*(r1c1*r2c2 - r1c2*r2c1) - r0c1*(r1c0*r2c2 - r1c2*r2c0) + r0c2*(r1c0*r2c1 - r1c1*r2c0); }
+    matrix33  orthonormalise () const { matrix33 cp = *this; return cp.orthonormalise(); }
+    matrix33  transpose      () const { matrix33 cp = *this; return cp.transpose(); }
+    matrix33  negate         () const { matrix33 cp = *this; return cp.negate(); }
     
     matrix33& set_from_scale_factors (const vector3&);
     matrix33& set_from_x_axis_angle (const float);
@@ -351,6 +361,8 @@ struct matrix43 {
     matrix43& operator/= (const float f)     { return (*this) *= (1.0f / f); }
     
     matrix43& negate () { (*this)[0]=(*this)[0].negate(); (*this)[1]=(*this)[1].negate(); (*this)[2]=(*this)[2].negate(); (*this)[3]=(*this)[3].negate(); return *this; }
+    
+    matrix43  negate () const { matrix43 cp = *this; return cp.negate(); }
     
     void get_rotation_component (matrix33& m) const { m[0] = (*this)[0]; m[1] = (*this)[1]; m[2] = (*this)[2]; }
     void get_translation_component (vector3& v) const { v.x = r3c0; v.y = r3c1; v.z = r3c2; };
@@ -410,13 +422,12 @@ struct matrix44 {
     matrix44& affine_inverse ();
     matrix44& decompose ();
     
-    float     determinant ()    const;
-    //matrix44  negate ()         const { matrix44 cp = *this; return cp.negate(); }
-    //matrix44  transpose ()      const { matrix44 cp = *this; return cp.transpose(); }
-    //matrix44  inverse ()        const { matrix44 cp = *this; return cp.inverse(); }
-    //matrix44  affine_inverse () const { matrix44 cp = *this; return cp.affine_inverse(); }
-    //matrix44  decompose ()      const { matrix44 cp = *this; return cp.decompose(); }
-    
+    float     determinant    () const;
+    matrix44  negate         () const { matrix44 cp = *this; return cp.negate(); }
+    matrix44  transpose      () const { matrix44 cp = *this; return cp.transpose(); }
+    matrix44  inverse        () const { matrix44 cp = *this; return cp.inverse(); }
+    matrix44  affine_inverse () const { matrix44 cp = *this; return cp.affine_inverse(); }
+    matrix44  decompose      () const { matrix44 cp = *this; return cp.decompose(); }
     
     vector3&    transform (vector3&v) const { vector4 v4 = { v.x, v.y, v.z, 1.0f }; product (v4, *this, v4); v.x = v4.x / v4.w; v.y = v4.y / v4.w; v.z = v4.z / v4.w; return v; } // row vector * matrix
     vector3     transform (const vector3& v) const { vector3 res = v; transform (res); return res; }

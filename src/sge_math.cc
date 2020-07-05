@@ -245,6 +245,13 @@ bool matrix33::is_orthonormal () const {
         if (((*this)[i] | (*this)[(i+1) % 3]) > EPSILON) return false;
     } return true;
 }
+matrix33& matrix33::transpose () {
+    float cp;
+    cp = r0c1; r0c1 = r1c0; r1c0 = cp;
+    cp = r0c2; r0c2 = r2c0; r2c0 = cp;
+    cp = r1c2; r1c2 = r2c1; r2c1 = cp;
+    return *this;
+}
 matrix33& matrix33::set_from_scale_factors (const vector3& f) {
     r0c0 = f.x;  r0c1 = 0.0f; r0c2 = 0.0f;
     r1c0 = 0.0f; r1c1 = f.y;  r1c2 = 0.0f;
@@ -410,6 +417,7 @@ matrix43& matrix43::set_rotation_component (const quaternion& q) {
     r3c2 = 0.0f;
     return *this;
 }
+    
 // ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 44 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -466,7 +474,6 @@ void matrix44::product (const vector4&  l, const matrix44& r, vector4&  result) 
     t.w = l.x*r.r0c3 + l.y*r.r1c3 + l.z*r.r2c3 + l.w*r.r3c3;
     result = t;
 }
-
 matrix44& matrix44::transpose () {
     float cp;
     cp = r0c1; r0c1 = r1c0; r1c0 = cp;
@@ -474,7 +481,7 @@ matrix44& matrix44::transpose () {
     cp = r0c3; r0c3 = r3c0; r3c0 = cp;
     cp = r1c2; r1c2 = r2c1; r2c1 = cp;
     cp = r1c3; r1c3 = r3c1; r3c1 = cp;
-    cp =  r2c3; r2c3 = r3c2; r3c2 = cp;
+    cp = r2c3; r2c3 = r3c2; r3c2 = cp;
     return *this;
 }
 matrix44& matrix44::inverse () {

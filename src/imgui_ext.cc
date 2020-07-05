@@ -14,7 +14,6 @@ inline bool is_within_ndc (vector3 v) { return v.x >= -1 && v.x <= 1 && v.y >= -
 
 struct tri_positions {
     vector3 p0, p1, p2;
-    
     vector3 normal () const { return (p1-p0) ^ (p2-p0); } // anti-clockwise winding
     vector3 centroid () const { return p0 + ((((p1+p2)/2.0f) - p0) * 2.0f / 3.0f); }
 };
@@ -68,13 +67,13 @@ void draw_user_triangles (
     if (user_container_relative_to_window) {
         const ImVec2 p = ImGui::GetCursorScreenPos();
         const ImVec2 region_max = ImGui::GetContentRegionMax();
-        container.location.x += p.x;
-        container.location.y += p.y;
         const float aspect = (float)user_container.extent.x / (float)user_container.extent.y;
-        if (container.location.x + container.extent.x > region_max.x) {
+        if (user_container.location.x + container.extent.x > region_max.x) {
             container.extent.x = std::max (16.0f, region_max.x - container.location.x);
             container.extent.y = container.extent.x / aspect;
         }
+        container.location.x += p.x;
+        container.location.y += p.y;
         ImGui::SetCursorScreenPos(ImVec2 { p.x, (float)container.location.y + (float)container.extent.y });
     }
     
@@ -87,26 +86,13 @@ void draw_user_triangles (
     //drawList.AddRect(im_min, im_max,0xFF00FF00);
     
     const float aspect = (float) container.extent.x / (float) container.extent.y;
-    
-    const matrix44 world = matrix44()
-        .set_translation_component(obj_pos)
-        .set_rotation_component(model_orientation);
-    
-    const matrix44 view_frame = matrix44()
-        .set_translation_component(camera_position)
-        .set_rotation_component(camera_orientation);
-    
-    matrix44 view = view_frame; view.inverse();
-    
-    const matrix44 proj = matrix44()
-        .set_as_perspective_fov_rh (camera_fov, aspect, camera_near, camera_far);
-    
+    const matrix44 world = matrix44().set_translation_component(obj_pos).set_rotation_component(model_orientation);
+    const matrix44 view_frame = matrix44().set_translation_component(camera_position).set_rotation_component(camera_orientation);
+    const matrix44 view = view_frame.inverse();
+    const matrix44 proj = matrix44().set_as_perspective_fov_rh (camera_fov, aspect, camera_near, camera_far);
     const matrix44 wv = world * view;
-    
-    
     const int num_tris = indices.size() / 3;
-    
-    tri_index_group* tri_indices = reinterpret_cast<tri_index_group*>(indices.data());
+    tri_index_group * const tri_indices = reinterpret_cast<tri_index_group*>(indices.data());
     
     const auto f = [&](const tri_index_group& l, const tri_index_group& r){
         tri_positions tri_l; l.get_tri_positions (vertices, wv, tri_l);

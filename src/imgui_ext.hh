@@ -15,7 +15,7 @@ void draw_user_triangles (
     const float camera_near,
     const float camera_far,
     const std::span<sge::data::vertex_pos_col> vertices,
-    std::span<uint32_t> indices, // not const, these will be sorted!
+    std::span<uint32_t> indices, // not const, these indices will be sorted!  allocate and pass in a copy if you don't want this.
     const sge::math::vector3& obj_pos,
     const sge::math::quaternion& model_orientation,
     const bool lighting = false);
