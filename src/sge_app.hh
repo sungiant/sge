@@ -3,13 +3,12 @@
 #include "sge.hh"
 #include "sge_runtime.hh"
 #include "sge_app_interface.hh"
-#include "sge_ext_overlay.hh"
+
 #include "sge_ext_keyboard.hh"
 #include "sge_ext_mouse.hh"
 #include "sge_ext_gamepad.hh"
 #include "sge_ext_instrumentation.hh"
 #include "sge_ext_freecam.hh"
-
 
 namespace sge::app {
 

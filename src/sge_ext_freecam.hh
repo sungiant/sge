@@ -5,15 +5,34 @@
 #include "sge_ext_keyboard.hh"
 #include "sge_ext_mouse.hh"
 #include "sge_ext_gamepad.hh"
-#include "imgui_ext.hh"
 
 namespace sge::ext {
 
 struct freecam : public runtime::view {
+
+    math::vector3 position;
+    math::quaternion orientation;
+
+    float traverse_sensitivity = 1.0f;
+    float look_sensitivity = 1.0f;
+
+    float fov = 57.5;
+    float near = 0.1f;
+    float far = 100.0f;
+
+    constexpr static float FOV_MIN = 30.0f;
+    constexpr static float FOV_MAX = 90.0f;
+    constexpr static float FOV_DEBUG_RATE = 20.0f;
+
+    constexpr static float TRAVERSE_RATE = 5.0f;
+    constexpr static float FAST_TRAVERSE_RATE = 30.0f;
+    constexpr static float LOOK_RATE = 1.20f;
+    constexpr static float FAST_LOOK_RATE = 1.70f;
+    constexpr static float MOUSE_F = 1.0f / 1.40f; // moving 140% of screen space per second is equivalent to holding a joystick on full
+    
     freecam (const runtime::api& z) : runtime::view (z) {
         reset();
         enabled = false;
-        sge::data::get_unit_cube(gizmo_vertices);
     }
 
     void reset () {
@@ -116,37 +135,16 @@ struct freecam : public runtime::view {
                 position += math::vector3::up * orientation * traverse_rate * f * dt;
             }
         }
-    }
-    
-    virtual void debug_ui () override {
         
-        int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
-        int screen_h = sge.system__get_state_int(runtime::system_int_state::screenheight);
-
+        
         
         if (!orientation.is_unit())
             orientation.normalise();
-        
-        
-        const int gizmo_size = 64;
-        
-        math::matrix33 cameraRotLH = math::matrix33().set_from_orientation(orientation);
-        //cameraRotLH[0] = -cameraRotLH[0];
-        //cameraRotLH.orthonormalise();
-        math::matrix44 gizmoView = math::matrix44().set_rotation_component (cameraRotLH);
-        ImGuizmo::ViewManipulate(&gizmoView[0][0], position.length(), ImVec2(screen_w - gizmo_size, 0), ImVec2(gizmo_size, gizmo_size), 0x10101010);
-        const math::matrix33 gizmoRotLH = math::matrix33().set_from_transform(gizmoView);
-        
-        if (gizmoRotLH != cameraRotLH) {
-            math::matrix33 cameraRotRH = gizmoRotLH;
-            //cameraRotRH[0] = -cameraRotRH[0];
-            cameraRotRH.orthonormalise ();
-            orientation.set_from_rotation(cameraRotRH);
-        }
-        
+    }
+    
+    virtual void debug_ui () override {
         ImGui::Begin ("Freecam"); {
 
-            
             ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", position.x, position.y, position.z);
             ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", orientation.i, orientation.j, orientation.k, orientation.u);
             
@@ -158,7 +156,6 @@ struct freecam : public runtime::view {
             math::vector3 camera_rotation_axis;
             float camera_rotation_angle;
             orientation.get_axis_angle(camera_rotation_axis, camera_rotation_angle);
-            
             ImGui::Text("axis angle (x:%.2f, y:%.2f, z:%.2f, a:%.2f)", camera_rotation_axis.x, camera_rotation_axis.y, camera_rotation_axis.z, camera_rotation_angle * math::RAD2DEG);
             
             math::vector3 camera_rotation_euler_angles;
@@ -172,81 +169,8 @@ struct freecam : public runtime::view {
             ImGui::SliderFloat ("sensitivity", &traverse_sensitivity, 1, 1000); // todo: automatically adjusted this based on proximity to surface - need info back from the compute shader for this.
         }
         ImGui::End ();
-        
-        
-        static float gizmo_cam_zn = -0.1f, gizmo_cam_zf = -300.0f, gizmo_cam_fov = 45.0f;
-        static math::vector3 gizmo_cam_pos = math::vector3 { 0, 0, 4.5 };
-        static math::quaternion gizmo_cam_orientation = math::quaternion::identity;
-        static math::rect gizmo_container { { screen_w - gizmo_size - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
-        static math::vector3 gizmo_obj_pos = math::vector3 { 0, 0.0f, -1 };
-        static math::quaternion gizmo_obj_orientation = math::quaternion::identity;
-        
-        gizmo_obj_orientation = orientation;
-        std::vector<uint32_t> gizmo_indices (gizmo_vertices.size());
-        
-        std::iota (std::begin(gizmo_indices), std::end(gizmo_indices), 0); // on the stack?! todo
-       
-        ImGui::Begin ("Freecam Gizmo Debugger");
-        ImGui::Text("cam position (x:%.2f, y:%.2f, z:%.2f)", gizmo_cam_pos.x, gizmo_cam_pos.y, gizmo_cam_pos.z);
-        ImGui::Text("cam orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_cam_orientation.i, gizmo_cam_orientation.j, gizmo_cam_orientation.k, gizmo_cam_orientation.u);
-        ImGui::Text("obj position (x:%.2f, y:%.2f, z:%.2f)", gizmo_obj_pos.x, gizmo_obj_pos.y, gizmo_obj_pos.z);
-        ImGui::Text("obj orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_obj_orientation.i, gizmo_obj_orientation.j, gizmo_obj_orientation.k, gizmo_obj_orientation.u);
-        ImGui::SliderFloat("near", &gizmo_cam_zn, -50.0f, 50.0f);
-        ImGui::SliderFloat("far", &gizmo_cam_zf, -50.0f, 50.0f);
-        ImGui::SliderFloat("fov", &gizmo_cam_fov, 0.0f, 180.0f);
-        ImGui::End ();
 
-
-        ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
-        ImGui::Begin ("Freecam Gizm", NULL,
-            ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
-            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
-            ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
-        ImGui::SetWindowPos (ImVec2 (0, 0), ImGuiCond_FirstUseEver);
-        ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
-        ImGui::SetWindowCollapsed (false);
-        {
-            imgui::ext::draw_user_triangles (
-                gizmo_container,
-                gizmo_cam_pos,
-                gizmo_cam_orientation,
-                gizmo_cam_fov * math::DEG2RAD,
-                gizmo_cam_zn,
-                gizmo_cam_zf,
-                gizmo_vertices,
-                gizmo_indices,
-                gizmo_obj_pos,
-                gizmo_obj_orientation);
-        }
-        ImGui::End ();
-        ImGui::PopStyleColor ();
     }
-
-    math::vector3 position;
-    math::quaternion orientation;
-
-    float traverse_sensitivity = 1.0f;
-    float look_sensitivity = 1.0f;
-
-    float fov = 57.5;
-    float near = 0.1f;
-    float far = 100.0f;
-
-    constexpr static float FOV_MIN = 30.0f;
-    constexpr static float FOV_MAX = 90.0f;
-    constexpr static float FOV_DEBUG_RATE = 20.0f;
-
-    constexpr static float TRAVERSE_RATE = 5.0f;
-    constexpr static float FAST_TRAVERSE_RATE = 30.0f;
-    constexpr static float LOOK_RATE = 1.20f;
-    constexpr static float FAST_LOOK_RATE = 1.70f;
-    constexpr static float MOUSE_F = 1.0f / 1.40f; // moving 140% of screen space per second is equivalent to holding a joystick on full
-    
-    
-
-    std::vector<sge::data::vertex_pos_col> gizmo_vertices;
-
 };
 
 }

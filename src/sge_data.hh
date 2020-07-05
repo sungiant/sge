@@ -32,6 +32,24 @@ namespace sge::data { // anti-clockwise winding
             {{ -1.0f, -1.0f, -1.0f }, 0xFF664444 }, {{ -1.0f,  1.0f, -1.0f }, 0xFF664444 }, {{  1.0f,  1.0f, -1.0f }, 0xFF664444 },
         };
     }
+    
+    inline static void get_colourful_cube (std::vector<vertex_pos_col>& verts, std::vector<uint32_t>& indices) {
+        assert (verts.size() == 0);
+        assert (indices.size() == 0);
+        verts = { //ABGR
+            {{ -1.0f, -1.0f, -1.0f }, 0xFF000000},
+            {{  1.0f, -1.0f, -1.0f }, 0xFFFF0000},
+            {{ -1.0f,  1.0f, -1.0f }, 0xFF00FF00},
+            {{  1.0f,  1.0f, -1.0f }, 0xFFFFFF00},
+            {{ -1.0f, -1.0f,  1.0f }, 0xFF0000FF},
+            {{  1.0f, -1.0f,  1.0f }, 0xFFFF00FF},
+            {{ -1.0f,  1.0f,  1.0f }, 0xFF00FFFF},
+            {{  1.0f,  1.0f,  1.0f }, 0xFFFFFFFF},
+        };
+        indices = {
+            0, 2, 3, 0, 3, 1, 4, 5, 7, 4, 7, 6, 1, 3, 7, 1, 7, 5,
+            0, 4, 6, 0, 6, 2, 2, 6, 7, 2, 7, 3, 0, 1, 5, 0, 5, 4, };
+    }
 
     inline static void get_torus (std::vector<vertex_pos_norm>& verts, std::vector<uint32_t>& indices, const int tessellation = 32, const float thickness = 0.333f, const float diameter = 1.0f) {
         assert (verts.size() == 0);

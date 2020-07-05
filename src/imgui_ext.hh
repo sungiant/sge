@@ -9,7 +9,6 @@ namespace imgui::ext {
     
     using namespace sge::math;
     
-    
     inline uint32_t average_colour (uint32_t v0, uint32_t v1, uint32_t v2) {
         const ImColor col0 = ImColor (v0);
         const ImColor col1 = ImColor (v1);
@@ -43,13 +42,22 @@ namespace imgui::ext {
             result.p1 = vertices[i1].position % transform;
             result.p2 = vertices[i2].position % transform;
         }
-        uint32_t get_col (const std::span<sge::data::vertex_pos_col> vertices) const {
+        uint32_t get_av_col (const std::span<sge::data::vertex_pos_col> vertices) const {
             return average_colour (vertices[i0].colour, vertices[i1].colour, vertices[i2].colour);
+        }
+        std::tuple<uint32_t, uint32_t, uint32_t> get_cols (const std::span<sge::data::vertex_pos_col> vertices) const {
+            return { vertices[i0].colour, vertices[i1].colour, vertices[i2].colour };
+        }
+        bool is_multicoloured (const std::span<sge::data::vertex_pos_col> vertices) const {
+            const uint32_t c0 = vertices[i0].colour;
+            const uint32_t c1 = vertices[i1].colour;
+            const uint32_t c2 = vertices[i2].colour;
+            return !((c0 == c1) && (c1 == c2));
         }
     };
 
     inline void draw_user_triangles (
-        const rect& container,
+        const rect& user_container,
         const vector3& camera_position,
         const quaternion& camera_orientation,
         const float camera_fov,
@@ -59,17 +67,29 @@ namespace imgui::ext {
         std::span<uint32_t> indices,
         const vector3& obj_pos,
         const quaternion& model_orientation,
+        bool container_relative_to_window = true,
         bool lighting = false,
         const std::optional<float> wireframe_thickness = std::nullopt) {
-
+        
+        if (ImGui::IsWindowCollapsed())
+            return; // early out as doing all this on the cpu isn't cheap.
+        
+        rect container = user_container;
+        if (container_relative_to_window) {
+            const ImVec2 p = ImGui::GetCursorScreenPos();
+            const ImVec2 region_max = ImGui::GetContentRegionMax();
+            container.location.x += p.x;
+            container.location.y += p.y;
+            ImGui::SetCursorScreenPos(ImVec2 { p.x, p.y + container.extent.y });
+        }
+        
         ImDrawList& drawList = *ImGui::GetWindowDrawList();
         
         const ImVec2 im_min = ImVec2(container.location.x, container.location.y);
         const ImVec2 im_max = ImVec2(container.location.x + container.extent.x, container.location.y + container.extent.y);
         
-        drawList.AddRectFilled(im_min, im_max, 0x11000000);
+        drawList.AddRectFilled(im_min, im_max, 0x22000000);
         //drawList.AddRect(im_min, im_max,0xFF00FF00);
-        drawList.PushClipRect (im_min, im_max);
         
         const float aspect = (float) container.extent.x / (float) container.extent.y;
         
@@ -106,13 +126,11 @@ namespace imgui::ext {
         std::sort(tri_indices, tri_indices + num_tris, f);
         
         for (int i = 0; i < num_tris; ++i) {
-            
-            const uint32_t av_col = tri_indices[i].get_col (vertices);
-            
+            const uint32_t av_col = tri_indices[i].get_av_col (vertices);
             tri tri_vs; tri_indices[i].get_tri (vertices, wv, tri_vs);
-            
             if ((tri_vs.normal() | -tri_vs.centroid()) < -0.0f) // https://chortle.ccsu.edu/VectorLessons/vch09/vch09_6.html
-                continue; // cull backfaces. https://www.youtube.com/watch?v=zGyfiOqiR4s
+                // right handed direction: https://www.youtube.com/watch?v=zGyfiOqiR4s
+                continue; // cull backfaces.
             
             uint32_t tri_col = av_col;
             if(lighting) {
@@ -141,10 +159,14 @@ namespace imgui::ext {
             const ImVec2 p2 = ndc_to_container_coordinates (ndc2, container);
             if (wireframe_thickness.has_value ())
                 drawList.AddTriangle (p0, p1, p2, tri_col, wireframe_thickness.value());
-            else
-                drawList.AddTriangleFilled (p0, p1, p2, tri_col);
+            else {
+                if (tri_indices[i].is_multicoloured (vertices)) {
+                    auto cols = tri_indices[i].get_cols (vertices);
+                    drawList.AddTriangleFilledMultiColor (p0, p1, p2, std::get<0>(cols), std::get<1>(cols), std::get<2>(cols));
+                } else {
+                    drawList.AddTriangleFilled (p0, p1, p2, tri_col);
+                }
+            }
         }
-        
-        drawList.PopClipRect();
     }
 }

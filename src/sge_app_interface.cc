@@ -2,6 +2,12 @@
 
 #include "sge_app.hh"
 
+#include "sge_ext_overlay.hh"
+
+#include "sge_ext_tools.hh"
+#include "sge_ext_gizmo.hh"
+#include "sge_ext_toy.hh"
+
 namespace sge::app::internal {
 
 std::unique_ptr<sge::app::api> user_api;
@@ -29,8 +35,12 @@ extensions& get_standard_extensions () {
             { sge::runtime::type_id<sge::ext::gamepad>(), [] (const sge::runtime::api& x) { return new sge::ext::gamepad (x); }},
             { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
             { sge::runtime::type_id<sge::ext::freecam>(), [] (const sge::runtime::api& x) { return new sge::ext::freecam (x); }},
+            { sge::runtime::type_id<sge::ext::gizmo>(), [] (const sge::runtime::api& x) { return new sge::ext::gizmo (x); }},
+            { sge::runtime::type_id<sge::ext::toy>(), [] (const sge::runtime::api& x) { return new sge::ext::toy (x); }},
         };
-        standard_extensions->systems = {};
+        standard_extensions->systems = {
+            { sge::runtime::type_id<sge::ext::tools>(), [] (sge::runtime::api& x) { return new sge::ext::tools (x); }},
+        };
     }
 
     return *standard_extensions.get ();
