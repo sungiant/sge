@@ -128,29 +128,27 @@ void initialise () {
     ubo_settings.iterations = 64;
     ubo_settings.display_mode = 0;
 #if (USE_SBO_MATERIALS == 1)
-    const auto white        = sge::math::vector3 { 1.00, 1.00, 1.00 };
-    const auto black        = sge::math::vector3 { 0.00, 0.00, 0.00 };
     const auto magenta      = sge::math::vector3 { 1.00, 0.00, 1.00 };
-    const auto coolBlack    = sge::math::vector3 { 0.00, 0.18, 0.39 };
-    const auto warmBlack    = sge::math::vector3 { 0.00, 0.26, 0.26 };
-    const auto persimmon    = sge::math::vector3 { 0.93, 0.35, 0.00 };
-    const auto vermillion   = sge::math::vector3 { 0.35, 0.10, 0.08 };
-    const auto jade         = sge::math::vector3 { 0.00, 0.66, 0.42 };
+    const auto my_black     = sge::math::vector3 { 0.03, 0.04, 0.08 };
+    const auto yellow       = sge::math::vector3 { 1.00, 0.90, 0.00 };
+    const auto white        = sge::math::vector3 { 1.00, 1.00, 1.00 };
+    const auto blue         = sge::math::vector3 { 0.00, 0.00, 1.00 };
+    const auto green        = sge::math::vector3 { 0.00, 1.00, 0.00 };
+    const auto red          = sge::math::vector3 { 1.00, 0.00, 0.00 };
 
     sbo_materials.emplace_back (Material { magenta, 0 });
-    sbo_materials.emplace_back (Material { warmBlack, 1 });
-    sbo_materials.emplace_back (Material { coolBlack, 256 });
-    sbo_materials.emplace_back (Material { jade, 2 });
-    sbo_materials.emplace_back (Material { persimmon, 128 });
-    sbo_materials.emplace_back (Material { persimmon, 8 });
-    sbo_materials.emplace_back (Material { vermillion, 32 });
+    sbo_materials.emplace_back (Material { my_black, 1 });
+    sbo_materials.emplace_back (Material { yellow, 51 });
+    sbo_materials.emplace_back (Material { white, 3 });
+    sbo_materials.emplace_back (Material { blue, 54 });
+    sbo_materials.emplace_back (Material { green, 54 });
+    sbo_materials.emplace_back (Material { red, 54 });
 #endif
 
 #if (USE_SBO_LIGHTS == 1)
-    sbo_lights.emplace_back (PointLight { sge::math::vector3 {6, 8, 2}, 18.0f, sge::math::vector3 {1, 0.71, 0}, 1 });
-    sbo_lights.emplace_back (PointLight { sge::math::vector3 {-5.7, 1.2, 5}, 16.0f, sge::math::vector3 {0.28, 0.12, 0.40}, 1 });
-    sbo_lights.emplace_back (PointLight { sge::math::vector3 {0, 0, 0}, 2.3f, sge::math::vector3 {0.32, 0.32, 0.32}, 0.7f });
-    sbo_lights.emplace_back (PointLight { sge::math::vector3 {3, 3, 0}, 12.0f, sge::math::vector3 {1, 1, 1}, 1.0f });
+    sbo_lights.emplace_back (PointLight { sge::math::vector3 {2.143f, 4.286f, -2.069f}, 20.395f, sge::math::vector3 {0.91f, 0, 1}, 0.266f });
+    sbo_lights.emplace_back (PointLight { sge::math::vector3 {-1.429, 0.714f, 4.138f}, 19.684f, sge::math::vector3 {0.96f, 0.32f, 0.12f}, 0.459f });
+    sbo_lights.emplace_back (PointLight { sge::math::vector3 {0, 0, 0}, 3.105f, sge::math::vector3 {0.16f, 0.65f, 0}, 0.422f });
 #endif
 
 #if (USE_SBO_SCENE == 1)
