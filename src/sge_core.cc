@@ -324,7 +324,7 @@ runtime::extension* api_impl::extension_get  (size_t id) const {
     
 
 void internal_update (sge::app::response& user_response, engine_state& engine_state, engine_tasks& engine_tasks) {
-    auto tStart = std::chrono::high_resolution_clock::now ();
+    const auto tStart = std::chrono::high_resolution_clock::now ();
 
     // USER TASKS
     {
@@ -366,7 +366,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
     // IMGUI
     {
         ImGuiIO& io = ImGui::GetIO ();
-        auto& input = engine_state.input;
+        const auto& input = engine_state.input;
         static int mouse_wheel_last_frame = 0;
         
         const int mouse_wheel_this_frame = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
@@ -382,8 +382,8 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
 
         io.MousePos = ImVec2 (p.x, p.y);
         io.MouseDown[0] = input.find (input_control_identifier::mb_left) != input.end () && std::get<input_binary_control>(input.at(input_control_identifier::mb_left));
-        io.MouseDown[1] = input.find (input_control_identifier::mb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
-        io.MouseDown[2] = input.find (input_control_identifier::mb_right) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_right));
+        io.MouseDown[2] = input.find (input_control_identifier::mb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
+        io.MouseDown[1] = input.find (input_control_identifier::mb_right) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_right));
         io.DeltaTime = engine_state.instrumentation.frameTimer;
         io.MouseWheel = (float) mouse_wheel_delta;
 
@@ -404,11 +404,11 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
     // INSTRUMENTATION
     {
         engine_state.instrumentation.frameCounter++;
-        auto tEnd = std::chrono::high_resolution_clock::now ();
-        auto tDiff = std::chrono::duration<double, std::milli> (tEnd - tStart).count ();
+        const auto tEnd = std::chrono::high_resolution_clock::now ();
+        const auto tDiff = std::chrono::duration<double, std::milli> (tEnd - tStart).count ();
         engine_state.instrumentation.frameTimer = (float)tDiff / 1000.0f;
         engine_state.instrumentation.totalTimer += engine_state.instrumentation.frameTimer;
-        float fpsTimer = (float)(std::chrono::duration<double, std::milli> (tEnd - engine_state.instrumentation.lastTimestamp).count ());
+        const float fpsTimer = (float)(std::chrono::duration<double, std::milli> (tEnd - engine_state.instrumentation.lastTimestamp).count ());
         if (fpsTimer > 1000.0f) {
             engine_state.instrumentation.lastFPS = static_cast<uint32_t>((float) engine_state.instrumentation.frameCounter * (1000.0f / fpsTimer));
 
