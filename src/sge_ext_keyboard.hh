@@ -39,7 +39,7 @@ private:
 
 public:
     
-    keyboard (const runtime::api& z) : runtime::view (z) {
+    keyboard (const runtime::api& z) : runtime::view (z, "Keyboard") {
         keys_current.reserve((size_t) runtime::keyboard_key::COUNT);
         keys_previous.reserve((size_t) runtime::keyboard_key::COUNT);
     }
@@ -95,9 +95,7 @@ public:
         
     }
 
-    virtual void debug_ui () override {
-        ImGui::Begin ("Keyboard");
-        
+    virtual void managed_debug_ui () override {
         ImGui::Columns (3);
         
         int counter = 0;
@@ -151,8 +149,6 @@ public:
 #undef SGE_X
 
         ImGui::Columns (1);
-        
-        ImGui::End();
     }
 };
 

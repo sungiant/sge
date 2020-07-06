@@ -32,7 +32,7 @@ private:
 
 public:
     
-    gamepad (const runtime::api& z) : runtime::view (z) {
+    gamepad (const runtime::api& z) : runtime::view (z, "Gamepad") {
         buttons_current.reserve((size_t) runtime::gamepad_button::COUNT);
         buttons_previous.reserve((size_t) runtime::gamepad_button::COUNT);
     }
@@ -67,9 +67,7 @@ public:
         }
     }
 
-    virtual void debug_ui () override {
-        ImGui::Begin ("Gamepad");
-        
+    virtual void managed_debug_ui () override {
         float left_thumbstick_x = left_stick ().x; ImGui::SliderFloat ("Left Thumbstick X", &left_thumbstick_x, -1.0f, 1.0f);
         float left_thumbstick_y = left_stick ().y; ImGui::SliderFloat ("Left Thumbstick Y", &left_thumbstick_y, -1.0f, 1.0f);
 
@@ -107,8 +105,6 @@ public:
         bool button_rthumb = is_button_down (runtime::gamepad_button::right_thumb); ImGui::Checkbox ("R3", &button_rthumb);
 
         ImGui::Columns (1);
-        
-        ImGui::End ();
     }
 
 };

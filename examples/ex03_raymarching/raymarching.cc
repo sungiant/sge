@@ -38,10 +38,10 @@ struct UBO_CAMERA { // https://www.reddit.com/r/vulkan/comments/9spolm/help_with
 
 struct UBO_SETTINGS {
     enum Flags {
-        CalculateAO = 0x01,
-        CalculateShadows = 0x03,
-        CalculateLighting = 0x07,
-        EnableLazyness = 0xf,
+        CalculateAO            = 0x01,
+        CalculateShadows       = 0x03,
+        CalculateLighting      = 0x07,
+        EnableLazyness         = 0xf,
         EnablebufferDownsizing = 0x10,
     };
 
@@ -86,7 +86,7 @@ void initialise () {
 void terminate () {}
 
 void start (const sge::app::api& sge) {
-    sge.freecam.set_enabled (true);
+    sge.freecam.set_active (true);
 }
 
 void stop (const sge::app::api& sge) {}
@@ -146,14 +146,14 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         ImGui::SliderInt("iterations", &us.iterations, 1, 256);
 
         ImGui::Text("FLAGS: %d", us.flags);
-        bool ao = (us.flags >> 0) & 1u;
-        bool shadows = (us.flags >> 1) & 1u;
-        bool lighting = (us.flags >> 2) & 1u;
-        bool lazy = (us.flags >> 3) & 1u;
-        if (ImGui::RadioButton("enable AO", ao)) { us.flags ^= (1u << 0); }
-        if (ImGui::RadioButton("enable shadows", shadows)) { us.flags ^= (1u << 1); }
-        if (ImGui::RadioButton("enable lighting", lighting)) { us.flags ^= (1u << 2); }
-        if (ImGui::RadioButton("enable lazyness", lazy)) { us.flags ^= (1u << 3); }
+        bool ao = sge::utils::get_flag_at_index (us.flags, 0);
+        bool shadows = sge::utils::get_flag_at_index (us.flags, 1);
+        bool lighting = sge::utils::get_flag_at_index (us.flags, 2);
+        bool lazy = sge::utils::get_flag_at_index (us.flags, 3);
+        if (ImGui::RadioButton("enable AO", ao)) { sge::utils::toggle_flag_at_index (us.flags, 0); }
+        if (ImGui::RadioButton("enable shadows", shadows)) {sge::utils::toggle_flag_at_index (us.flags, 1); }
+        if (ImGui::RadioButton("enable lighting", lighting)) { sge::utils::toggle_flag_at_index (us.flags, 2); }
+        if (ImGui::RadioButton("enable lazyness", lazy)) { sge::utils::toggle_flag_at_index (us.flags, 3); }
 
         ImGui::SliderFloat("shadow_factor", &us.soft_shadow_factor, 1.0f, 100.0f);
 

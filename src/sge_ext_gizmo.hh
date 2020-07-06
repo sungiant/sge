@@ -28,7 +28,8 @@ class gizmo : public runtime::view {
     ext::freecam* freecam;
         
 public:
-    gizmo (const runtime::api& z) : runtime::view (z) {
+    gizmo (const runtime::api& z) : runtime::view (z, "Gizmo", MANAGED_DEBUG_UI | CUSTOM_DEBUG_UI) {
+        utils::set_flag_at_mask (runtime_state, runtime_flags::CUSTOM_DEBUG_UI_ACTIVE, true);
         if (1) {
             sge::data::get_unit_cube(gizmo_vertices);
             gizmo_indices.resize(gizmo_vertices.size());
@@ -41,28 +42,25 @@ public:
         
     }
     virtual void update () override {
-        if (!freecam || !freecam->is_enabled()) return;
+        if (!freecam || !freecam->is_active()) return;
         
         gizmo_obj_orientation = freecam->orientation;
     }
 
-    virtual void debug_ui () override {
-        if (!freecam || !freecam->is_enabled()) return;
-        
-        int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
-
-        ImGui::Begin ("Gizmo Debugger");
+    virtual void managed_debug_ui () override {
+        if (!freecam || !freecam->is_active()) return;
         ImGui::Text("cam position (x:%.2f, y:%.2f, z:%.2f)", gizmo_cam_pos.x, gizmo_cam_pos.y, gizmo_cam_pos.z);
         ImGui::Text("cam orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_cam_orientation.i, gizmo_cam_orientation.j, gizmo_cam_orientation.k, gizmo_cam_orientation.u);
         ImGui::Text("obj position (x:%.2f, y:%.2f, z:%.2f)", gizmo_obj_pos.x, gizmo_obj_pos.y, gizmo_obj_pos.z);
         ImGui::Text("obj orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", gizmo_obj_orientation.i, gizmo_obj_orientation.j, gizmo_obj_orientation.k, gizmo_obj_orientation.u);
-        ImGui::SliderFloat("near", &gizmo_cam_zn, -50.0f, 50.0f);
-        ImGui::SliderFloat("far", &gizmo_cam_zf, -50.0f, 50.0f);
+        ImGui::SliderFloat("near", &gizmo_cam_zn, -50.0f, 0.0f);
+        ImGui::SliderFloat("far", &gizmo_cam_zf, -50.0f, 0.0f);
         ImGui::SliderFloat("fov", &gizmo_cam_fov, 0.0f, 180.0f);
-        ImGui::End ();
-
+    }
+    
+    virtual void custom_debug_ui () override {
         ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
-        ImGui::Begin ("Gizmo", NULL,
+        ImGui::Begin ("Gizmo 3D", NULL,
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
@@ -71,6 +69,7 @@ public:
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
+            const int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
             math::rect gizmo_container = { { screen_w - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
 
             imgui::ext::draw_user_triangles (

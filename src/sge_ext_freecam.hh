@@ -30,9 +30,9 @@ struct freecam : public runtime::view {
     constexpr static float FAST_LOOK_RATE = 1.70f;
     constexpr static float MOUSE_F = 1.0f / 1.40f; // moving 140% of screen space per second is equivalent to holding a joystick on full
     
-    freecam (const runtime::api& z) : runtime::view (z) {
+    freecam (const runtime::api& z) : runtime::view (z, "Freecam") {
         reset();
-        enabled = false;
+        set_active(false);
     }
 
     void reset () {
@@ -126,9 +126,8 @@ struct freecam : public runtime::view {
         orientation.set_from_yaw_pitch_roll(eulerAngles.x, eulerAngles.y, eulerAngles.z);
     }
     
-    virtual void debug_ui () override {
-        ImGui::Begin ("Freecam");
-
+    virtual void managed_debug_ui () override {
+        
         ImGui::Text("position (x:%.2f, y:%.2f, z:%.2f)", position.x, position.y, position.z);
         ImGui::Text("orientation (i:%.2f, j:%.2f, k:%.2f, u:%.2f)", orientation.i, orientation.j, orientation.k, orientation.u);
         {
@@ -155,7 +154,6 @@ struct freecam : public runtime::view {
         ImGui::SliderFloat("far", &far, 0.0f, 1000.0f);
         ImGui::SliderFloat ("sensitivity", &traverse_sensitivity, 1, 1000); // todo: automatically adjusted this based on proximity to surface - need info back from the compute shader for this.
     
-        ImGui::End ();
     }
 };
 

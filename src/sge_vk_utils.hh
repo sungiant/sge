@@ -40,7 +40,6 @@ void set_image_layout (
     VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
     VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
-
 #include "sge_vk_utils.inl"
 
 }

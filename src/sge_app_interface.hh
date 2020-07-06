@@ -72,7 +72,9 @@ namespace internal {
     api* create_user_api (sge::runtime::api&);
     void delete_user_api (api*);
     extensions& get_standard_extensions (); // these are always enabled and the user api provides easy access to them
-
+    
+    //void debug_ui_menu () {};
+    //void debug_ui () {};
 }
 
 

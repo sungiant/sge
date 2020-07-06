@@ -4,7 +4,7 @@
 
 #include "sge_ext_overlay.hh"
 
-#include "sge_ext_tools.hh"
+#include "sge_ext_presentation.hh"
 #include "sge_ext_gizmo.hh"
 #include "sge_ext_toy.hh"
 
@@ -39,7 +39,7 @@ extensions& get_standard_extensions () {
             { sge::runtime::type_id<sge::ext::toy>(), [] (const sge::runtime::api& x) { return new sge::ext::toy (x); }},
         };
         standard_extensions->systems = {
-            { sge::runtime::type_id<sge::ext::tools>(), [] (sge::runtime::api& x) { return new sge::ext::tools (x); }},
+            { sge::runtime::type_id<sge::ext::presentation>(), [] (sge::runtime::api& x) { return new sge::ext::presentation (x); }},
         };
     }
 

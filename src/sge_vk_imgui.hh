@@ -20,7 +20,7 @@ public:
 
     typedef std::vector<std::function<void ()>> debug_fns;
 
-    imgui (const struct context&, const struct queue_identifier, const class presentation&, debug_fns&);
+    imgui (const struct context&, const struct queue_identifier, const class presentation&, const std::function <void()>&);
     ~imgui ();
 
     void                                refresh                     ();
@@ -64,14 +64,13 @@ private:
     const context&                      context;
     const queue_identifier              queue_identifier;
     const presentation&                 presentation;
-    const debug_fns                     debug_uis;
+    const std::function <void()>        imgui_fn;
     state                               state;
 
     void                                init                        (float, float);
     void                                release                     ();
     VkPipelineShaderStageCreateInfo     load_shader                 (std::string, VkShaderStageFlagBits);
     void                                init_resources              (VkRenderPass, VkQueue);
-    void                                new_frame                   (bool);
     void                                update_buffers              ();
     void                                draw_frame                  (VkCommandBuffer);
     void                                record_command_buffer       (int32_t);

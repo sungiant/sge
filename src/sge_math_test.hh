@@ -8,36 +8,15 @@ struct framework {
     
 framework () {
     
-    {   // cross product (right handed)
-        assert ((vector3::up ^ vector3::forward) == vector3::left);
-        assert ((vector3::up ^ vector3::left) == vector3::backward);
-        assert ((vector3::up ^ vector3::backward) == vector3::right);
-        assert ((vector3::up ^ vector3::right) == vector3::forward);
-        
-        assert ((vector3::down ^ vector3::forward) == vector3::right);
-        assert ((vector3::down ^ vector3::left) == vector3::forward);
-        assert ((vector3::down ^ vector3::backward) == vector3::left);
-        assert ((vector3::down ^ vector3::right) == vector3::backward);
-        
-        assert ((vector3::right ^ vector3::forward) == vector3::up);
-        assert ((vector3::right ^ vector3::down) == vector3::forward);
-        assert ((vector3::right ^ vector3::backward) == vector3::down);
-        assert ((vector3::right ^ vector3::up) == vector3::backward);
-        
-        assert ((vector3::left ^ vector3::forward) == vector3::down);
-        assert ((vector3::left ^ vector3::down) == vector3::backward);
-        assert ((vector3::left ^ vector3::backward) == vector3::up);
-        assert ((vector3::left ^ vector3::up) == vector3::forward);
-        
-        assert ((vector3::backward ^ vector3::left) == vector3::down);
-        assert ((vector3::backward ^ vector3::down) == vector3::right);
-        assert ((vector3::backward ^ vector3::right) == vector3::up);
-        assert ((vector3::backward ^ vector3::up) == vector3::left);
-        
-        assert ((vector3::forward ^ vector3::left) == vector3::up);
-        assert ((vector3::forward ^ vector3::down) == vector3::left);
-        assert ((vector3::forward ^ vector3::right) == vector3::down);
-        assert ((vector3::forward ^ vector3::up) == vector3::right);
+    { // cross product (right handed)
+#define FN(a, b, ex) { assert ((a ^ b) == ex); }
+        FN(vector3::up,       vector3::forward, vector3::left);  FN(vector3::up,       vector3::left, vector3::backward); FN(vector3::up,       vector3::backward, vector3::right); FN(vector3::up,       vector3::right, vector3::forward);
+        FN(vector3::down,     vector3::forward, vector3::right); FN(vector3::down,     vector3::left, vector3::forward);  FN(vector3::down,     vector3::backward, vector3::left);  FN(vector3::down,     vector3::right, vector3::backward);
+        FN(vector3::right,    vector3::forward, vector3::up);    FN(vector3::right,    vector3::down, vector3::forward);  FN(vector3::right,    vector3::backward, vector3::down);  FN(vector3::right,    vector3::up,    vector3::backward);
+        FN(vector3::left,     vector3::forward, vector3::down);  FN(vector3::left,     vector3::down, vector3::backward); FN(vector3::left,     vector3::backward, vector3::up);    FN(vector3::left,     vector3::up,    vector3::forward);
+        FN(vector3::backward, vector3::left,    vector3::down);  FN(vector3::backward, vector3::down, vector3::right);    FN(vector3::backward, vector3::right,    vector3::up);    FN(vector3::backward, vector3::up,    vector3::left);
+        FN(vector3::forward,  vector3::left,    vector3::up);    FN(vector3::forward,  vector3::down, vector3::left);     FN(vector3::forward,  vector3::right,    vector3::down);  FN(vector3::forward,  vector3::up,    vector3::right);
+#undef FN
     }
     { // fluent chains
          matrix44 view0 = matrix44()
@@ -51,96 +30,97 @@ framework () {
         assert (view0 == expected);
     }
     { // quaternion vector transformations
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::forward);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::left);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::backward);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0,             0, 0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::forward);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::left);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::backward);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::right);
+#define FN(ax, y, p, r, ex) { assert (ax * quaternion().set_from_yaw_pitch_roll(y, p, r) == ex); }
+        FN (vector3::right, -TAU,          0, 0, vector3::right);
+        FN (vector3::right, -3.0f*HALF_PI, 0, 0, vector3::forward);
+        FN (vector3::right, -PI,           0, 0, vector3::left);
+        FN (vector3::right, -HALF_PI,      0, 0, vector3::backward);
+        FN (vector3::right, 0,             0, 0, vector3::right);
+        FN (vector3::right, HALF_PI,       0, 0, vector3::forward);
+        FN (vector3::right, PI,            0, 0, vector3::left);
+        FN (vector3::right, 3.0f*HALF_PI,  0, 0, vector3::backward);
+        FN (vector3::right, TAU,           0, 0, vector3::right);
         
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0,             0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, PI,            0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::right);
+        FN (vector3::right, 0, -TAU,          0, vector3::right);
+        FN (vector3::right, 0, -3.0f*HALF_PI, 0, vector3::right);
+        FN (vector3::right, 0, -PI,           0, vector3::right);
+        FN (vector3::right, 0, -HALF_PI,      0, vector3::right);
+        FN (vector3::right, 0, 0,             0, vector3::right);
+        FN (vector3::right, 0, HALF_PI,       0, vector3::right);
+        FN (vector3::right, 0, PI,            0, vector3::right);
+        FN (vector3::right, 0, 3.0f*HALF_PI,  0, vector3::right);
+        FN (vector3::right, 0, TAU,           0, vector3::right);
         
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::up);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::left);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::down);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::right);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::up);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::left);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::down);
-        assert (vector3::right * quaternion().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::right);
+        FN (vector3::right, 0, 0, -TAU         , vector3::right);
+        FN (vector3::right, 0, 0, -3.0f*HALF_PI, vector3::up);
+        FN (vector3::right, 0, 0, -PI          , vector3::left);
+        FN (vector3::right, 0, 0, -HALF_PI     , vector3::down);
+        FN (vector3::right, 0, 0, 0            , vector3::right);
+        FN (vector3::right, 0, 0, HALF_PI      , vector3::up);
+        FN (vector3::right, 0, 0, PI           , vector3::left);
+        FN (vector3::right, 0, 0, 3.0f*HALF_PI , vector3::down);
+        FN (vector3::right, 0, 0, TAU          , vector3::right);
         
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0,             0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::up);
+        FN (vector3::up, -TAU,          0, 0, vector3::up);
+        FN (vector3::up, -3.0f*HALF_PI, 0, 0, vector3::up);
+        FN (vector3::up, -PI,           0, 0, vector3::up);
+        FN (vector3::up, -HALF_PI,      0, 0, vector3::up);
+        FN (vector3::up, 0,             0, 0, vector3::up);
+        FN (vector3::up, HALF_PI,       0, 0, vector3::up);
+        FN (vector3::up, PI,            0, 0, vector3::up);
+        FN (vector3::up, 3.0f*HALF_PI,  0, 0, vector3::up);
+        FN (vector3::up, TAU,           0, 0, vector3::up);
         
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::backward);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::down);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::forward);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0,             0) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::backward);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, PI,            0) == vector3::down);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::forward);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::up);
+        FN (vector3::up, 0, -TAU,          0, vector3::up);
+        FN (vector3::up, 0, -3.0f*HALF_PI, 0, vector3::backward);
+        FN (vector3::up, 0, -PI,           0, vector3::down);
+        FN (vector3::up, 0, -HALF_PI,      0, vector3::forward);
+        FN (vector3::up, 0, 0,             0, vector3::up);
+        FN (vector3::up, 0, HALF_PI,       0, vector3::backward);
+        FN (vector3::up, 0, PI,            0, vector3::down);
+        FN (vector3::up, 0, 3.0f*HALF_PI,  0, vector3::forward);
+        FN (vector3::up, 0, TAU,           0, vector3::up);
         
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::left);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::down);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::right);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::up);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::left);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::down);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::right);
-        assert (vector3::up * quaternion().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::up);
+        FN (vector3::up, 0, 0, -TAU         , vector3::up);
+        FN (vector3::up, 0, 0, -3.0f*HALF_PI, vector3::left);
+        FN (vector3::up, 0, 0, -PI          , vector3::down);
+        FN (vector3::up, 0, 0, -HALF_PI     , vector3::right);
+        FN (vector3::up, 0, 0, 0            , vector3::up);
+        FN (vector3::up, 0, 0, HALF_PI      , vector3::left);
+        FN (vector3::up, 0, 0, PI           , vector3::down);
+        FN (vector3::up, 0, 0, 3.0f*HALF_PI , vector3::right);
+        FN (vector3::up, 0, 0, TAU          , vector3::up);
         
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-TAU,          0, 0) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-3.0f*HALF_PI, 0, 0) == vector3::right);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-PI,           0, 0) == vector3::forward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(-HALF_PI,      0, 0) == vector3::left);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0,             0, 0) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(HALF_PI,       0, 0) == vector3::right);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(PI,            0, 0) == vector3::forward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(3.0f*HALF_PI,  0, 0) == vector3::left);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(TAU,           0, 0) == vector3::backward);
+        FN (vector3::backward, -TAU,          0, 0, vector3::backward);
+        FN (vector3::backward, -3.0f*HALF_PI, 0, 0, vector3::right);
+        FN (vector3::backward, -PI,           0, 0, vector3::forward);
+        FN (vector3::backward, -HALF_PI,      0, 0, vector3::left);
+        FN (vector3::backward, 0,             0, 0, vector3::backward);
+        FN (vector3::backward, HALF_PI,       0, 0, vector3::right);
+        FN (vector3::backward, PI,            0, 0, vector3::forward);
+        FN (vector3::backward, 3.0f*HALF_PI,  0, 0, vector3::left);
+        FN (vector3::backward, TAU,           0, 0, vector3::backward);
         
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -TAU,          0) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -3.0f*HALF_PI, 0) == vector3::down);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -PI,           0) == vector3::forward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, -HALF_PI,      0) == vector3::up);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0,             0) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, HALF_PI,       0) == vector3::down);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, PI,            0) == vector3::forward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 3.0f*HALF_PI,  0) == vector3::up);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, TAU,           0) == vector3::backward);
+        FN (vector3::backward, 0, -TAU,          0, vector3::backward);
+        FN (vector3::backward, 0, -3.0f*HALF_PI, 0, vector3::down);
+        FN (vector3::backward, 0, -PI,           0, vector3::forward);
+        FN (vector3::backward, 0, -HALF_PI,      0, vector3::up);
+        FN (vector3::backward, 0, 0,             0, vector3::backward);
+        FN (vector3::backward, 0, HALF_PI,       0, vector3::down);
+        FN (vector3::backward, 0, PI,            0, vector3::forward);
+        FN (vector3::backward, 0, 3.0f*HALF_PI,  0, vector3::up);
+        FN (vector3::backward, 0, TAU,           0, vector3::backward);
         
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -TAU         ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -3.0f*HALF_PI) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -PI          ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, -HALF_PI     ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, 0            ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, HALF_PI      ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, PI           ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, 3.0f*HALF_PI ) == vector3::backward);
-        assert (vector3::backward * quaternion().set_from_yaw_pitch_roll(0, 0, TAU          ) == vector3::backward);
-        
+        FN (vector3::backward, 0, 0, -TAU         , vector3::backward);
+        FN (vector3::backward, 0, 0, -3.0f*HALF_PI, vector3::backward);
+        FN (vector3::backward, 0, 0, -PI          , vector3::backward);
+        FN (vector3::backward, 0, 0, -HALF_PI     , vector3::backward);
+        FN (vector3::backward, 0, 0, 0            , vector3::backward);
+        FN (vector3::backward, 0, 0, HALF_PI      , vector3::backward);
+        FN (vector3::backward, 0, 0, PI           , vector3::backward);
+        FN (vector3::backward, 0, 0, 3.0f*HALF_PI , vector3::backward);
+        FN (vector3::backward, 0, 0, TAU          , vector3::backward);
+#undef FN
     }
     { // matrix33 vector transformations
         assert (vector3::right * matrix33().set_from_y_axis_angle(-TAU         ) == vector3::right);

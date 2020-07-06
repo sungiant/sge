@@ -253,7 +253,7 @@ void initialise () {
 void terminate () {}
 
 void start (const sge::app::api& sge) {
-    sge.freecam.set_enabled (true);
+    sge.freecam.set_active (true);
 }
 
 void stop (const sge::app::api& sge) {}

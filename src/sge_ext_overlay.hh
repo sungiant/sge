@@ -10,10 +10,13 @@ namespace sge::ext {
 
 class overlay : public runtime::view {
 public:
-    overlay (const runtime::api& z) : runtime::view (z) {}
+    overlay (const runtime::api& z)
+        : runtime::view (z, "Overlay", CUSTOM_DEBUG_UI) {
+            utils::set_flag_at_mask (runtime_state, runtime_flags::CUSTOM_DEBUG_UI_ACTIVE, true);
+        }
     
 
-    virtual void debug_ui () override {
+    virtual void custom_debug_ui () override {
         ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
         ImGui::Begin ("BACKGROUND", NULL,
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |

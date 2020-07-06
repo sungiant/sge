@@ -3,6 +3,7 @@
 #include "sge.hh"
 
 #include "sge_math.hh"
+#include "sge_utils.hh"
 
 // SGE-RUNTIME
 // ---------------------------------- //
@@ -88,21 +89,79 @@ template<typename T> size_t type_id() { return reinterpret_cast<size_t>(&type<T>
 
 class extension {
 public:
-    virtual void update () {};
-    virtual void debug_ui () {};
     virtual ~extension () {};
-    bool is_enabled () { return enabled; }
-    void set_enabled (const bool v) { enabled = v; }
+    
+    void invoke_update () { update (); };
+    
+    void invoke_debug_menu () {
+        if (utils::get_flag_at_mask (configuration_state, config_flags::MANAGED_DEBUG_UI)) {
+            if (ImGui::MenuItem (display_name.c_str(), NULL, utils::get_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE))) {
+                utils::toggle_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE);
+            }
+        }
+    }
+    
+    void invoke_debug_ui () {
+        
+        if (utils::get_flag_at_mask (configuration_state, config_flags::MANAGED_DEBUG_UI)) {
+            const bool active = utils::get_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE);
+            if (active) {
+                bool open = active;
+                ImGui::Begin (display_name.c_str(), &open, ImGuiWindowFlags_NoCollapse);
+                managed_debug_ui ();
+                ImGui::End();
+                
+                if (open != active)
+                    utils::set_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE, open);
+            }
+        }
+        
+        if (utils::get_flag_at_mask (configuration_state, config_flags::CUSTOM_DEBUG_UI)) {
+            if (utils::get_flag_at_mask (runtime_state, runtime_flags::CUSTOM_DEBUG_UI_ACTIVE))
+                custom_debug_ui ();
+        }
+    };
+    
+    bool is_active () const { return utils::get_flag_at_mask (runtime_state, runtime_flags::ACTIVE); }
+    void set_active (const bool v) { utils::set_flag_at_mask (runtime_state, runtime_flags::ACTIVE, v); }
+
+    const std::string& get_display_name () const { return display_name; }
 protected:
-    extension () {};
-    bool enabled = true;
+    
+    extension (const uint32_t z_configuration, const std::string_view z_display_name)
+        : configuration_state (z_configuration)
+        , runtime_state (default_initial_runtime)
+        , display_name (z_display_name) {}
+    
+    virtual void update () {};
+    virtual void managed_debug_ui () {};
+    virtual void custom_debug_ui () {};
+    
+    enum config_flags : uint8_t {
+        MANAGED_DEBUG_UI = 1 << 0, // does the extension have a managed debug_ui? i.e.
+        CUSTOM_DEBUG_UI  = 1 << 1, // does the extension have a custom debug_ui?
+    };
+    
+    enum runtime_flags : uint8_t {
+        ACTIVE                  = 1 << 0,  // is the extension active (some extensions are inactive by default - i.e. the freecam).
+        MANAGED_DEBUG_UI_ACTIVE = 1 << 1,
+        CUSTOM_DEBUG_UI_ACTIVE  = 1 << 2, /*FOO = 1 << 2, BAR = 1 << 3, FOO1 = 1 << 4, BAR1 = 1 << 5*/
+    };
+    
+    const uint32_t configuration_state;
+    uint32_t runtime_state;
+    const std::string display_name;
+    
+    static const uint32_t default_configuration = MANAGED_DEBUG_UI;
+    static const uint32_t default_initial_runtime = ACTIVE | CUSTOM_DEBUG_UI_ACTIVE;
 };
 
 // runtime views have readonly (const) access to the runtime api.
 class view : public extension {
 protected:
     const api& sge;
-    view (const api& z) : sge (z) {}
+    view (const api& z, const std::string_view z_display_name) : extension (default_configuration, z_display_name), sge (z) {}
+    view (const api& z, const std::string_view z_display_name, const uint32_t z_configuration) : extension (z_configuration, z_display_name), sge (z) {}
 public:
     virtual ~view () {};
 };
@@ -111,11 +170,11 @@ public:
 class system : public extension {
 protected:
     api& sge;
-    system (api& z) : sge (z) {}
+    system (api& z, const std::string_view z_display_name) : extension (default_configuration, z_display_name), sge (z) {}
+    system (api& z, const std::string_view z_display_name, const uint32_t z_configuration)  : extension (z_configuration, z_display_name), sge (z) {}
 public:
     virtual ~system () {};
 };
-
 
 }
 

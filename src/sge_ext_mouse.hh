@@ -44,7 +44,7 @@ private:
     
 public:
     
-    mouse (const runtime::api& z) : runtime::view (z) {
+    mouse (const runtime::api& z) : runtime::view (z, "Mouse") {
         buttons_current.reserve((size_t) runtime::mouse_button::COUNT);
         buttons_previous.reserve((size_t) runtime::mouse_button::COUNT);
     }
@@ -81,8 +81,7 @@ public:
         }
     }
 
-    virtual void debug_ui () override {
-        ImGui::Begin ("Mouse");
+    virtual void managed_debug_ui () override {
         ImGui::Columns (3);
         bool button_left = is_button_down (runtime::mouse_button::left); ImGui::Checkbox ("Left", &button_left);
         ImGui::NextColumn ();
@@ -90,10 +89,9 @@ public:
         ImGui::NextColumn ();
         bool button_right = is_button_down (runtime::mouse_button::right); ImGui::Checkbox ("Right", &button_right);
         ImGui::Columns (1);
-        int mouse_x = position ().x; ImGui::SliderInt ("Position X", &mouse_x, 0, 4096);
-        int mouse_y = position ().y; ImGui::SliderInt ("Position Y", &mouse_y, 0, 4096);
+        int mouse_x = position ().x; ImGui::SliderInt ("Position X", &mouse_x, -4096, 4096);
+        int mouse_y = position ().y; ImGui::SliderInt ("Position Y", &mouse_y, -4096, 4096);
         int mouse_scroll = scrollwheel (); ImGui::SliderInt ("Scroll Wheel", &mouse_scroll, -16384, 16384);
-        ImGui::End();
     }
 };
 

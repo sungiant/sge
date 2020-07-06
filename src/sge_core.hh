@@ -226,7 +226,6 @@ class engine {
     std::unordered_map<size_t, std::unique_ptr<runtime::extension>> engine_extensions = {};
     std::unique_ptr<app::response>                      user_response;
     app::api*                                           user_api;
-    std::vector<std::function<void ()>>                 debug_fns = {};
 
 public:
     engine ();
@@ -252,8 +251,9 @@ public:
     void start ();
     void update (container_state&, input_state&);
     void stop ();
-
     void shutdown ();
+    
+    void imgui ();
 };
 
 }

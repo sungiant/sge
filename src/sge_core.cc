@@ -512,25 +512,15 @@ void engine::setup (
         engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
     }
     
-    for (auto& kvp : engine_extensions) {
-        const size_t id = kvp.first;
-        debug_fns.emplace_back ([this, id]() {
-            if (engine_extensions[id]->is_enabled())
-                engine_extensions[id]->debug_ui ();
-        });
-    }
-    
     user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
     user_api = app::internal::create_user_api (*engine_api);
-
-    debug_fns.emplace_back ([this]() { sge::app::debug_ui (*user_response, *user_api); });
 
 }
 
 void engine::start () {
 
     sge::app::start (*user_api);
-    engine_state->graphics.create_systems (debug_fns);
+    engine_state->graphics.create_systems (std::bind(&engine::imgui, this));
 }
 
 void engine::update (container_state& z_container, input_state& z_input) {
@@ -558,8 +548,8 @@ void engine::update (container_state& z_container, input_state& z_input) {
 
     // update all registered extensions
     for (auto& kvp : engine_extensions) {
-        if (kvp.second->is_enabled())
-            kvp.second->update ();
+        if (kvp.second->is_active())
+            kvp.second->invoke_update ();
     }
 
     // update the user's app
@@ -578,6 +568,59 @@ void engine::shutdown () {
     engine_state->graphics.destroy ();
     engine_tasks.reset ();
     engine_state.reset ();
+}
+    
+
+void engine::imgui () {
+    static bool show_about_window = false;
+    static bool show_dear_imgui_demo_window = false;
+    
+    
+    // top level imgui fn, all imgui calls are from this call.
+    if (ImGui::BeginMainMenuBar()) {
+        
+        if (ImGui::BeginMenu("SGE")) {
+            if (ImGui::MenuItem("About", NULL, show_about_window)) {
+                show_about_window = !show_about_window;
+            }
+            ImGui::Separator();
+#if TARGET_WIN32
+            if (ImGui::MenuItem("Quit", "Alt+F4")) { /* todo */ }
+#elif TARGET_MACOSX
+            if (ImGui::MenuItem("Quit", "CMD+Q")) { /* todo */ }
+#endif
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Runtime")) {
+            for (auto& kvp : engine_extensions) {
+                const size_t id = kvp.first;
+                engine_extensions[id]->invoke_debug_menu();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Debug")) {
+            if (ImGui::MenuItem("Dear ImGui Demo", NULL, show_dear_imgui_demo_window)) {
+                show_dear_imgui_demo_window = !show_dear_imgui_demo_window;
+            }
+            
+            ImGui::EndMenu();
+        }
+        
+        ImGui::EndMainMenuBar();
+    }
+    for (auto& kvp : engine_extensions) {
+        const size_t id = kvp.first;
+        engine_extensions[id]->invoke_debug_ui();
+    }
+    
+    if (show_dear_imgui_demo_window) ImGui::ShowDemoWindow();
+    if (show_about_window) {
+        ImGui::SetNextWindowSize(ImVec2 (180, 240), ImGuiCond_Always);
+        ImGui::Begin("About", &show_about_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+        ImGui::End();
+    }
+    
+    sge::app::debug_ui (*user_response, *user_api);
 }
 
 }

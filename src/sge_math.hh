@@ -250,7 +250,6 @@ struct quaternion {
     quaternion  normalise   () const { quaternion cp = *this; return cp.normalise(); }
     quaternion  negate      () const { quaternion cp = *this; return cp.negate(); }
     quaternion  conjugate   () const { quaternion cp = *this; return cp.conjugate(); }
-    quaternion  concatenate () const { quaternion cp = *this; return cp.concatenate(); }
     
     vector3&    rotate (vector3&) const;
     vector3     rotate (const vector3& v) const { vector3 res = v; rotate (res); return res; }

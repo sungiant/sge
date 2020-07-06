@@ -32,7 +32,7 @@ void vk::create (int w, int h) {
     presentation->create ();
 }
 
-void vk::create_systems (std::vector<std::function<void ()>>& debug_fns) {
+void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
 
     compute_target = std::make_unique<class compute_target> (
         kernel->primary_context (),
@@ -55,8 +55,7 @@ void vk::create_systems (std::vector<std::function<void ()>>& debug_fns) {
         kernel->primary_context (),
         kernel->primary_work_queue (),
         *presentation.get (),
-        debug_fns
-        );
+        z_imgui_fn);
 	imgui->create ();
 
 }

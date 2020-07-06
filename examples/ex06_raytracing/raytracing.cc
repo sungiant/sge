@@ -101,7 +101,7 @@ void initialise () {
 void terminate () {}
 
 void start (const sge::app::api& sge) {
-    sge.freecam.set_enabled (true);
+    sge.freecam.set_active (true);
     sge.freecam.position = ubo.position;
     sge.freecam.orientation = ubo.orientation;
 }
