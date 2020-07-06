@@ -367,7 +367,15 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
     {
         ImGuiIO& io = ImGui::GetIO ();
         auto& input = engine_state.input;
-
+        static int mouse_wheel_last_frame = 0;
+        
+        const int mouse_wheel_this_frame = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
+               ? std::get<input_digital_control> (input.at (input_control_identifier::md_scrollwheel))
+               : 0;
+        const int mouse_wheel_delta = mouse_wheel_this_frame - mouse_wheel_last_frame;
+        
+        mouse_wheel_last_frame = mouse_wheel_this_frame;
+        
         auto p = (input.find (input_control_identifier::mp_position) != input.end ())
             ? std::get<input_point_control> (input.at (input_control_identifier::mp_position))
         : sge::math::point2 { 0, 0 };
@@ -377,9 +385,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
         io.MouseDown[1] = input.find (input_control_identifier::mb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
         io.MouseDown[2] = input.find (input_control_identifier::mb_right) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_right));
         io.DeltaTime = engine_state.instrumentation.frameTimer;
-        io.MouseWheel = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
-            ? (float) std::get<input_digital_control> (input.at (input_control_identifier::md_scrollwheel))
-            : 0.0f;
+        io.MouseWheel = (float) mouse_wheel_delta;
 
         io.KeyCtrl = input.find (input_control_identifier::kb_control) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_control));
         io.KeyShift = input.find (input_control_identifier::kb_shift) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_shift));
