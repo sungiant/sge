@@ -47,18 +47,22 @@ public:
     virtual void update () override {
         uint32_t sz = 0;
         
+        const bool imgui_wants_keyboard = ImGui::GetIO().WantCaptureKeyboard;
+        
         { // keys
             static std::array<runtime::keyboard_key, (size_t) runtime::keyboard_key::COUNT> keys_arr;
             
             keys_previous = keys_current;
             keys_current.clear();
             
-            sge.input__keyboard_pressed_keys (&sz, nullptr);
-            assert (sz <= keys_arr.size ());
-            sge.input__keyboard_pressed_keys (&sz, keys_arr.data());
-            
-            for (uint32_t i = 0; i < sz; ++i)
-                keys_current.insert(keys_arr[i]);
+            if (!imgui_wants_keyboard) {
+                sge.input__keyboard_pressed_keys (&sz, nullptr);
+                assert (sz <= keys_arr.size ());
+                sge.input__keyboard_pressed_keys (&sz, keys_arr.data());
+                
+                for (uint32_t i = 0; i < sz; ++i)
+                    keys_current.insert(keys_arr[i]);
+            }
         }
         
         { // characters
@@ -67,12 +71,14 @@ public:
             characters_previous = characters_current;
             characters_current.clear();
             
-            sge.input__keyboard_pressed_characters (&sz, nullptr);
-            assert (sz <= chars_arr.size ());
-            sge.input__keyboard_pressed_characters (&sz, chars_arr.data());
-            
-            for (uint32_t i = 0; i < sz; ++i)
-                characters_current.insert(chars_arr[i]);
+            if (!imgui_wants_keyboard) {
+                sge.input__keyboard_pressed_characters (&sz, nullptr);
+                assert (sz <= chars_arr.size ());
+                sge.input__keyboard_pressed_characters (&sz, chars_arr.data());
+                
+                for (uint32_t i = 0; i < sz; ++i)
+                    characters_current.insert(chars_arr[i]);
+            }
         }
         
         { // locks

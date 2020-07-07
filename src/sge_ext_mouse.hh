@@ -31,6 +31,9 @@ private:
     std::unordered_set<runtime::mouse_button> buttons_current;
     std::unordered_set<runtime::mouse_button> buttons_previous;
     
+    bool imgui_wants_mouse_current;
+    bool imgui_wants_mouse_previous;
+    
     math::point2 position_current = math::point2 { 0, 0 };
     math::point2 position_previous = math::point2 { 0, 0 };
     
@@ -55,6 +58,9 @@ public:
         current_screenheight = sge.system__get_state_int (sge::runtime::system_int_state::screenheight);
         current_dt = sge.timer__get_delta();
         
+        imgui_wants_mouse_previous = imgui_wants_mouse_current;
+        imgui_wants_mouse_current = ImGui::GetIO().WantCaptureMouse;
+        
         { // buttons
             uint32_t sz = 0;
             static std::array<runtime::mouse_button, (size_t) runtime::mouse_button::COUNT> buttons_arr;
@@ -62,12 +68,15 @@ public:
             buttons_previous = buttons_current;
             buttons_current.clear();
             
-            sge.input__mouse_pressed_buttons (&sz, nullptr);
-            assert (sz <= buttons_arr.size ());
-            sge.input__mouse_pressed_buttons (&sz, buttons_arr.data());
-            
-            for (uint32_t i = 0; i < sz; ++i)
-                buttons_current.insert(buttons_arr[i]);
+            if (!imgui_wants_mouse_current) { // only track pressed mouse buttons if imgui doesn't want to take the mouse input.
+                
+                sge.input__mouse_pressed_buttons (&sz, nullptr);
+                assert (sz <= buttons_arr.size ());
+                sge.input__mouse_pressed_buttons (&sz, buttons_arr.data());
+                
+                for (uint32_t i = 0; i < sz; ++i)
+                    buttons_current.insert(buttons_arr[i]);
+            }
         }
         
         { // position
@@ -76,8 +85,13 @@ public:
         }
         
         { // scroll wheel
-            scrollwheel_previous = scrollwheel_current;
-            sge.input__mouse_scrollwheel(&scrollwheel_current);
+            if (!imgui_wants_mouse_current) { // only track the scroll wheel if imgui doesn't want to take the mouse input.
+                scrollwheel_previous = scrollwheel_current;
+                sge.input__mouse_scrollwheel(&scrollwheel_current);
+                
+                if (imgui_wants_mouse_previous) // avoid lurches in scroll wheel delta if imgui took the mouse input previously.
+                    scrollwheel_previous = scrollwheel_current;
+            }
         }
     }
 
