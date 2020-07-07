@@ -17,8 +17,8 @@ public:
         }
 
         if (ImGui::Button ("Set 800x600")) {
-            sge.system__set_state_int (sge::runtime::system_int_state::screenwidth, 800);
-            sge.system__set_state_int (sge::runtime::system_int_state::screenheight, 600);
+            sge.system__set_state_int (sge::runtime::system_int_state::screen_width, 800);
+            sge.system__set_state_int (sge::runtime::system_int_state::screen_height, 600);
         }
     }
 };

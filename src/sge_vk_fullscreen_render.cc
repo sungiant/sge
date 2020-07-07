@@ -16,8 +16,8 @@ fullscreen_render::fullscreen_render (const struct context& context, const queue
 }
 
 void fullscreen_render::create () {
-    auto semaphoreInfo = utils::init_VkSemaphoreCreateInfo ();
-    vk_assert (vkCreateSemaphore (context.logical_device, &semaphoreInfo, context.allocation_callbacks, &state.render_finished));;
+    const auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
+    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));;
 
     create_descriptor_set_layout ();
     create_command_pool ();
@@ -84,7 +84,6 @@ void fullscreen_render::refresh_command_buffers () {
 }
 
 void fullscreen_render::create_descriptor_set_layout () {
-
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings = {
         utils::init_VkDescriptorSetLayoutBinding (
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -92,18 +91,13 @@ void fullscreen_render::create_descriptor_set_layout () {
             0)
     };
 
-    auto descriptor_layout = utils::init_VkDescriptorSetLayoutCreateInfo (descriptor_set_layout_bindings);
-
+    const auto descriptor_layout = utils::init_VkDescriptorSetLayoutCreateInfo (descriptor_set_layout_bindings);
     vk_assert (vkCreateDescriptorSetLayout (context.logical_device, &descriptor_layout, context.allocation_callbacks, &state.descriptor_set_layout));
 }
 
 void fullscreen_render::create_command_pool () {
-
-    auto pool_info = utils::init_VkCommandPoolCreateInfo (identifier.family_index);
-    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
+    const auto pool_info = utils::init_VkCommandPoolCreateInfo (identifier.family_index, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     vk_assert (vkCreateCommandPool (context.logical_device, &pool_info, context.allocation_callbacks, &state.command_pool));
-
 }
 
 void fullscreen_render::create_descriptor_pool () {
@@ -130,8 +124,7 @@ void fullscreen_render::create_descriptor_pool () {
 void fullscreen_render::create_descriptor_set () {
 
     VkDescriptorSetLayout layouts[] = { state.descriptor_set_layout };
-    auto allocate_info = utils::init_VkDescriptorSetAllocateInfo (state.descriptor_pool, layouts, 1);
-
+    const auto allocate_info = utils::init_VkDescriptorSetAllocateInfo (state.descriptor_pool, layouts, 1);
     vk_assert (vkAllocateDescriptorSets (context.logical_device, &allocate_info, &state.descriptor_set));
 
     VkDescriptorImageInfo ii = compute_tex ();
@@ -158,19 +151,19 @@ void fullscreen_render::create_pipeline () {
     VkShaderModule vertex_shader       = utils::create_shader_module (context.logical_device, context.allocation_callbacks, vert);
     VkShaderModule fragment_shader     = utils::create_shader_module (context.logical_device, context.allocation_callbacks, frag);
 
-    auto vertex_shader_stage_info      = utils::init_VkPipelineShaderStageCreateInfo (VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, "main");
-    auto fragment_shader_stage_info    = utils::init_VkPipelineShaderStageCreateInfo (VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, "main");
+    const auto vertex_shader_stage_info      = utils::init_VkPipelineShaderStageCreateInfo (VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, "main");
+    const auto fragment_shader_stage_info    = utils::init_VkPipelineShaderStageCreateInfo (VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, "main");
 
     VkPipelineShaderStageCreateInfo shader_stages[] = { vertex_shader_stage_info, fragment_shader_stage_info };
 
-    auto empty_input_state             = utils::init_VkPipelineVertexInputStateCreateInfo ();
-    auto input_assembly                = utils::init_VkPipelineInputAssemblyStateCreateInfo (VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
-    auto scissor                       = utils::init_VkRect2D (presentation.extent ());
-    auto viewport_state                = utils::init_VkPipelineViewportStateCreateInfo (VkViewport(), scissor); // viewport is ignored here as we set it in the command buffer
-    auto rasterizer                    = utils::init_VkPipelineRasterizationStateCreateInfo (VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-    auto multisampling                 = utils::init_VkPipelineMultisampleStateCreateInfo (VK_SAMPLE_COUNT_1_BIT);
+    const auto empty_input_state             = utils::init_VkPipelineVertexInputStateCreateInfo ();
+    const auto input_assembly                = utils::init_VkPipelineInputAssemblyStateCreateInfo (VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
+    const auto scissor                       = utils::init_VkRect2D (presentation.extent ());
+    const auto viewport_state                = utils::init_VkPipelineViewportStateCreateInfo (VkViewport(), scissor); // viewport is ignored here as we set it in the command buffer
+    const auto rasterizer                    = utils::init_VkPipelineRasterizationStateCreateInfo (VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+    const auto multisampling                 = utils::init_VkPipelineMultisampleStateCreateInfo (VK_SAMPLE_COUNT_1_BIT);
 
-    auto colour_blend_attachment = utils::init_VkPipelineColorBlendAttachmentState ();
+    const auto colour_blend_attachment = utils::init_VkPipelineColorBlendAttachmentState ();
     auto colour_blending = utils::init_VkPipelineColorBlendStateCreateInfo (colour_blend_attachment);
     colour_blending.logicOpEnable = VK_FALSE;
     colour_blending.logicOp = VK_LOGIC_OP_COPY;
@@ -179,14 +172,14 @@ void fullscreen_render::create_pipeline () {
     colour_blending.blendConstants[2] = 0.0f;
     colour_blending.blendConstants[3] = 0.0f;
 
-    auto pipeline_layout_info = utils::init_VkPipelineLayoutCreateInfo(1, &state.descriptor_set_layout);
+    const auto pipeline_layout_info = utils::init_VkPipelineLayoutCreateInfo(1, &state.descriptor_set_layout);
 
     vk_assert (vkCreatePipelineLayout (context.logical_device, &pipeline_layout_info, context.allocation_callbacks, &state.pipeline_layout));
      
     const std::vector<VkDynamicState> dynamic_states_to_enable = { VK_DYNAMIC_STATE_VIEWPORT };
     const auto dynamic_state = utils::init_VkPipelineDynamicStateCreateInfo (dynamic_states_to_enable);
      
-    auto depth_stencil_state = utils::init_VkPipelineDepthStencilStateCreateInfo (VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+    const auto depth_stencil_state = utils::init_VkPipelineDepthStencilStateCreateInfo (VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
 
     auto pipeline_info = utils::init_VkGraphicsPipelineCreateInfo (state.pipeline_layout, presentation.fullscreen_render_pass ());
     pipeline_info.stageCount = 2;
@@ -213,7 +206,7 @@ void fullscreen_render::create_command_buffers () {
 
     state.command_buffers.resize (presentation.num_frame_buffers ());
 
-    auto allocate_info = utils::init_VkCommandBufferAllocateInfo (state.command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, (uint32_t) state.command_buffers.size ());
+    const auto allocate_info = utils::init_VkCommandBufferAllocateInfo (state.command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, (uint32_t) state.command_buffers.size ());
 
     vk_assert (vkAllocateCommandBuffers (context.logical_device, &allocate_info, state.command_buffers.data ()));
 
@@ -223,7 +216,7 @@ void fullscreen_render::create_command_buffers () {
     render_pass_begin_info.renderArea.extent = presentation.extent ();
 
     for (int i = 0; i < state.command_buffers.size (); i++) {
-        auto begin_info = utils::init_VkCommandBufferBeginInfo (VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+        const auto begin_info = utils::init_VkCommandBufferBeginInfo (VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
         vkBeginCommandBuffer (state.command_buffers[i], &begin_info);
 

@@ -5,13 +5,17 @@
 
 namespace sge::vk {
 
-compute_target::compute_target (const struct vk::context& z_context, const struct vk::queue_identifier& z_qid, const class presentation& p, const struct sge::app::content& z_content)
+compute_target::compute_target (const struct vk::context& z_context, const struct vk::queue_identifier& z_qid, const class presentation& z_p, const struct sge::app::content& z_content)
     : context (z_context)
     , identifier (z_qid)
-    , presentation (p)
+    , presentation (z_p)
     , content (z_content)
-{}
+    , default_size_fn ([](const class presentation& p) { auto e = p.extent (); return VkExtent2D { e.width, e.height }; })
+{
+    state.current_size = default_size_fn (z_p);
+}
 
+    
 void compute_target::end_of_frame () {
     const int num_blobs = content.blobs.size ();
 
@@ -54,7 +58,12 @@ void compute_target::create () {
 }
 
 void compute_target::create_r () {
-    prepare_texture_target (VK_FORMAT_R8G8B8A8_UNORM);
+    update_target_size();
+    if (state.target_size.has_value()) {
+        state.current_size = state.target_size.value();
+        state.target_size.reset();
+    }
+    prepare_texture_target (VK_FORMAT_R8G8B8A8_UNORM, state.current_size);
     prepare_uniform_buffers ();
     prepare_blob_buffers ();
     create_rl ();
@@ -65,7 +74,7 @@ void compute_target::create_rl () {
     create_descriptor_set ();
     create_compute_pipeline ();
     create_command_buffer ();
-    record_command_buffer ();
+    record_command_buffer (state.current_size);
 }
 
 void compute_target::destroy_rl () {
@@ -122,7 +131,7 @@ void compute_target::append_pre_render_submissions (std::vector<VkSemaphore>& wa
 void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {
 
     if (push_flag) {
-        record_command_buffer ();
+        record_command_buffer (state.current_size);
         push_flag = false;
     }
 
@@ -247,19 +256,17 @@ void compute_target::destroy_blob_buffers () {
     state.blob_staging_buffers.clear ();
 }
 
-void compute_target::prepare_texture_target (VkFormat format) {
+void compute_target::prepare_texture_target (VkFormat format, const VkExtent2D sz) {
     VkFormatProperties formatProperties;
     vkGetPhysicalDeviceFormatProperties (context.physical_device, format, &formatProperties);
     assert (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
-
-    auto e = presentation.extent ();
-    state.compute_tex.width = e.width;
-    state.compute_tex.height = e.height;
+    state.compute_tex.width = sz.width;
+    state.compute_tex.height = sz.height;
 
     auto imageCreateInfo = utils::init_VkImageCreateInfo ();
     imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imageCreateInfo.format = format;
-    imageCreateInfo.extent = { e.width, e.height, 1 };
+    imageCreateInfo.extent = { sz.width, sz.height, 1 };
     imageCreateInfo.mipLevels = 1;
     imageCreateInfo.arrayLayers = 1;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -466,7 +473,7 @@ void compute_target::destroy_command_buffer () {
     state.command_pool = VK_NULL_HANDLE;
 }
 
-void compute_target::record_command_buffer () {
+void compute_target::record_command_buffer (const VkExtent2D sz) {
     auto begin_info = utils::init_VkCommandBufferBeginInfo ();
     vk_assert (vkBeginCommandBuffer (state.command_buffer, &begin_info));
     if (content.push_constants.has_value ()) {
@@ -495,12 +502,10 @@ void compute_target::record_command_buffer () {
     const uint32_t workgroup_size_y = 16;
     const uint32_t workgroup_size_z = 1;
 
-    const auto e = presentation.extent ();
-
     vkCmdDispatch (
         state.command_buffer,
-        (uint32_t) ceil (e.width / float (workgroup_size_x)),
-        (uint32_t) ceil (e.height / float (workgroup_size_y)),
+        (uint32_t) ceil (sz.width / float (workgroup_size_x)),
+        (uint32_t) ceil (sz.height / float (workgroup_size_y)),
         workgroup_size_z);
     vk_assert (vkEndCommandBuffer (state.command_buffer));
 }

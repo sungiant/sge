@@ -2,6 +2,7 @@
 
 #include "sge.hh"
 
+#include "imgui_ext.hh"
 
 // SGE-APP
 // ---------------------------------- //
@@ -25,6 +26,9 @@ struct configuration {
     int app_height = 360;
     bool enable_console = false;
     bool ignore_os_dpi_scaling = false;
+    
+    int adjusted_app_width () const { return app_width; }
+    int adjusted_app_height () const { return app_height + imgui::ext::guess_main_menu_bar_height(); }
 };
 
 // The content of an SGE app is a computation defined by and app and managed by the engine.

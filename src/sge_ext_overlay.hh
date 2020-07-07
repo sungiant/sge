@@ -44,8 +44,8 @@ public:
 
             sprintf (text, "%d FPS @ %dx%d",
                 sge.timer__get_fps (),
-                sge.system__get_state_int (sge::runtime::system_int_state::screenwidth),
-                sge.system__get_state_int (sge::runtime::system_int_state::screenheight));
+                sge.system__get_state_int (sge::runtime::system_int_state::compute_width),
+                sge.system__get_state_int (sge::runtime::system_int_state::compute_height));
             ImGui::GetWindowDrawList ()->AddText (ImVec2 (20, y), ImColor (0.0f, 1.0f, 0.0f, 1.0f), text);
             next_line ();
 

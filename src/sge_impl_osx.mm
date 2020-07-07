@@ -663,9 +663,9 @@ void calculate_sge_input_state (sge::core::input_state& input) {
 
 - (void)loadView {
     _configuration = &sge::app::get_configuration ();
-    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, _configuration->app_width, _configuration->app_height)];
-    g_container_width = _configuration->app_width;
-    g_container_height = _configuration->app_height;
+    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, _configuration->app_width, _configuration->adjusted_app_height())];
+    g_container_width = _configuration->adjusted_app_width();
+    g_container_height = _configuration->adjusted_app_height();
 }
 
 - (void) setWindow: (NSWindow *) w {

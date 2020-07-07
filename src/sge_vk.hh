@@ -38,7 +38,8 @@ namespace sge::vk {
     private:
     
         
-        VkViewport calculate_viewport (const class presentation& p);
+        VkViewport calculate_viewport (const class presentation&);
+        VkExtent2D calculate_size (const class presentation&);
     };
 
 };

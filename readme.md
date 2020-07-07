@@ -82,7 +82,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [x] CI integration.
 - [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
 - [x] Mouse control for free camera.
-- [ ] Improve and make configurable SGE built-in ImGui windows and extension windows.
+- [x] Improve and make configurable SGE built-in ImGui windows and extension windows.
 - [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
 - [ ] Intelligent Vulkan queue selection.
 - [ ] Host independent from core.

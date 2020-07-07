@@ -707,8 +707,8 @@ int CALLBACK WinMain (HINSTANCE hinst, HINSTANCE hpinst, LPSTR lpcmdln, int ncmd
 
     g_screen_width = GetSystemMetrics (SM_CXSCREEN);
     g_screen_height = GetSystemMetrics (SM_CYSCREEN);
-    const int target_window_width = configuration.app_width;
-    const int target_window_height = configuration.app_height;
+    const int target_window_width = configuration.adjusted_app_width();
+    const int target_window_height = configuration.adjusted_app_height();
     const int target_window_x = g_screen_width / 2 - target_window_width / 2;
     const int target_window_y = g_screen_height / 2 - target_window_height / 2;
     g_latest_window_rect.left = target_window_x;
@@ -716,8 +716,8 @@ int CALLBACK WinMain (HINSTANCE hinst, HINSTANCE hpinst, LPSTR lpcmdln, int ncmd
     g_latest_window_rect.right = target_window_x + target_window_width;
     g_latest_window_rect.bottom = target_window_y + target_window_height;
     AdjustWindowRect (&g_latest_window_rect, g_style, FALSE);
-    g_window_style_x = width(g_latest_window_rect) - configuration.app_width;
-    g_window_style_y = height(g_latest_window_rect) - configuration.app_height;
+    g_window_style_x = width(g_latest_window_rect) - configuration.adjusted_app_width();
+    g_window_style_y = height(g_latest_window_rect) - configuration.adjusted_app_height();
     g_latest_windowed_mode_window_rect = g_latest_window_rect;
 
     HWND hwnd = CreateWindow (

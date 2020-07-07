@@ -22,10 +22,12 @@ bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
 }
 int api_impl::system__get_state_int (runtime::system_int_state z) const {
     switch (z) {
-        case runtime::system_int_state::screenwidth: return engine_state.container.current_width;
-        case runtime::system_int_state::screenheight: return engine_state.container.current_height;
-        case runtime::system_int_state::displaywidth: return engine_state.container.max_width;
-        case runtime::system_int_state::displayheight: return engine_state.container.max_height;
+        case runtime::system_int_state::screen_width: return engine_state.container.current_width;
+        case runtime::system_int_state::screen_height: return engine_state.container.current_height;
+        case runtime::system_int_state::display_width: return engine_state.container.max_width;
+        case runtime::system_int_state::display_height: return engine_state.container.max_height;
+        case runtime::system_int_state::compute_width: return engine_state.graphics.compute_target->current_width ();
+        case runtime::system_int_state::compute_height: return engine_state.graphics.compute_target->current_height ();
         default: assert (false); return 0;
     }
 }
@@ -292,8 +294,8 @@ void api_impl::system__set_state_bool (runtime::system_bool_state z, bool v) {
 }
 void api_impl::system__set_state_int (runtime::system_int_state z, int v) {
     switch (z){
-        case runtime::system_int_state::screenwidth: engine_tasks.change_screen_width = v; break;
-        case runtime::system_int_state::screenheight: engine_tasks.change_screen_height = v; break;
+        case runtime::system_int_state::screen_width: engine_tasks.change_screen_width = v; break;
+        case runtime::system_int_state::screen_height: engine_tasks.change_screen_height = v; break;
         default: break;
     }
 }

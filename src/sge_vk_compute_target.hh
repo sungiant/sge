@@ -34,7 +34,32 @@ public:
 
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
     void                                end_of_frame ();
+    
+    
+    bool                                need_recreate () {
+        update_target_size ();
+        return state.target_size.has_value();
+        
+    }
+    
+    void set_custom_size_fn (const std::function<VkExtent2D(const class presentation&)>& z_fn) { state.custom_size_fn = z_fn; update_target_size (); }
+    void has_custom_size_fn () { state.custom_size_fn.has_value (); }
+    void clear_custom_size_fn () { state.custom_size_fn = std::nullopt; update_target_size (); }
+    
+    int current_width () const { return state.current_size.width; }
+    int current_height () const { return state.current_size.height; }
 private:
+    
+    void update_target_size () {
+        const auto updated = state.custom_size_fn.has_value()
+            ? state.custom_size_fn.value() (presentation)
+            : default_size_fn (presentation);
+        
+        if (!utils::equal (updated, state.current_size))
+            state.target_size = updated;
+        else state.target_size.reset ();
+    }
+    
 
     struct state {
         texture                         compute_tex;
@@ -54,14 +79,17 @@ private:
         std::vector<dataspan>           latest_blob_infos; // keep track of sizes needed for user storage blobs as these can change at runtime.
 
         std::vector<std::optional<dataspan>> pending_blob_changes;
-    };
+        
+        VkExtent2D                      current_size;
+        std::optional<VkExtent2D>       target_size;
+        std::optional<std::function<VkExtent2D(const class presentation&)>> custom_size_fn;    };
 
     const context&                      context;
     const queue_identifier              identifier;
     const presentation&                 presentation;
     const sge::app::content&            content;
     state                               state;
-
+    const std::function<VkExtent2D(const class presentation&)> default_size_fn;
 
     void                                create_r                                ();
     void                                create_rl                               ();
@@ -74,10 +102,10 @@ private:
     void                                destroy_compute_pipeline                ();
     void                                create_command_buffer                   ();
     void                                destroy_command_buffer                  ();
-    void                                record_command_buffer                   ();
+    void                                record_command_buffer                   (VkExtent2D);
     void                                run_command_buffer                      ();
 
-    void                                prepare_texture_target                  (VkFormat);
+    void                                prepare_texture_target                  (VkFormat, VkExtent2D);
     void                                destroy_texture_target                  ();
 
     void                                prepare_uniform_buffers                 ();

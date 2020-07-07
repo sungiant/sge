@@ -38,7 +38,7 @@ enum class gamepad_button       { dpad_up, dpad_down, dpad_left, dpad_right, bac
 enum class gamepad_axis         { left_trigger, right_trigger, left_stick_vertical, left_stick_horizontal, right_stick_vertical, right_stick_horizontal, COUNT };
     
 enum class system_bool_state    { fullscreen, imgui, hide_cusor, COUNT };
-enum class system_int_state     { /* renderable area */ screenwidth, screenheight, /* fullscreen area */ displaywidth, displayheight, COUNT };
+enum class system_int_state     { /* renderable area */ screen_width, screen_height, /* fullscreen area */ display_width, display_height, /* renderable area excluding ui */ compute_width, compute_height, COUNT };
 enum class system_string_state  { title, gpu_name, engine_version, COUNT };
 
 class extension;
@@ -95,8 +95,10 @@ public:
     
     void invoke_debug_menu () {
         if (utils::get_flag_at_mask (configuration_state, config_flags::MANAGED_DEBUG_UI)) {
-            if (ImGui::MenuItem (display_name.c_str(), NULL, utils::get_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE))) {
-                utils::toggle_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE);
+            if (utils::get_flag_at_mask (runtime_state, runtime_flags::ACTIVE)) {
+                if (ImGui::MenuItem (display_name.c_str(), NULL, utils::get_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE))) {
+                    utils::toggle_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE);
+                }
             }
         }
     }

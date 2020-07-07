@@ -14,7 +14,15 @@ VkViewport vk::calculate_viewport (const class presentation& p) {
         return utils::init_VkViewport (0, 0, (float) p.extent ().width, (float) p.extent ().height, 0.0f, 1.0f);
     }
 }
-    
+
+VkExtent2D vk::calculate_size (const class presentation& p) {
+    const auto e = p.extent();
+    if (imgui_on) {
+        const int imgui_main_menu_bar_height = ::imgui::ext::guess_main_menu_bar_height();
+        return VkExtent2D { e.width, e.height - imgui_main_menu_bar_height };
+    }
+    else return VkExtent2D { e.width, e.height };
+}
 
 #if TARGET_WIN32
 void vk::create (HINSTANCE hi, HWND hw, int w, int h) {
@@ -51,6 +59,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
         kernel->primary_work_queue (),
         *presentation.get (),
         sge::app::get_content ());
+    compute_target->set_custom_size_fn(std::bind (&vk::calculate_size, this, std::placeholders::_1));
     compute_target->create ();
 
     fullscreen_render = std::make_unique<class fullscreen_render> (
@@ -137,8 +146,14 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
         }
 	}
 	else {
-
-        if (fullscreen_render->need_command_buffers_refresh()) {
+        
+        
+        if (compute_target->need_recreate()) {
+            compute_target->recreate();
+            fullscreen_render->refresh_full ();
+            imgui->refresh ();
+        }
+        else if (fullscreen_render->need_command_buffers_refresh()) {
             fullscreen_render->refresh_command_buffers();
         }
         
@@ -173,7 +188,6 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
             render_finished[0] = imgui->get_render_finished ();
         }
 
-
 		VkSwapchainKHR swap_chain[] = { presentation->swapchain () };
 		auto present_info = utils::init_VkPresentInfoKHR ();
 		present_info.waitSemaphoreCount = 1;
@@ -205,7 +219,6 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 		imgui->refresh ();
     }
     else {
-        
         compute_target->end_of_frame ();
     }
 }

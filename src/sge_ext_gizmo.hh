@@ -42,7 +42,10 @@ public:
         
     }
     virtual void update () override {
-        if (!freecam || !freecam->is_active()) return;
+        if (!freecam || !freecam->is_active()) {
+            set_active(false);
+            return;
+        }
         
         gizmo_obj_orientation = freecam->orientation;
     }
@@ -136,6 +139,7 @@ public:
     }
     
     virtual void custom_debug_ui () override {
+        if (!freecam || !freecam->is_active()) return;
         ImGui::PushStyleColor (ImGuiCol_WindowBg, ImVec4 (0, 0, 0, 0));
         ImGui::Begin ("Gizmo 3D", NULL,
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -147,7 +151,7 @@ public:
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
-            const int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
+            const int screen_w = sge.system__get_state_int(runtime::system_int_state::screen_width);
             math::rect gizmo_container = { { screen_w - gizmo_size, (int) imgui::ext::guess_main_menu_bar_height() }, { gizmo_size, gizmo_size }};
 
             imgui::ext::draw_user_triangles (

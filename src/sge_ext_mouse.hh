@@ -54,8 +54,8 @@ public:
 
     virtual void update () override {
         
-        current_screenwidth = sge.system__get_state_int (sge::runtime::system_int_state::screenwidth);
-        current_screenheight = sge.system__get_state_int (sge::runtime::system_int_state::screenheight);
+        current_screenwidth = sge.system__get_state_int (sge::runtime::system_int_state::screen_width);
+        current_screenheight = sge.system__get_state_int (sge::runtime::system_int_state::screen_height);
         current_dt = sge.timer__get_delta();
         
         imgui_wants_mouse_previous = imgui_wants_mouse_current;

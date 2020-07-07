@@ -96,9 +96,9 @@ void update (sge::app::response& r, const sge::app::api& sge) {
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::escape)) { sge.runtime.system__request_shutdown (); }
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::o)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::imgui); }
     if (sge.input.keyboard.key_just_pressed (sge::runtime::keyboard_key::f)) { sge.runtime.system__toggle_state_bool (sge::runtime::system_bool_state::fullscreen); }
-
-    int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::screenwidth);
-    int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::screenheight);
+    
+    int res_x = sge.runtime.system__get_state_int(sge::runtime::system_int_state::compute_width);
+    int res_y = sge.runtime.system__get_state_int (sge::runtime::system_int_state::compute_height);
 
     UBO_CAMERA uc = ubo_camera;
     uc.position = sge.freecam.position;
