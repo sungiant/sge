@@ -254,6 +254,9 @@ public:
     void shutdown ();
     
     void imgui ();
+    
+    
+    void about_window_content ();
 };
 
 }

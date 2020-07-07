@@ -102,6 +102,7 @@ void draw_user_triangles (
     #endif
     const vector3& obj_pos,
     const quaternion& model_orientation,
+    const uint32_t container_background,
     const bool lighting)
 {
     assert (indices.size() % 3 == 0);
@@ -128,7 +129,7 @@ void draw_user_triangles (
     const ImVec2 im_min = ImVec2(container.location.x, container.location.y);
     const ImVec2 im_max = ImVec2(container.location.x + container.extent.x, container.location.y + container.extent.y);
     
-    drawList.AddRectFilled(im_min, im_max, 0x22000000);
+    drawList.AddRectFilled(im_min, im_max, container_background);
     //drawList.AddRect(im_min, im_max,0xFF00FF00);
     
     const float aspect = (float) container.extent.x / (float) container.extent.y;

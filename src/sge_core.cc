@@ -3,7 +3,6 @@
 #include "sge_app_interface.hh"
 
 namespace sge::core {
-
 //--------------------------------------------------------------------------------------------------------------------//
 
 api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks, std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& z_exts)
@@ -616,12 +615,64 @@ void engine::imgui () {
     
     if (show_dear_imgui_demo_window) ImGui::ShowDemoWindow();
     if (show_about_window) {
-        ImGui::SetNextWindowSize(ImVec2 (180, 240), ImGuiCond_Always);
+        const float w  = 240;
+        ImGui::SetNextWindowSize(ImVec2 (w, 260), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2 ((engine_state->container.current_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
         ImGui::Begin("About", &show_about_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+        
+        if (show_about_window)
+            about_window_content ();
+                
         ImGui::End();
     }
     
     sge::app::debug_ui (*user_response, *user_api);
 }
+    
 
+void engine::about_window_content () {
+    
+    static bool first_run = true;
+    static std::vector<data::vertex_pos_col> toy_obj_verts;
+    static std::vector<uint32_t> toy_obj_indices;
+    static float toy_cam_zn = -0.1f, toy_cam_zf = -300.0f, toy_cam_fov = 45.0f;
+    static math::vector3 toy_cam_pos = math::vector3 { 0, 0, 5 };
+    static math::quaternion toy_cam_orientation = math::quaternion::identity;
+    static math::rect toy_container { { 0, 0 }, { 225, 140 }};
+    static math::vector3 toy_obj_pos = math::vector3 { 0, 0.0f, -1 };
+    static math::quaternion toy_obj_orientation = math::quaternion::identity;
+    static float toy_obj_t = 0.0f, toy_obj_speed = 0.8f;
+    
+    if (first_run) {
+        //std::vector<data::vertex_pos_norm> verts;
+        //data::get_teapot (verts, toy_obj_indices, 1.0f, 4);
+        //for (auto& v : verts)
+        //    toy_obj_verts.emplace_back(data::vertex_pos_col {v.position, 0xFFFFFFFF} );
+        data::get_colourful_cube (toy_obj_verts, toy_obj_indices);
+        first_run = false;
+    }
+
+    toy_obj_t += engine_state->instrumentation.frameTimer * toy_obj_speed;
+    toy_obj_orientation = math::quaternion().set_from_yaw_pitch_roll(toy_obj_t, 2.0 * toy_obj_t, -toy_obj_t);
+    
+    imgui::ext::draw_user_triangles (
+        toy_container,
+        true,
+        toy_cam_pos,
+        toy_cam_orientation,
+        toy_cam_fov * math::DEG2RAD,
+        toy_cam_zn,
+        toy_cam_zf,
+        toy_obj_verts,
+        toy_obj_indices,
+        toy_obj_pos,
+        toy_obj_orientation,
+        0x00000000);
+    
+    ImGui::Text ("SGE ~ Simple Graphics Engine");
+    ImGui::Text ("      written by A.J.Pook");
+    ImGui::Text ("      copyright © 2020");
+    ImGui::Text ("      license: MIT");
 }
+}
+

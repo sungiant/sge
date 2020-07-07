@@ -109,6 +109,7 @@ public:
             const bool active = utils::get_flag_at_mask (runtime_state, runtime_flags::MANAGED_DEBUG_UI_ACTIVE);
             if (active) {
                 bool open = active;
+                ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
                 ImGui::Begin (display_name.c_str(), &open, ImGuiWindowFlags_NoCollapse);
                 managed_debug_ui ();
                 ImGui::End();

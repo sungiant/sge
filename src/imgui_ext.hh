@@ -25,6 +25,7 @@ void draw_user_triangles (
 #endif
     const sge::math::vector3& obj_pos,
     const sge::math::quaternion& model_orientation,
+    const uint32_t container_background = 0x22000000,
     const bool lighting = false);
 
 }
