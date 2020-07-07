@@ -1,8 +1,20 @@
 #include "sge_vk.hh"
 
 #include "sge_vk_context.hh"
+#include "imgui_ext.hh"
 
 namespace sge::vk {
+
+VkViewport vk::calculate_viewport (const class presentation& p) {
+    if (imgui_on) {
+        const int imgui_main_menu_bar_height = ::imgui::ext::guess_main_menu_bar_height();
+        return utils::init_VkViewport (0, imgui_main_menu_bar_height, (float) p.extent ().width, (float) p.extent ().height - imgui_main_menu_bar_height, 0.0f, 1.0f);
+    }
+    else {
+        return utils::init_VkViewport (0, 0, (float) p.extent ().width, (float) p.extent ().height, 0.0f, 1.0f);
+    }
+}
+    
 
 #if TARGET_WIN32
 void vk::create (HINSTANCE hi, HWND hw, int w, int h) {
@@ -48,6 +60,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
         [this]() {
             return compute_target->get_pre_render_texture ().descriptor;
         });
+    fullscreen_render->set_custom_viewport_fn(std::bind (&vk::calculate_viewport, this, std::placeholders::_1));
     fullscreen_render->create ();
 
     // ImGUI
@@ -102,6 +115,7 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
 
 void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags, float dt) {
 
+    
 	bool refresh = false;
 
     compute_target->update (push_flag, ubo_flags, sbo_flags);
@@ -124,6 +138,10 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 	}
 	else {
 
+        if (fullscreen_render->need_command_buffers_refresh()) {
+            fullscreen_render->refresh_command_buffers();
+        }
+        
         auto image_index = std::get<sge::vk::image_index> (image_index_opt);
         if (imgui_on) {
             imgui->enqueue (image_index);
@@ -183,10 +201,11 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
     if (refresh) {
 		presentation->refresh ();
         compute_target->recreate ();
-		fullscreen_render->refresh ();
+		fullscreen_render->refresh_full ();
 		imgui->refresh ();
     }
     else {
+        
         compute_target->end_of_frame ();
     }
 }

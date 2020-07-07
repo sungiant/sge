@@ -34,6 +34,11 @@ namespace sge::vk {
         void create_systems (const std::function <void()>&);
         void destroy ();
         void update (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&, float);
+        
+    private:
+    
+        
+        VkViewport calculate_viewport (const class presentation& p);
     };
 
 };

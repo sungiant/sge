@@ -16,7 +16,16 @@ inline VkViewport init_VkViewport (float width, float height, float min_depth, f
     viewport.maxDepth = max_depth;
     return viewport;
 }
-
+inline VkViewport init_VkViewport (float zx, float zy, float width, float height, float min_depth, float max_depth) {
+    VkViewport viewport{};
+    viewport.x = zx;
+    viewport.y = zy;
+    viewport.width = width;
+    viewport.height = height;
+    viewport.minDepth = min_depth;
+    viewport.maxDepth = max_depth;
+    return viewport;
+}
 inline VkRect2D init_VkRect2D (uint32_t width, uint32_t height, int32_t offset_x = 0, int32_t offset_y = 0) {
     VkRect2D rect{};
     rect.extent.width = width;
@@ -557,8 +566,8 @@ inline VkPipelineDynamicStateCreateInfo init_VkPipelineDynamicStateCreateInfo (c
     VkPipelineDynamicStateCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     create_info.pNext = nullptr;
-    create_info.flags = flags;
-    create_info.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size ());
+    //create_info.flags = 0;
+    create_info.dynamicStateCount = (uint32_t) dynamic_states.size ();
     create_info.pDynamicStates = dynamic_states.data ();
     return create_info;
 }

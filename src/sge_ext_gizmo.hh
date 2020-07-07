@@ -142,12 +142,13 @@ public:
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
             ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
+            
         ImGui::SetWindowPos (ImVec2 (0, 0), ImGuiCond_FirstUseEver);
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
             const int screen_w = sge.system__get_state_int(runtime::system_int_state::screenwidth);
-            math::rect gizmo_container = { { screen_w - gizmo_size, 0 }, { gizmo_size, gizmo_size }};
+            math::rect gizmo_container = { { screen_w - gizmo_size, (int) imgui::ext::guess_main_menu_bar_height() }, { gizmo_size, gizmo_size }};
 
             imgui::ext::draw_user_triangles (
                 gizmo_container,

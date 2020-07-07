@@ -6,6 +6,8 @@
 
 namespace imgui::ext {
 
+int guess_main_menu_bar_height ();
+    
 void draw_user_triangles (
     const sge::math::rect& user_container,
     const bool user_container_relative_to_window,

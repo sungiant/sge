@@ -2,6 +2,7 @@
 
 #include "sge.hh"
 #include "sge_data.hh"
+#include "imgui_ext.hh"
 
 // OVERLAY
 //--------------------------------------------------------------------------------------------------------------------//
@@ -23,11 +24,12 @@ public:
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
             ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
+        
         ImGui::SetWindowPos (ImVec2 (0, 0), ImGuiCond_FirstUseEver);
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
-            int y = 20;
+            int y = 20 + imgui::ext::guess_main_menu_bar_height();
             int* py = &y;
             const int line_spacing = 14;
             const std::function<void ()> next_line = [py]() {

@@ -40,6 +40,17 @@ void set_image_layout (
     VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
     VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
+    
+
+inline bool equal(const VkViewport& l, const VkViewport& r) {
+    return l.x == r.x
+        && l.y == r.y
+        && l.width == r.width
+        && l.height == r.height
+        && l.minDepth == r.minDepth
+        && l.maxDepth == r.maxDepth;
+}
+    
 #include "sge_vk_utils.inl"
 
 }

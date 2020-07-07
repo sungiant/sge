@@ -34,10 +34,31 @@ public:
 
     void                                create                                  ();
     void                                destroy                                 ();
-    void                                refresh                                 ();
-
+    void                                refresh_full                            ();
+    
+    void                                refresh_command_buffers                 ();
+    
+    bool                                need_command_buffers_refresh            () {
+        update_target_viewport ();
+        return state.target_viewport.has_value();
+        
+    }
+    
+    void set_custom_viewport_fn (const std::function<VkViewport(const class presentation&)>& z_fn) { state.custom_viewport_fn = z_fn; update_target_viewport (); }
+    void has_custom_viewport_fn () { state.custom_viewport_fn.has_value (); }
+    void clear_custom_viewport_fn () { state.custom_viewport_fn = std::nullopt; update_target_viewport (); }
+    
 private:
-
+    void update_target_viewport () {
+        const auto updated = state.custom_viewport_fn.has_value()
+            ? state.custom_viewport_fn.value() (presentation)
+            : default_viewport_fn (presentation);
+        
+        if (!utils::equal (updated, state.current_viewport))
+            state.target_viewport = updated;
+        else state.target_viewport.reset ();
+    }
+    
     struct state {
         VkDescriptorSetLayout           descriptor_set_layout;
         VkDescriptorPool                descriptor_pool;
@@ -47,6 +68,9 @@ private:
         VkCommandPool                   command_pool;
         std::vector<VkCommandBuffer>    command_buffers;
         VkSemaphore                     render_finished;
+        VkViewport                      current_viewport;
+        std::optional<VkViewport>       target_viewport;
+        std::optional<std::function<VkViewport(const class presentation&)>> custom_viewport_fn;
     };
 
     const context&                      context;
@@ -54,6 +78,7 @@ private:
     const presentation&                 presentation;
     const tex_fn                        compute_tex;
     state                               state;
+    const std::function<VkViewport(const class presentation&)> default_viewport_fn;
 
 
 private:

@@ -1,8 +1,33 @@
 #include "imgui_ext.hh"
 
+#include <imgui/imgui_internal.h>
+
 namespace imgui::ext {
     
 using namespace sge::math;
+
+int guess_main_menu_bar_height () { // https://github.com/ocornut/imgui/issues/252
+    const auto context = ImGui::GetCurrentContext();
+    int result = 19; // wild guess
+    if (context) {
+        result = context->FontSize + context->Style.FramePadding.y * 2; // best guess
+    }
+    return result;
+}
+
+void add_triangle_filled_multi_colour(ImDrawList& drawList, const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, ImU32 col1, ImU32 col2, ImU32 col3) {
+    if (((col1 | col2 | col3) & IM_COL32_A_MASK) == 0)
+      return;
+
+    const ImVec2 uv = drawList._Data->TexUvWhitePixel;
+    drawList.PrimReserve(3, 3);
+    drawList.PrimWriteIdx((ImDrawIdx)(drawList._VtxCurrentIdx));
+    drawList.PrimWriteIdx((ImDrawIdx)(drawList._VtxCurrentIdx+1));
+    drawList.PrimWriteIdx((ImDrawIdx)(drawList._VtxCurrentIdx+2));
+    drawList.PrimWriteVtx(p1, uv, col1);
+    drawList.PrimWriteVtx(p2, uv, col2);
+    drawList.PrimWriteVtx(p3, uv, col3);
+}
 
 inline ImVec2 ndc_to_container_coordinates (const vector3& ndc, const rect& container) {
     return ImVec2 (
@@ -161,7 +186,7 @@ void draw_user_triangles (
 
         if (tri_indices[i].is_tri_multicoloured (vertices)) {
             uint32_t c0, c1, c2; tri_indices[i].get_tri_colours (vertices, c0, c1, c2);
-            drawList.AddTriangleFilledMultiColor (p0, p1, p2, c0, c1, c2);
+            add_triangle_filled_multi_colour (drawList, p0, p1, p2, c0, c1, c2);
         } else {
             drawList.AddTriangleFilled (p0, p1, p2, tri_col);
         }

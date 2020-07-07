@@ -575,7 +575,6 @@ void engine::imgui () {
     static bool show_about_window = false;
     static bool show_dear_imgui_demo_window = false;
     
-    
     // top level imgui fn, all imgui calls are from this call.
     if (ImGui::BeginMainMenuBar()) {
         
