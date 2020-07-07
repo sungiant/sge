@@ -138,7 +138,7 @@ public:
         
         ImGui::Separator ();
          
-        ImGui::Columns (3);
+        ImGui::Columns (6);
 
 #define SGE_X(x) { bool key_ ## x = is_key_down (runtime::keyboard_key::x); ImGui::Checkbox (#x, &key_ ## x); ImGui::NextColumn (); }
         SGE_X (escape); SGE_X (enter); SGE_X (spacebar); SGE_X (shift); SGE_X (control); SGE_X (alt); SGE_X (backspace); SGE_X (tab);

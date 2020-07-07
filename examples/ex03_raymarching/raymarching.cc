@@ -38,17 +38,18 @@ struct UBO_CAMERA { // https://www.reddit.com/r/vulkan/comments/9spolm/help_with
 
 struct UBO_SETTINGS {
     enum Flags {
-        CalculateAO            = 0x01,
-        CalculateShadows       = 0x03,
-        CalculateLighting      = 0x07,
-        EnableLazyness         = 0xf,
-        EnablebufferDownsizing = 0x10,
+        CalculateAO            = (1 << 0),
+        CalculateShadows       = (1 << 1),
+        CalculateLighting      = (1 << 2),
+        EnableLazyness         = (1 << 3),
+        RenderLazynessMarkers  = (1 << 4),
+        DebugAxes              = (1 << 5)
     };
 
     int         display_mode = 0;
     float       gamma = 2.2f;
     int         iterations = 64;
-    uint32_t    flags =  CalculateAO | CalculateShadows | CalculateLighting | EnableLazyness | EnablebufferDownsizing;
+    uint32_t    flags =  CalculateAO | CalculateShadows | CalculateLighting | EnableLazyness;
     float       soft_shadow_factor = 10.0f;
 
     bool operator == (const UBO_SETTINGS& ubo) const {
@@ -121,7 +122,6 @@ void update (sge::app::response& r, const sge::app::api& sge) {
         push.no_change = false;
         r.push_constants_changed = true;
     }
-
 }
 
 const char* display_mode_text[] {
@@ -150,10 +150,14 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         bool shadows = sge::utils::get_flag_at_index (us.flags, 1);
         bool lighting = sge::utils::get_flag_at_index (us.flags, 2);
         bool lazy = sge::utils::get_flag_at_index (us.flags, 3);
+        bool lazy_markers = sge::utils::get_flag_at_index (us.flags, 4);
+        bool debug_axes = sge::utils::get_flag_at_index (us.flags, 5);
         if (ImGui::RadioButton("enable AO", ao)) { sge::utils::toggle_flag_at_index (us.flags, 0); }
         if (ImGui::RadioButton("enable shadows", shadows)) {sge::utils::toggle_flag_at_index (us.flags, 1); }
         if (ImGui::RadioButton("enable lighting", lighting)) { sge::utils::toggle_flag_at_index (us.flags, 2); }
         if (ImGui::RadioButton("enable lazyness", lazy)) { sge::utils::toggle_flag_at_index (us.flags, 3); }
+        if (ImGui::RadioButton("render lazyness markers", lazy_markers)) { sge::utils::toggle_flag_at_index (us.flags, 4); }
+        if (ImGui::RadioButton("show debug axes", debug_axes)) { sge::utils::toggle_flag_at_index (us.flags, 5); }
 
         ImGui::SliderFloat("shadow_factor", &us.soft_shadow_factor, 1.0f, 100.0f);
 

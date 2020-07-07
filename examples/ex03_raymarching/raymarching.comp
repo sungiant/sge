@@ -221,12 +221,16 @@ Z sdf_m (vec3 position) {
     Z shape_ab = sdf_intersection_m (shape_a, shape_b);
     Z shape = sdf_difference_m (shape_ab, shape_cde);
 
-    Z shape_x = Z (sdf_cuboid (position, vec3 (10.0, 0.0, 0.0), vec3(20, 0.1, 0.1)), 7);
-    Z shape_y = Z (sdf_cuboid (position, vec3 (0.0, 10.0, 0.0), vec3(0.1, 20, 0.1)), 8);
-    Z shape_z = Z (sdf_cuboid (position, vec3 (0.0, 0.0, 10.0), vec3(0.1, 0.1, 20)), 9);
-    Z axis = sdf_union_m (sdf_union_m (shape_x, shape_y), shape_z);
-
-    return sdf_union_m (sdf_union_m (sdf_union_m (sdf_union_m (boxes, ground), debris), shape), axis);
+    if ((((ubo_settings.flags >> 5) & 1u) > 0)) {
+        Z shape_x = Z (sdf_cuboid (position, vec3 (10.0, 0.0, 0.0), vec3(20, 0.1, 0.1)), 7);
+        Z shape_y = Z (sdf_cuboid (position, vec3 (0.0, 10.0, 0.0), vec3(0.1, 20, 0.1)), 8);
+        Z shape_z = Z (sdf_cuboid (position, vec3 (0.0, 0.0, 10.0), vec3(0.1, 0.1, 20)), 9);
+        Z axis = sdf_union_m (sdf_union_m (shape_x, shape_y), shape_z);
+        return sdf_union_m (sdf_union_m (sdf_union_m (sdf_union_m (boxes, ground), debris), shape), axis);
+    }
+    else {
+        return sdf_union_m (sdf_union_m (sdf_union_m (boxes, ground), debris), shape);
+    }
 }
 
 
@@ -498,10 +502,13 @@ void main() {
 
     if (push.no_change && (((ubo_settings.flags >> 3) & 1u) > 0)) {
         // nothing changed, don't bother
-        if (        gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 0, 0, 1)); }
-        if (dim.x - gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 1, 0, 1)); }
-        if (        gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 0, 1)); }
-        if (dim.x - gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 1, 1)); }
+        
+        if ((((ubo_settings.flags >> 4) & 1u) > 0)) { // render markers to show we're not rendering
+            if (        gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 0, 0, 1)); }
+            if (dim.x - gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 1, 0, 1)); }
+            if (        gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 0, 1)); }
+            if (dim.x - gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 1, 1)); }
+        }
     }
     else {
         const vec3 bg = vec3 (.4) * (1. - (length(uv - vec2(0.5)) - .2));
