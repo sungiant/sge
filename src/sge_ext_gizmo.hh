@@ -56,6 +56,83 @@ public:
         ImGui::SliderFloat("near", &gizmo_cam_zn, -50.0f, 0.0f);
         ImGui::SliderFloat("far", &gizmo_cam_zf, -50.0f, 0.0f);
         ImGui::SliderFloat("fov", &gizmo_cam_fov, 0.0f, 180.0f);
+        
+        const math::vector3 point_of_interest = math::vector3::zero;
+        const float current_distance_from_camera = freecam->position.distance (point_of_interest);
+
+#define SET_ORI(y, p, r) freecam->orientation = math::quaternion().set_from_yaw_pitch_roll (y, p, r)
+#define SET_POS freecam->position = point_of_interest + math::matrix33().set_from_orientation (freecam->orientation).backward () * current_distance_from_camera
+      
+        ImGui::Columns (3);
+        
+        
+        if (ImGui::Button ("+X____")) { SET_ORI (math::HALF_PI, 0, 0);           SET_POS; }
+        if (ImGui::Button ("-X____")) { SET_ORI (math::HALF_PI * 3.0f, 0, 0);    SET_POS; }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("__+Y__")) {
+            // todo: this doesn't work right now as camera only has an orientation (it doesn't have an up vector - all of the orientations below are the same)
+            // const math::vector3 b = math::matrix33().set_from_orientation (freecam->orientation).backward ();
+            // if (abs (b.x) > abs (b.z)) {
+            //     if (b.x >= 0)  SET_ORI (math::HALF_PI, -math::HALF_PI, 0);SET_POS;
+            //     else           SET_ORI (3.0f * math::HALF_PI, -math::HALF_PI, 0);SET_POS;
+            // }
+            // else {
+            //     if (b.z >= 0)  SET_ORI (0, -math::HALF_PI, 0);SET_POS;
+            //     else           SET_ORI (math::PI, -math::HALF_PI, 0);SET_POS;
+            // }
+            SET_ORI (0, -math::HALF_PI, 0);SET_POS; // this is the best we can do for now without changing the freecam
+        }
+        if (ImGui::Button ("__-Y__")) {
+            // todo: this doesn't work right now as camera only has an orientation (it doesn't have an up vector - all of the orientations below are the same)
+            // const math::vector3 b = math::matrix33().set_from_orientation (freecam->orientation).backward ();
+            // if (abs (b.x) > abs (b.z)) {
+            //     if (b.x >= 0)  SET_ORI (math::HALF_PI, math::HALF_PI, 0);SET_POS;
+            //     else           SET_ORI (3.0f * math::HALF_PI, math::HALF_PI, 0);SET_POS;
+            // }
+            // else {
+            //     if (b.z >= 0)  SET_ORI (0, math::HALF_PI, 0);SET_POS;
+            //     else           SET_ORI (math::PI, math::HALF_PI, 0);SET_POS;
+            // }
+            SET_ORI (0, math::HALF_PI, 0);SET_POS; // this is the best we can do for now without changing the freecam
+        }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("____+Z")) { freecam->orientation = math::quaternion::identity;    SET_POS; }
+        if (ImGui::Button ("____-Z")) { SET_ORI (math::PI, 0, 0);                SET_POS; }
+        ImGui::NextColumn ();
+        ImGui::Separator ();
+        if (ImGui::Button ("+X__+Z")) { SET_ORI (math::HALF_PI * 0.5f, 0, 0);   SET_POS; }
+        if (ImGui::Button ("+X__-Z")) { SET_ORI (math::HALF_PI * 1.5f, 0, 0);   SET_POS; }
+        if (ImGui::Button ("-X__-Z")) { SET_ORI (math::HALF_PI * 2.5f, 0, 0);   SET_POS; }
+        if (ImGui::Button ("-X__+Z")) { SET_ORI (math::HALF_PI * 3.5f, 0, 0);   SET_POS; }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("__+Y+Z")) { SET_ORI (0, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("__-Y+Z")) { SET_ORI (0, math::HALF_PI * 0.5f,0);   SET_POS; }
+        if (ImGui::Button ("__+Y-Z")) { SET_ORI (math::PI, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("__-Y-Z")) { SET_ORI (math::PI, math::HALF_PI * 0.5f,0);   SET_POS; }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("+X+Y__")) { SET_ORI (math::HALF_PI, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("+X-Y__")) { SET_ORI (math::HALF_PI, math::HALF_PI * 0.5f,0);   SET_POS; }
+        if (ImGui::Button ("-X-Y__")) { SET_ORI (math::HALF_PI * 3.0f, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("-X+Y__")) { SET_ORI (math::HALF_PI * 3.0f, math::HALF_PI * 0.5f,0);   SET_POS; }
+        ImGui::NextColumn ();
+        ImGui::Columns (1);
+        ImGui::Separator ();
+        ImGui::Columns (4);
+        if (ImGui::Button ("+X+Y+Z")) { SET_ORI (math::HALF_PI * 0.5f, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("+X+Y-Z")) { SET_ORI (math::HALF_PI * 1.5f, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("+X-Y+Z")) { SET_ORI (math::HALF_PI * 0.5f, math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("+X-Y-Z")) { SET_ORI (math::HALF_PI * 1.5f, math::HALF_PI * 0.5f, 0);   SET_POS; }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("-X+Y+Z")) { SET_ORI (-math::HALF_PI * 0.5f, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("-X+Y-Z")) { SET_ORI (-math::HALF_PI * 1.5f, -math::HALF_PI * 0.5f, 0);   SET_POS; }
+        ImGui::NextColumn ();
+        if (ImGui::Button ("-X-Y+Z")) { SET_ORI (-math::HALF_PI * 0.5f, math::HALF_PI * 0.5f, 0);   SET_POS; }
+        if (ImGui::Button ("-X-Y-Z")) { SET_ORI (-math::HALF_PI * 1.5f, math::HALF_PI * 0.5f, 0);   SET_POS; }
+        ImGui::NextColumn ();
+        ImGui::Columns (1);
+#undef SET_POS
+#undef SET_ORI
     }
     
     virtual void custom_debug_ui () override {

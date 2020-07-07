@@ -12,6 +12,10 @@ struct freecam : public runtime::view {
 
     math::vector3 position;
     math::quaternion orientation;
+    
+    
+    math::vector3 default_position;
+    math::quaternion default_orientation;
 
     float traverse_sensitivity = 1.0f;
     float look_sensitivity = 1.0f;
@@ -31,18 +35,24 @@ struct freecam : public runtime::view {
     constexpr static float MOUSE_F = 1.0f / 1.40f; // moving 140% of screen space per second is equivalent to holding a joystick on full
     
     freecam (const runtime::api& z) : runtime::view (z, "Freecam") {
-        reset();
-        set_active(false);
-    }
-
-    void reset () {
         float y = 4.0f;
         float zx = 6.0f;
-        position = { zx, y, zx };
-        orientation.set_from_yaw_pitch_roll(1.0f * 3.1415962f / 4.0f, -(3.1415962f / 2.0f) + (atan(sqrt(zx * zx * 2.0f) / y)), 0.0f);
+        default_position = { zx, y, zx };
+        default_orientation.set_from_yaw_pitch_roll(1.0f * 3.1415962f / 4.0f, -(3.1415962f / 2.0f) + (atan(sqrt(zx * zx * 2.0f) / y)), 0.0f);
+        position = default_position;
+        orientation = default_orientation;
+        set_active(false);
     }
     
     virtual void update () override {
+        static bool flag = false;
+        
+        if (!flag) {
+            flag = true;
+            position = default_position;
+            orientation = default_orientation;
+        }
+        
         const float dt = sge.timer__get_delta ();
 
         const auto& keyboard = *static_cast <ext::keyboard*> (sge.extension_get (runtime::type_id<ext::keyboard>()));
@@ -148,7 +158,14 @@ struct freecam : public runtime::view {
             ImGui::Text("euler angles (yaw:%.2f, pitch:%.2f, roll:%.2f)", camera_rotation_euler_angles.x * math::RAD2DEG, camera_rotation_euler_angles.y * math::RAD2DEG, camera_rotation_euler_angles.z * math::RAD2DEG);
         }
         
-        if (ImGui::Button("reset")) reset();
+        if (ImGui::Button("reset")){
+            position = default_position;
+            orientation = default_orientation;
+        }
+        
+        if (ImGui::Button("look at origin"))
+            orientation.set_from_rotation(math::matrix44().set_as_view_transform_from_look_at_target (position, math::vector3::zero, math::vector3::up).get_rotation_component());
+        
         ImGui::SliderFloat("fov", &fov, freecam::FOV_MIN, freecam::FOV_MAX);
         ImGui::SliderFloat("near", &near, 0.0f, 1000.0f);
         ImGui::SliderFloat("far", &far, 0.0f, 1000.0f);
