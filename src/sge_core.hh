@@ -256,7 +256,10 @@ public:
     void imgui ();
     
     
-    void about_window_content ();
+    void about_window (bool*);
+    void host_window (bool*);
+    void graphics_window (bool*);
+    void memory_window (bool*);
 };
 
 }

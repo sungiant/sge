@@ -571,9 +571,27 @@ void engine::shutdown () {
     engine_state.reset ();
 }
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//====================================================================================================================//
 
 void engine::imgui () {
     static bool show_about_window = false;
+    static bool show_engine_host_window = false;
+    static bool show_engine_graphics_window = false;
+    static bool show_engine_memory_window = false;
     static bool show_dear_imgui_demo_window = false;
     
     // top level imgui fn, all imgui calls are from this call.
@@ -591,6 +609,25 @@ void engine::imgui () {
 #endif
             ImGui::EndMenu();
         }
+        
+        if (ImGui::BeginMenu("Engine")) {
+            
+            if (ImGui::MenuItem("Host", NULL, show_engine_host_window)) {
+                show_engine_host_window = !show_engine_host_window;
+            }
+            
+            if (ImGui::MenuItem("Graphics", NULL, show_engine_graphics_window)) {
+                show_engine_graphics_window = !show_engine_graphics_window;
+            }
+            
+            if (ImGui::MenuItem("Memory", NULL, show_engine_memory_window)) {
+                show_engine_memory_window = !show_engine_memory_window;
+            }
+            
+            
+            ImGui::EndMenu();
+        }
+        
         if (ImGui::BeginMenu("Runtime")) {
             for (auto& kvp : engine_extensions) {
                 const size_t id = kvp.first;
@@ -598,14 +635,18 @@ void engine::imgui () {
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Debug")) {
-            if (ImGui::MenuItem("Dear ImGui Demo", NULL, show_dear_imgui_demo_window)) {
-                show_dear_imgui_demo_window = !show_dear_imgui_demo_window;
-            }
-            
+        
+        if (ImGui::BeginMenu("User")) {
             ImGui::EndMenu();
         }
         
+        if (ImGui::BeginMenu("Help")) {
+            if (ImGui::MenuItem("Dear ImGui Demo", NULL, show_dear_imgui_demo_window)) {
+                show_dear_imgui_demo_window = !show_dear_imgui_demo_window;
+            }
+            ImGui::EndMenu();
+        }
+                
         ImGui::EndMainMenuBar();
     }
     for (auto& kvp : engine_extensions) {
@@ -613,32 +654,30 @@ void engine::imgui () {
         engine_extensions[id]->invoke_debug_ui();
     }
     
+    if (show_about_window)           about_window    (&show_about_window);
+    if (show_engine_host_window)     host_window     (&show_engine_host_window);
+    if (show_engine_graphics_window) graphics_window (&show_engine_graphics_window);
+    if (show_engine_memory_window)   memory_window   (&show_engine_memory_window);
+    
     if (show_dear_imgui_demo_window) ImGui::ShowDemoWindow();
-    if (show_about_window) {
-        const float w  = 240;
-        ImGui::SetNextWindowSize(ImVec2 (w, 260), ImGuiCond_Always);
-        ImGui::SetNextWindowPos(ImVec2 ((engine_state->container.current_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
-        ImGui::Begin("About", &show_about_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-        
-        if (show_about_window)
-            about_window_content ();
-                
-        ImGui::End();
-    }
     
     sge::app::debug_ui (*user_response, *user_api);
 }
     
 
-void engine::about_window_content () {
-    
+void engine::about_window (bool* show) {
+    const int w  = 240;
+    ImGui::SetNextWindowSize(ImVec2 (w, 260), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2 ((engine_state->container.current_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
+    ImGui::Begin("About", show, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+
     static bool first_run = true;
     static std::vector<data::vertex_pos_col> toy_obj_verts;
     static std::vector<uint32_t> toy_obj_indices;
     static float toy_cam_zn = -0.1f, toy_cam_zf = -300.0f, toy_cam_fov = 45.0f;
     static math::vector3 toy_cam_pos = math::vector3 { 0, 0, 5 };
     static math::quaternion toy_cam_orientation = math::quaternion::identity;
-    static math::rect toy_container { { 0, 0 }, { 225, 140 }};
+    static math::rect toy_container { { 0, 0 }, { w - 15, 140 }};
     static math::vector3 toy_obj_pos = math::vector3 { 0, 0.0f, -1 };
     static math::quaternion toy_obj_orientation = math::quaternion::identity;
     static float toy_obj_t = 0.0f, toy_obj_speed = 0.8f;
@@ -673,6 +712,46 @@ void engine::about_window_content () {
     ImGui::Text ("      written by A.J.Pook");
     ImGui::Text ("      copyright © 2020");
     ImGui::Text ("      license: MIT");
+
+    ImGui::End();
 }
+
+void engine::host_window (bool* show) {
+    ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
+    ImGui::Begin("SGE Host", show, ImGuiWindowFlags_NoCollapse);
+    
+    ImGui::Text ("Canvas size: %dx%d",
+        engine_state->container.current_width,
+        engine_state->container.current_height);
+    
+    
+    ImGui::Text ("Maximum canvas size: %dx%d",
+        engine_state->container.max_width,
+        engine_state->container.max_height);
+    ImGui::End ();
+    
+}
+
+void engine::graphics_window (bool* show) {
+    ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
+    
+    ImGui::Begin("SGE Graphics", show, ImGuiWindowFlags_NoCollapse);
+    
+    ImGui::Text ("Compute target size: %dx%d",
+        engine_state->graphics.compute_target->current_width (),
+        engine_state->graphics.compute_target->current_height ());
+    
+    
+    ImGui::End ();
+}
+
+void engine::memory_window (bool* show) {
+    ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
+    ImGui::Begin("SGE Memory", show, ImGuiWindowFlags_NoCollapse);
+    
+    //engine_state->graphics.kernel->custom_allocator->debug_ui_content();
+    ImGui::End ();
+}
+    
 }
 
