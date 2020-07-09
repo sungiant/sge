@@ -25,7 +25,7 @@ struct configuration {
     int app_width = 640;
     int app_height = 360;
     bool enable_console = false;
-    bool ignore_os_dpi_scaling = false;
+    bool ignore_os_dpi_scaling = true;
 
     // todo, this shouldn't live here.
     int adjusted_app_width () const { return app_width; }

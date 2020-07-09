@@ -132,9 +132,15 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
     
 	bool refresh = false;
 
-	auto image_index_opt = presentation->next_image ();
-
-    VkResult* failure = std::get_if<VkResult> (&image_index_opt);
+    VkResult* failure = nullptr;
+    std::variant<VkResult, image_index> image_index_opt;
+    if (presentation->in_limbo ()) {
+        refresh = true;
+    }
+    else {
+        image_index_opt = presentation->next_image ();
+        failure = std::get_if<VkResult> (&image_index_opt);
+    }
 
 	if (failure) {
         switch (*failure) {
@@ -147,23 +153,17 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
             default: break;
         }
 	}
-	else {
-        // update
-        const VkExtent2D latest_compute_size = calculate_compute_size ();
-        if (!utils::equal (latest_compute_size, state.compute_size)) {
-            state.compute_size = latest_compute_size;
-            compute_target->recreate ();
-        }
 
-        const VkViewport latest_canvas_viewport = calculate_canvas_viewport ();
-        if (!utils::equal (latest_canvas_viewport, state.canvas_viewport)) {
-            state.canvas_viewport = latest_canvas_viewport;
-            fullscreen_render->refresh_full ();
-        }
+    if (!failure && !refresh) {
+        if (!utils::equal (calculate_compute_size (), state.compute_size)) { refresh = true; }
+        if (!utils::equal (calculate_canvas_viewport (), state.canvas_viewport)) { refresh = true; }
 
-        // system updates
         compute_target->update (push_flag, ubo_flags, sbo_flags);
-        fullscreen_render->update ();
+    }
+
+
+	if (!failure && !refresh) {
+
 
         // system enqueues
         compute_target->enqueue ();
@@ -225,6 +225,13 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
     // RECREATE
     if (refresh) {
 		presentation->refresh ();
+
+        if (presentation->in_limbo ())
+            return;
+
+        state.compute_size = calculate_compute_size ();
+        state.canvas_viewport = calculate_canvas_viewport ();
+
         compute_target->recreate ();
 		fullscreen_render->refresh_full ();
 		imgui->refresh ();

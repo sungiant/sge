@@ -31,8 +31,6 @@ public:
 
     ~fullscreen_render () {}
 
-    void                                update                                  ();
-
     const VkQueue                       get_queue                               ()                  const { return context.get_queue (identifier); };
     const VkCommandBuffer               get_command_buffer                      (image_index i)     const { return state.command_buffers[i]; }
     const VkSemaphore                   get_render_finished                     ()                  const { return state.render_finished; }
@@ -55,7 +53,6 @@ private:
         std::vector<VkCommandBuffer>    command_buffers;
         VkSemaphore                     render_finished;
         VkViewport                      current_viewport;
-        std::optional<VkViewport>       target_viewport;
     };
 
     const context&                      context;

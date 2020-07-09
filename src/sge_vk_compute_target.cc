@@ -13,6 +13,7 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
     , get_size_fn (z_size_fn)
 {
     state.current_size = get_size_fn ();
+    assert (state.current_size.width > 0 && state.current_size.height > 0);
 }
 
     
@@ -42,7 +43,7 @@ void compute_target::recreate () {
     destroy_r ();
 
     state.current_size = get_size_fn ();
-    state.target_size.reset ();
+    assert (state.current_size.width > 0 && state.current_size.height > 0);
 
     create_r ();
 }
@@ -62,7 +63,6 @@ void compute_target::create () {
 }
 
 void compute_target::create_r () {
-
     prepare_texture_target (VK_FORMAT_R8G8B8A8_UNORM, state.current_size);
     prepare_uniform_buffers ();
     prepare_blob_buffers ();
@@ -128,14 +128,7 @@ void compute_target::append_pre_render_submissions (std::vector<VkSemaphore>& wa
     stage_flags.emplace_back (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 }
 
-void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {
-
-    const auto updated = get_size_fn ();
-
-    if (!utils::equal (updated, state.current_size))
-        state.target_size = updated;
-    else state.target_size.reset ();
-    
+void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {  
 
     if (push_flag) {
         record_command_buffer (state.current_size);

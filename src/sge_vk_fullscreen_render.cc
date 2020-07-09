@@ -39,10 +39,6 @@ void fullscreen_render::destroy () {
     state.render_finished = VK_NULL_HANDLE;
 }
 
-void fullscreen_render::update () {
-    assert (utils::equal (get_viewport_fn (), state.current_viewport));
-}
-
 void fullscreen_render::create_r () {
     create_pipeline ();
     create_descriptor_pool ();
@@ -68,7 +64,6 @@ void fullscreen_render::refresh_full () {
     destroy_r ();
 
     state.current_viewport = get_viewport_fn ();
-    state.target_viewport.reset ();
 
     create_r ();
 }
@@ -77,7 +72,6 @@ void fullscreen_render::refresh_command_buffers () {
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
 
     state.current_viewport = get_viewport_fn ();
-    state.target_viewport.reset ();
     
     create_command_buffers ();
 }
@@ -211,11 +205,11 @@ void fullscreen_render::create_command_buffers () {
 
     auto render_pass_begin_info = utils::init_VkRenderPassBeginInfo ();
     render_pass_begin_info.renderPass = presentation.fullscreen_render_pass ();
-    //render_pass_begin_info.renderArea.offset = VkOffset2D{ (int32_t)state.current_viewport.x, (int32_t)state.current_viewport.y };
-    //render_pass_begin_info.renderArea.extent = VkExtent2D{ (uint32_t)state.current_viewport.width, (uint32_t)state.current_viewport.height };
+    render_pass_begin_info.renderArea.offset = VkOffset2D{ (int32_t)state.current_viewport.x, (int32_t)state.current_viewport.y };
+    render_pass_begin_info.renderArea.extent = VkExtent2D{ (uint32_t)state.current_viewport.width, (uint32_t)state.current_viewport.height };
 
-    render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = presentation.extent ();
+    //render_pass_begin_info.renderArea.offset = { 0, 0 };
+    //render_pass_begin_info.renderArea.extent = presentation.extent ();
 
     for (int i = 0; i < state.command_buffers.size (); i++) {
         const auto begin_info = utils::init_VkCommandBufferBeginInfo (VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);

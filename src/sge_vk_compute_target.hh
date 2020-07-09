@@ -35,10 +35,7 @@ public:
 
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
     void                                end_of_frame                            ();
-    
-    
-    bool                                need_recreate                           () { return state.target_size.has_value(); }
-    
+
     int current_width () const { return state.current_size.width; }
     int current_height () const { return state.current_size.height; }
 private:
@@ -63,14 +60,13 @@ private:
         std::vector<std::optional<dataspan>> pending_blob_changes;
         
         VkExtent2D                      current_size;
-        std::optional<VkExtent2D>       target_size;
     };
 
     const context&                      context;
     const queue_identifier              identifier;
     const sge::app::content&            content;
     state                               state;
-    const std::function<VkExtent2D()> get_size_fn;
+    const std::function<VkExtent2D()>   get_size_fn;
 
     void                                create_r                                ();
     void                                create_rl                               ();

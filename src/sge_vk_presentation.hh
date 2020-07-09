@@ -43,6 +43,9 @@ public:
     const VkExtent2D&                   extent                                 ()                   const { return state.swapchain_extent; }
     const VkSwapchainKHR&               swapchain                              ()                   const { return state.swapchain; }
 
+
+
+    bool in_limbo () { return state.was_last_call_to_create_r_successful.has_value () && state.was_last_call_to_create_r_successful.value () == false; }
 private:
 
     struct state {
@@ -64,6 +67,8 @@ private:
         VkDeviceMemory                  depth_stencil_memory;
         VkImageView                     depth_stencil_view;
         std::vector<queue_family_index> queue_families_requiring_swapchain_access;
+
+        std::optional<bool>             was_last_call_to_create_r_successful;
     };
 
     const context&                      context;

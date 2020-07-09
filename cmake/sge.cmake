@@ -27,7 +27,7 @@ target_include_directories (sge PUBLIC $ENV{MOLTEN_VK}/include)
 target_link_libraries (sge ${MVK_FRAMEWORK})
 
 elseif (G_TARGET STREQUAL "LINUX")
-	
+
 add_library (sge ${SOURCE_LIST})
 
 target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/)
@@ -41,7 +41,7 @@ if (G_TARGET STREQUAL "WIN32")
 add_definitions (-DSGE_VK_USE_CUSTOM_ALLOCATOR)
 endif ()
 
-#add_definitions (-DSGE_DEBUG_MODE)
+add_definitions (-DSGE_DEBUG_MODE)
 #add_definitions (-DSGE_PROFILING_MODE)
 
 ################################################################################
