@@ -403,8 +403,10 @@ int                                     g_fullscreen_width; // not scaled, 1:1
 int                                     g_fullscreen_height;
 int                                     g_colour_bits;
 int                                     g_refresh_rate;
-int                                     g_window_style_x; // in normal windowed mode how much horizontal space does the window style take up
-int                                     g_window_style_y; // in normal windowed mode how much vertical space does the window style take up
+int                                     g_window_style_top;     // in normal windowed mode how much horizontal space does the window style take up at the top
+int                                     g_window_style_bottom;  // in normal windowed mode how much vertical space does the window style take up at the bottom
+int                                     g_window_style_left;    // in normal windowed mode how much horizontal space does the window style take up on the left
+int                                     g_window_style_right;   // in normal windowed mode how much vertical space does the window style take up on the right
 
 // input helpers
 win32_keyboard                          g_keyboard;
@@ -440,19 +442,29 @@ void console (sge::app::configuration& configuration) {
 }
 
 void calculate_sge_container_state (sge::core::container_state& container) {
+
     container.is_resizing = g_is_resizing;
 
     if (g_fullscreen) {
-        container.current_width = /* g_fullscreen_width */ width (g_latest_window_rect);
-        container.current_height = /* g_fullscreen_height */ height (g_latest_window_rect);
+        container.container_width = /* g_fullscreen_width */ width (g_latest_window_rect);
+        container.container_height = /* g_fullscreen_height */ height (g_latest_window_rect);
     }
     else {
-        container.current_width = width (g_latest_window_rect) - g_window_style_x;
-        container.current_height = height (g_latest_window_rect) - g_window_style_y;
+        container.container_width = width (g_latest_window_rect) - (g_window_style_left + g_window_style_right);
+        container.container_height = height (g_latest_window_rect) - (g_window_style_top + g_window_style_bottom);
     }
 
-    container.max_width = g_fullscreen_width;
-    container.max_height = g_fullscreen_height;
+    container.container_position_x = g_window_style_left;
+    container.container_position_y = g_window_style_top;
+
+    container.window_width = width (g_latest_window_rect);
+    container.window_height = height (g_latest_window_rect);
+
+    container.window_position_x = g_latest_window_rect.left;
+    container.window_position_y = g_latest_window_rect.top;
+
+    container.max_container_width = g_screen_width;
+    container.max_container_height = g_screen_height;
 }
 
 void calculate_sge_input_state (sge::core::input_state& input) {
@@ -596,6 +608,8 @@ int run (HINSTANCE hinst, HWND hwnd, sge::app::configuration& configuration) {
     MSG message = {};
     while (return_code == 0) {
 
+        GetWindowRect (hwnd, &g_latest_window_rect);
+
         // reset flags
         g_is_resizing = false;
 
@@ -623,6 +637,7 @@ int run (HINSTANCE hinst, HWND hwnd, sge::app::configuration& configuration) {
         // update the engine
         sge::core::container_state container_state;
         sge::core::input_state input_state;
+
 
         calculate_sge_container_state (container_state);
         calculate_sge_input_state (input_state);
@@ -707,8 +722,8 @@ int CALLBACK WinMain (HINSTANCE hinst, HINSTANCE hpinst, LPSTR lpcmdln, int ncmd
 
     g_screen_width = GetSystemMetrics (SM_CXSCREEN);
     g_screen_height = GetSystemMetrics (SM_CYSCREEN);
-    const int target_window_width = configuration.adjusted_app_width();
-    const int target_window_height = configuration.adjusted_app_height();
+    const int target_window_width = configuration.adjusted_app_width ();
+    const int target_window_height = configuration.adjusted_app_height (); // todo, need a proper way to get this info here.
     const int target_window_x = g_screen_width / 2 - target_window_width / 2;
     const int target_window_y = g_screen_height / 2 - target_window_height / 2;
     g_latest_window_rect.left = target_window_x;
@@ -716,9 +731,16 @@ int CALLBACK WinMain (HINSTANCE hinst, HINSTANCE hpinst, LPSTR lpcmdln, int ncmd
     g_latest_window_rect.right = target_window_x + target_window_width;
     g_latest_window_rect.bottom = target_window_y + target_window_height;
     AdjustWindowRect (&g_latest_window_rect, g_style, FALSE);
-    g_window_style_x = width(g_latest_window_rect) - configuration.adjusted_app_width();
-    g_window_style_y = height(g_latest_window_rect) - configuration.adjusted_app_height();
+    const int window_style_horizontal = width(g_latest_window_rect) - target_window_width;
+    const int window_style_vertical = height(g_latest_window_rect) - target_window_height;
     g_latest_windowed_mode_window_rect = g_latest_window_rect;
+
+    // this is an educated guess, there must be a better way to do this
+    // n.b. these numbers may seem overly large, however the window style actually is more than just an obvious 1px solid border, there is a subtle dropshadow also.
+    g_window_style_left = window_style_horizontal / 2;
+    g_window_style_right = g_window_style_left;
+    g_window_style_bottom = g_window_style_left;
+    g_window_style_top = window_style_vertical - g_window_style_left;
 
     HWND hwnd = CreateWindow (
         configuration.app_name.c_str (),
@@ -737,6 +759,12 @@ int CALLBACK WinMain (HINSTANCE hinst, HINSTANCE hpinst, LPSTR lpcmdln, int ncmd
     SetForegroundWindow (hwnd);
     SetFocus (hwnd);
 
+    RECT client_rect;
+    GetClientRect (hwnd, &client_rect);
+
+    assert (width (client_rect) == target_window_width);
+    assert (height (client_rect) == target_window_height);
+    
     HDC windowHDC = GetDC (hwnd);
     g_fullscreen_width = GetDeviceCaps (windowHDC, DESKTOPHORZRES);
     g_fullscreen_height = GetDeviceCaps (windowHDC, DESKTOPVERTRES);

@@ -26,7 +26,8 @@ struct configuration {
     int app_height = 360;
     bool enable_console = false;
     bool ignore_os_dpi_scaling = false;
-    
+
+    // todo, this shouldn't live here.
     int adjusted_app_width () const { return app_width; }
     int adjusted_app_height () const { return app_height + imgui::ext::guess_main_menu_bar_height(); }
 };
@@ -49,11 +50,11 @@ struct content {
     std::vector<dataspan> uniforms = {};
     std::vector<dataspan> blobs = {}; // todo: change to pair<dataspan, size_t> and make it possible to know the maximum size a blob could be over the full course of the app so we can allocate it on the gpu upfront.  right now when the user changes blob size at runtime the whole sbo is deallocated and reallocated to accomodate.
 };
-    
+
 struct extensions {
     typedef std::function<runtime::view*(const runtime::api&)> create_view_fn;
     typedef std::function<runtime::system*(runtime::api&)> create_system_fn;
-    
+
     std::vector<std::pair<size_t, create_view_fn>> views;
     std::vector<std::pair<size_t, create_system_fn>> systems;
 };
@@ -76,7 +77,7 @@ namespace internal {
     api* create_user_api (sge::runtime::api&);
     void delete_user_api (api*);
     extensions& get_standard_extensions (); // these are always enabled and the user api provides easy access to them
-    
+
     //void debug_ui_menu () {};
     //void debug_ui () {};
 }

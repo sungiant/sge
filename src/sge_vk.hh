@@ -19,7 +19,12 @@ namespace sge::vk {
         std::unique_ptr<compute_target>     compute_target;
         std::unique_ptr<fullscreen_render>  fullscreen_render;
         std::unique_ptr<imgui>              imgui;
-        bool                                imgui_on = true;
+        
+        struct {
+            bool                                imgui_on = true;
+            VkExtent2D                          compute_size;
+            VkViewport                          canvas_viewport;
+        } state;
 
 #if TARGET_WIN32
         void create (HINSTANCE, HWND, int, int);
@@ -34,12 +39,17 @@ namespace sge::vk {
         void create_systems (const std::function <void()>&);
         void destroy ();
         void update (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&, float);
+
+        int get_user_viewport_x      () const { return state.canvas_viewport.x; }
+        int get_user_viewport_y      () const { return state.canvas_viewport.y; }
+        int get_user_viewport_width  () const { return state.canvas_viewport.width; }
+        int get_user_viewport_height () const { return state.canvas_viewport.height; }
         
     private:
     
-        
-        VkViewport calculate_viewport (const class presentation&);
-        VkExtent2D calculate_size (const class presentation&);
+        VkExtent2D calculate_compute_size ();
+        VkViewport calculate_canvas_viewport ();
+
     };
 
 };

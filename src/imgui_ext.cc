@@ -9,7 +9,7 @@ using namespace sge::math;
 int guess_main_menu_bar_height () { // https://github.com/ocornut/imgui/issues/252
     const auto context = ImGui::GetCurrentContext();
     int result = 19; // wild guess
-    if (context) {
+    if (context && context->FontSize > 0.0f) {
         result = context->FontSize + context->Style.FramePadding.y * 2; // best guess
     }
     return result;

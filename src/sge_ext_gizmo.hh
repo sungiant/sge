@@ -151,8 +151,10 @@ public:
         ImGui::SetWindowSize (ImGui::GetIO ().DisplaySize);
         ImGui::SetWindowCollapsed (false);
         {
-            const int screen_w = sge.system__get_state_int(runtime::system_int_state::screen_width);
-            math::rect gizmo_container = { { screen_w - gizmo_size, (int) imgui::ext::guess_main_menu_bar_height() }, { gizmo_size, gizmo_size }};
+            const int canvas_x = sge.system__get_state_int (runtime::system_int_state::canvas_offset_x);
+            const int canvas_y = sge.system__get_state_int (runtime::system_int_state::canvas_offset_y);
+            const int canvas_w = sge.system__get_state_int(runtime::system_int_state::canvas_width);
+            math::rect gizmo_container = { { canvas_x + canvas_w - gizmo_size, canvas_y }, { gizmo_size, gizmo_size }};
 
             imgui::ext::draw_user_triangles (
                 gizmo_container,

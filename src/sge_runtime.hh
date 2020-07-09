@@ -38,7 +38,17 @@ enum class gamepad_button       { dpad_up, dpad_down, dpad_left, dpad_right, bac
 enum class gamepad_axis         { left_trigger, right_trigger, left_stick_vertical, left_stick_horizontal, right_stick_vertical, right_stick_horizontal, COUNT };
     
 enum class system_bool_state    { fullscreen, imgui, hide_cusor, COUNT };
-enum class system_int_state     { /* renderable area */ screen_width, screen_height, /* fullscreen area */ display_width, display_height, /* renderable area excluding ui */ compute_width, compute_height, COUNT };
+enum class system_int_state     {
+    //screen_width, screen_height,                            // extent of user renderable area
+    //screen_position_x, screen_position_y,                   // position of user renderable area relative to the display (top, left)
+
+    max_canvas_width, max_canvas_height,                    // maximum extent of user renderable viewport on current monitor, i.e. fullscreen and full viewport (if the if the application moves to a different monitor of a different resolution/orientation this value will change).  this information can be useful to the user as it can help determine the velocity of mouse movements in proportion to context hosting the application.
+
+    canvas_width, canvas_height,                            // current user renderable viewport extent
+    canvas_offset_x, canvas_offset_y,                       // current user renderable viewport offset (ideally this wouldn't be here as the user shouldn't have to know about this detail - the user viewport is not always the full frame as the engine may instantiate UI around it, which is all fine, however, right now ImGui for the user is not aware of this).
+
+    COUNT };
+
 enum class system_string_state  { title, gpu_name, engine_version, COUNT };
 
 class extension;

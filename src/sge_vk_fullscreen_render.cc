@@ -5,14 +5,15 @@
 
 namespace sge::vk {
 
-fullscreen_render::fullscreen_render (const struct context& context, const queue_identifier qid, const class presentation& p, const std::function<const VkDescriptorImageInfo&()> tex)
+
+fullscreen_render::fullscreen_render (const struct context& context, const queue_identifier qid, const class presentation& p, const tex_fn& tex, const viewport_fn& vp)
     : context (context)
     , identifier (qid)
     , presentation (p)
     , compute_tex (tex)
-    , default_viewport_fn ([](const class presentation& p) { return utils::init_VkViewport ((float) p.extent ().width, (float) p.extent ().height, 0.0f, 1.0f); })
+    , get_viewport_fn (vp)
 {
-    state.current_viewport = default_viewport_fn (presentation);
+    state.current_viewport = get_viewport_fn ();
 }
 
 void fullscreen_render::create () {
@@ -38,6 +39,10 @@ void fullscreen_render::destroy () {
     state.render_finished = VK_NULL_HANDLE;
 }
 
+void fullscreen_render::update () {
+    assert (utils::equal (get_viewport_fn (), state.current_viewport));
+}
+
 void fullscreen_render::create_r () {
     create_pipeline ();
     create_descriptor_pool ();
@@ -61,24 +66,18 @@ void fullscreen_render::destroy_r () {
 
 void fullscreen_render::refresh_full () {
     destroy_r ();
-    
-    update_target_viewport ();
-    if (state.target_viewport.has_value()) {
-        state.current_viewport = state.target_viewport.value();
-        state.target_viewport.reset();
-    }
-    
+
+    state.current_viewport = get_viewport_fn ();
+    state.target_viewport.reset ();
+
     create_r ();
 }
     
 void fullscreen_render::refresh_command_buffers () {
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
-    
-    update_target_viewport ();
-    if (state.target_viewport.has_value()) {
-        state.current_viewport = state.target_viewport.value();
-        state.target_viewport.reset();
-    }
+
+    state.current_viewport = get_viewport_fn ();
+    state.target_viewport.reset ();
     
     create_command_buffers ();
 }
@@ -158,8 +157,8 @@ void fullscreen_render::create_pipeline () {
 
     const auto empty_input_state             = utils::init_VkPipelineVertexInputStateCreateInfo ();
     const auto input_assembly                = utils::init_VkPipelineInputAssemblyStateCreateInfo (VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
-    const auto scissor                       = utils::init_VkRect2D (presentation.extent ());
-    const auto viewport_state                = utils::init_VkPipelineViewportStateCreateInfo (VkViewport(), scissor); // viewport is ignored here as we set it in the command buffer
+    const auto scissor                       = utils::init_VkRect2D ((int)state.current_viewport.width, (int) state.current_viewport.height, (int)state.current_viewport.x, (int)state.current_viewport.y);
+    const auto viewport_state                = utils::init_VkPipelineViewportStateCreateInfo (state.current_viewport, scissor); // viewport is ignored here as we set it in the command buffer
     const auto rasterizer                    = utils::init_VkPipelineRasterizationStateCreateInfo (VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
     const auto multisampling                 = utils::init_VkPipelineMultisampleStateCreateInfo (VK_SAMPLE_COUNT_1_BIT);
 
@@ -212,6 +211,9 @@ void fullscreen_render::create_command_buffers () {
 
     auto render_pass_begin_info = utils::init_VkRenderPassBeginInfo ();
     render_pass_begin_info.renderPass = presentation.fullscreen_render_pass ();
+    //render_pass_begin_info.renderArea.offset = VkOffset2D{ (int32_t)state.current_viewport.x, (int32_t)state.current_viewport.y };
+    //render_pass_begin_info.renderArea.extent = VkExtent2D{ (uint32_t)state.current_viewport.width, (uint32_t)state.current_viewport.height };
+
     render_pass_begin_info.renderArea.offset = { 0, 0 };
     render_pass_begin_info.renderArea.extent = presentation.extent ();
 

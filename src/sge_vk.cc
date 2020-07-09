@@ -5,19 +5,21 @@
 
 namespace sge::vk {
 
-VkViewport vk::calculate_viewport (const class presentation& p) {
-    if (imgui_on) {
+VkViewport vk::calculate_canvas_viewport () {
+    const auto e = presentation->extent ();
+    if (state.imgui_on) {
         const int imgui_main_menu_bar_height = ::imgui::ext::guess_main_menu_bar_height();
-        return utils::init_VkViewport (0, imgui_main_menu_bar_height, (float) p.extent ().width, (float) p.extent ().height - imgui_main_menu_bar_height, 0.0f, 1.0f);
+        const VkViewport vp = utils::init_VkViewport (0, imgui_main_menu_bar_height, (float) e.width, (float) e.height - imgui_main_menu_bar_height, 0.0f, 1.0f);
+        return vp;
     }
     else {
-        return utils::init_VkViewport (0, 0, (float) p.extent ().width, (float) p.extent ().height, 0.0f, 1.0f);
+        return utils::init_VkViewport (0, 0, (float) e.width, (float) e.height, 0.0f, 1.0f);
     }
 }
 
-VkExtent2D vk::calculate_size (const class presentation& p) {
-    const auto e = p.extent();
-    if (imgui_on) {
+VkExtent2D vk::calculate_compute_size () {
+    const auto e = presentation->extent();
+    if (state.imgui_on) {
         const int imgui_main_menu_bar_height = ::imgui::ext::guess_main_menu_bar_height();
         return VkExtent2D { e.width, e.height - imgui_main_menu_bar_height };
     }
@@ -50,6 +52,9 @@ void vk::create (int w, int h) {
     );
 
     presentation->create ();
+
+    state.compute_size = calculate_compute_size ();
+    state.canvas_viewport = calculate_canvas_viewport ();
 }
 
 void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
@@ -57,19 +62,20 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
     compute_target = std::make_unique<class compute_target> (
         kernel->primary_context (),
         kernel->primary_work_queue (),
-        *presentation.get (),
-        sge::app::get_content ());
-    compute_target->set_custom_size_fn(std::bind (&vk::calculate_size, this, std::placeholders::_1));
+        sge::app::get_content (),
+        [this]() { return state.compute_size; }
+        );
     compute_target->create ();
 
     fullscreen_render = std::make_unique<class fullscreen_render> (
         kernel->primary_context (),
         kernel->primary_work_queue (),
         *presentation.get (),
+        [this]() { return compute_target->get_pre_render_texture ().descriptor; },
         [this]() {
-            return compute_target->get_pre_render_texture ().descriptor;
-        });
-    fullscreen_render->set_custom_viewport_fn(std::bind (&vk::calculate_viewport, this, std::placeholders::_1));
+            return state.canvas_viewport;
+        }
+    );
     fullscreen_render->create ();
 
     // ImGUI
@@ -123,12 +129,8 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
 }
 
 void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags, float dt) {
-
     
 	bool refresh = false;
-
-    compute_target->update (push_flag, ubo_flags, sbo_flags);
-    compute_target->enqueue ();
 
 	auto image_index_opt = presentation->next_image ();
 
@@ -146,19 +148,28 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
         }
 	}
 	else {
-        
-        
-        if (compute_target->need_recreate()) {
-            compute_target->recreate();
+        // update
+        const VkExtent2D latest_compute_size = calculate_compute_size ();
+        if (!utils::equal (latest_compute_size, state.compute_size)) {
+            state.compute_size = latest_compute_size;
+            compute_target->recreate ();
+        }
+
+        const VkViewport latest_canvas_viewport = calculate_canvas_viewport ();
+        if (!utils::equal (latest_canvas_viewport, state.canvas_viewport)) {
+            state.canvas_viewport = latest_canvas_viewport;
             fullscreen_render->refresh_full ();
-            imgui->refresh ();
         }
-        else if (fullscreen_render->need_command_buffers_refresh()) {
-            fullscreen_render->refresh_command_buffers();
-        }
-        
+
+        // system updates
+        compute_target->update (push_flag, ubo_flags, sbo_flags);
+        fullscreen_render->update ();
+
+        // system enqueues
+        compute_target->enqueue ();
+
         auto image_index = std::get<sge::vk::image_index> (image_index_opt);
-        if (imgui_on) {
+        if (state.imgui_on) {
             imgui->enqueue (image_index);
         }
 
@@ -177,7 +188,7 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 
         VkSemaphore render_finished[] = { fullscreen_render->get_render_finished () };
 
-        if (imgui_on) {
+        if (state.imgui_on) {
             submit (
                 imgui->get_command_buffer (image_index),
                 imgui->get_queue (),

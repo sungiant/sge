@@ -5,14 +5,14 @@
 
 namespace sge::vk {
 
-compute_target::compute_target (const struct vk::context& z_context, const struct vk::queue_identifier& z_qid, const class presentation& z_p, const struct sge::app::content& z_content)
+
+compute_target::compute_target (const struct vk::context& z_context, const struct vk::queue_identifier& z_qid, const struct sge::app::content& z_content, const size_fn& z_size_fn)
     : context (z_context)
     , identifier (z_qid)
-    , presentation (z_p)
     , content (z_content)
-    , default_size_fn ([](const class presentation& p) { auto e = p.extent (); return VkExtent2D { e.width, e.height }; })
+    , get_size_fn (z_size_fn)
 {
-    state.current_size = default_size_fn (z_p);
+    state.current_size = get_size_fn ();
 }
 
     
@@ -40,6 +40,10 @@ void compute_target::end_of_frame () {
 
 void compute_target::recreate () {
     destroy_r ();
+
+    state.current_size = get_size_fn ();
+    state.target_size.reset ();
+
     create_r ();
 }
 void compute_target::refresh () {
@@ -58,11 +62,7 @@ void compute_target::create () {
 }
 
 void compute_target::create_r () {
-    update_target_size();
-    if (state.target_size.has_value()) {
-        state.current_size = state.target_size.value();
-        state.target_size.reset();
-    }
+
     prepare_texture_target (VK_FORMAT_R8G8B8A8_UNORM, state.current_size);
     prepare_uniform_buffers ();
     prepare_blob_buffers ();
@@ -129,6 +129,13 @@ void compute_target::append_pre_render_submissions (std::vector<VkSemaphore>& wa
 }
 
 void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {
+
+    const auto updated = get_size_fn ();
+
+    if (!utils::equal (updated, state.current_size))
+        state.target_size = updated;
+    else state.target_size.reset ();
+    
 
     if (push_flag) {
         record_command_buffer (state.current_size);

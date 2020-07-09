@@ -19,8 +19,9 @@ class presentation;
 
 class compute_target {
 public:
+    typedef std::function<VkExtent2D ()> size_fn;
 
-    compute_target (const struct context&, const struct queue_identifier&, const class presentation&, const struct sge::app::content&);
+    compute_target (const struct context&, const struct queue_identifier&, const struct sge::app::content&, const size_fn&);
     ~compute_target () {};
 
     void                                create                                  ();
@@ -33,33 +34,14 @@ public:
     void                                append_pre_render_submissions           (std::vector<VkSemaphore>&, std::vector<VkPipelineStageFlags>&);
 
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
-    void                                end_of_frame ();
+    void                                end_of_frame                            ();
     
     
-    bool                                need_recreate () {
-        update_target_size ();
-        return state.target_size.has_value();
-        
-    }
-    
-    void set_custom_size_fn (const std::function<VkExtent2D(const class presentation&)>& z_fn) { state.custom_size_fn = z_fn; update_target_size (); }
-    void has_custom_size_fn () { state.custom_size_fn.has_value (); }
-    void clear_custom_size_fn () { state.custom_size_fn = std::nullopt; update_target_size (); }
+    bool                                need_recreate                           () { return state.target_size.has_value(); }
     
     int current_width () const { return state.current_size.width; }
     int current_height () const { return state.current_size.height; }
 private:
-    
-    void update_target_size () {
-        const auto updated = state.custom_size_fn.has_value()
-            ? state.custom_size_fn.value() (presentation)
-            : default_size_fn (presentation);
-        
-        if (!utils::equal (updated, state.current_size))
-            state.target_size = updated;
-        else state.target_size.reset ();
-    }
-    
 
     struct state {
         texture                         compute_tex;
@@ -82,14 +64,13 @@ private:
         
         VkExtent2D                      current_size;
         std::optional<VkExtent2D>       target_size;
-        std::optional<std::function<VkExtent2D(const class presentation&)>> custom_size_fn;    };
+    };
 
     const context&                      context;
     const queue_identifier              identifier;
-    const presentation&                 presentation;
     const sge::app::content&            content;
     state                               state;
-    const std::function<VkExtent2D(const class presentation&)> default_size_fn;
+    const std::function<VkExtent2D()> get_size_fn;
 
     void                                create_r                                ();
     void                                create_rl                               ();

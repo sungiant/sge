@@ -84,13 +84,20 @@ struct container_state {
     bool is_resizing; // todo: surely this isn't needed and is just a function of changes in the values below.
     
     // the size in pixels of the area SGE is currently contained within (this does not include the OS window borders).
-    int current_width;
-    int current_height;
-    
+    int container_width;
+    int container_height;
+    int container_position_x;
+    int container_position_y;
+
+    int window_width;
+    int window_height;
+    int window_position_x;
+    int window_position_y;
+
     // the maximum possible size the rendering area could be (i.e. in fullscreen mode -
     // equivalent to the primary monitor's resolution).
-    int max_width;
-    int max_height;
+    int max_container_width;
+    int max_container_height;
 };
 
 typedef std::function <void (void)>         void_fn;
@@ -115,6 +122,12 @@ struct host_state {
 
 struct configuration_state {
     const float defaultClearColor [4] = { 0.025f, 0.025f, 0.025f, 1.0f };
+};
+
+struct user_state {
+    // the size the user wants their canvas to be
+    int desired_canvas_size_x;
+    int desired_canvas_size_y;
 };
 
 struct platform_state {
@@ -165,8 +178,8 @@ struct engine_tasks {
     std::optional<bool>                 change_imgui_enabled;
     std::optional<bool>                 change_fullscreen_enabled;
     std::optional<std::string>          change_window_title;
-    std::optional<int>                  change_screen_width;
-    std::optional<int>                  change_screen_height;
+    std::optional<int>                  change_canvas_width;
+    std::optional<int>                  change_canvas_height;
     std::optional<std::monostate>       shutdown_request;
 };
 
@@ -252,7 +265,7 @@ public:
     void update (container_state&, input_state&);
     void stop ();
     void shutdown ();
-    
+
     void imgui ();
     
     

@@ -15,18 +15,18 @@ bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
     switch (z){
         
         case runtime::system_bool_state::fullscreen: return engine_state.host.is_fullscreen;
-        case runtime::system_bool_state::imgui: return engine_state.graphics.imgui_on;
+        case runtime::system_bool_state::imgui: return engine_state.graphics.state.imgui_on;
         default: assert (false); return false;
     }
 }
 int api_impl::system__get_state_int (runtime::system_int_state z) const {
     switch (z) {
-        case runtime::system_int_state::screen_width: return engine_state.container.current_width;
-        case runtime::system_int_state::screen_height: return engine_state.container.current_height;
-        case runtime::system_int_state::display_width: return engine_state.container.max_width;
-        case runtime::system_int_state::display_height: return engine_state.container.max_height;
-        case runtime::system_int_state::compute_width: return engine_state.graphics.compute_target->current_width ();
-        case runtime::system_int_state::compute_height: return engine_state.graphics.compute_target->current_height ();
+        case runtime::system_int_state::max_canvas_width: return engine_state.container.max_container_width;
+        case runtime::system_int_state::max_canvas_height: return engine_state.container.max_container_height;
+        case runtime::system_int_state::canvas_offset_x: return engine_state.graphics.get_user_viewport_x ();
+        case runtime::system_int_state::canvas_offset_y: return engine_state.graphics.get_user_viewport_y();
+        case runtime::system_int_state::canvas_width: return engine_state.graphics.get_user_viewport_width ();
+        case runtime::system_int_state::canvas_height: return engine_state.graphics.get_user_viewport_height ();
         default: assert (false); return 0;
     }
 }
@@ -293,8 +293,8 @@ void api_impl::system__set_state_bool (runtime::system_bool_state z, bool v) {
 }
 void api_impl::system__set_state_int (runtime::system_int_state z, int v) {
     switch (z){
-        case runtime::system_int_state::screen_width: engine_tasks.change_screen_width = v; break;
-        case runtime::system_int_state::screen_height: engine_tasks.change_screen_height = v; break;
+        case runtime::system_int_state::canvas_width: engine_tasks.change_canvas_width = v; break;
+        case runtime::system_int_state::canvas_height: engine_tasks.change_canvas_height = v; break;
         default: break;
     }
 }
@@ -330,7 +330,7 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
     // USER TASKS
     {
         if (engine_tasks.change_imgui_enabled.has_value ()) {
-            engine_state.graphics.imgui_on = engine_tasks.change_imgui_enabled.value ();
+            engine_state.graphics.state.imgui_on = engine_tasks.change_imgui_enabled.value ();
             engine_tasks.change_imgui_enabled.reset ();
         }
 
@@ -349,12 +349,16 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
             engine_tasks.change_window_title.reset ();
         }
 
-        if ((engine_tasks.change_screen_width.has_value () || engine_tasks.change_screen_height.has_value ()) && engine_state.host.set_window_size_fn.has_value ()) {
-            const int vw = engine_tasks.change_screen_width.has_value () ? engine_tasks.change_screen_width.value () : engine_state.container.current_width;
-            const int vh = engine_tasks.change_screen_height.has_value() ? engine_tasks.change_screen_height.value () : engine_state.container.current_height;
-            engine_state.host.set_window_size_fn.value () (vw, vh);
-            engine_tasks.change_screen_width.reset ();
-            engine_tasks.change_screen_height.reset ();
+        if ((engine_tasks.change_canvas_width.has_value () || engine_tasks.change_canvas_height.has_value ()) && engine_state.host.set_window_size_fn.has_value ()) {
+            const int vw = engine_tasks.change_canvas_width.has_value () ? engine_tasks.change_canvas_width.value () : engine_state.container.container_width;
+            const int vh = engine_tasks.change_canvas_height.has_value() ? engine_tasks.change_canvas_height.value () : engine_state.container.container_height;
+
+            const int adjusted_size_x = vw;
+            const int adjusted_size_y = engine_state.graphics.state.imgui_on ? vh + imgui::ext::guess_main_menu_bar_height () : vh;
+
+            engine_state.host.set_window_size_fn.value () (adjusted_size_x, adjusted_size_y);
+            engine_tasks.change_canvas_width.reset ();
+            engine_tasks.change_canvas_height.reset ();
             engine_state.host.container_just_changed = true;
         }
 
@@ -468,7 +472,7 @@ void engine::setup (
 #if TARGET_WIN32
     engine_state->platform.hinst = z_hinst;
     engine_state->platform.hwnd = z_hwnd;
-    engine_state->graphics.create (z_hinst, z_hwnd, engine_state->container.current_width, engine_state->container.current_height);
+    engine_state->graphics.create (z_hinst, z_hwnd, engine_state->container.container_width, engine_state->container.container_height);
 #elif TARGET_MACOSX
     engine_state->platform.view = z_view;
     engine_state->graphics.create (z_view, engine_state->container.current_width, engine_state->container.current_height);
@@ -535,8 +539,8 @@ void engine::update (container_state& z_container, input_state& z_input) {
         std::cout << "caps lk (" << locked << ", " << pressed << ")" << '\n';
     }*/
 
-    if (z_container.current_width != engine_state->container.current_width
-        || z_container.current_height != engine_state->container.current_height
+    if (z_container.container_width != engine_state->container.container_width
+        || z_container.container_height != engine_state->container.container_height
         || z_container.is_resizing) {
         engine_state->host.container_just_changed = true;
     }
@@ -588,6 +592,7 @@ void engine::shutdown () {
 //====================================================================================================================//
 
 void engine::imgui () {
+
     static bool show_about_window = false;
     static bool show_engine_host_window = false;
     static bool show_engine_graphics_window = false;
@@ -668,7 +673,7 @@ void engine::imgui () {
 void engine::about_window (bool* show) {
     const int w  = 240;
     ImGui::SetNextWindowSize(ImVec2 (w, 260), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(ImVec2 ((engine_state->container.current_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
+    ImGui::SetNextWindowPos(ImVec2 ((engine_state->container.container_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
     ImGui::Begin("About", show, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
     static bool first_run = true;
@@ -719,15 +724,64 @@ void engine::about_window (bool* show) {
 void engine::host_window (bool* show) {
     ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
     ImGui::Begin("SGE Host", show, ImGuiWindowFlags_NoCollapse);
-    
-    ImGui::Text ("Canvas size: %dx%d",
-        engine_state->container.current_width,
-        engine_state->container.current_height);
-    
-    
-    ImGui::Text ("Maximum canvas size: %dx%d",
-        engine_state->container.max_width,
-        engine_state->container.max_height);
+
+    const int display_width = engine_state->container.max_container_width;
+    const int display_height = engine_state->container.max_container_height;
+
+    const int window_width = engine_state->container.window_width;
+    const int window_height = engine_state->container.window_height;
+    const int window_x = engine_state->container.window_position_x;
+    const int window_y = engine_state->container.window_position_y;
+
+    const int container_width = engine_state->container.container_width;
+    const int container_height = engine_state->container.container_height;
+    const int container_x = engine_state->container.container_position_x;
+    const int container_y = engine_state->container.container_position_y;
+
+    const int canvas_width = engine_state->graphics.get_user_viewport_width ();
+    const int canvas_height = engine_state->graphics.get_user_viewport_height ();
+    const int canvas_x = engine_state->graphics.get_user_viewport_x ();
+    const int canvas_y = engine_state->graphics.get_user_viewport_y ();
+
+    ImGui::Text ("Display size: %dx%d", display_width, display_height);
+    ImGui::Text ("Window size: %dx%d", window_width, window_height);
+    ImGui::Text ("Window position: %dx%d", window_x, window_y);
+    ImGui::Text ("Container size: %dx%d", container_width, container_height);
+    ImGui::Text ("Container position: %dx%d", container_x, container_y);
+    ImGui::Text ("Canvas size: %dx%d", canvas_width, canvas_height);
+    ImGui::Text ("Canvas position: %dx%d", canvas_x, canvas_y);
+
+    ImGui::Dummy (ImVec2 (0, 10));
+
+    {
+        const float im_content_w = ImGui::GetWindowContentRegionWidth ();
+        auto dl = ImGui::GetWindowDrawList ();
+        const ImVec2 im_cp = ImGui::GetCursorScreenPos ();
+        const float im_scale = im_content_w / (float) display_width;
+
+        const auto im_display_size = ImVec2 (im_scale * display_width, im_scale * display_height);
+        const auto im_display_min = im_cp;
+        const auto im_display_max = ImVec2 (im_display_min.x + im_display_size.x, im_display_min.y + im_display_size.y);
+        dl->AddRectFilled (im_display_min, im_display_max, 0xFFA18A7C);
+
+        const auto im_window_size = ImVec2 (im_scale * window_width, im_scale * window_height);
+        const auto im_window_min = ImVec2 (im_display_min.x + (im_scale * window_x), im_display_min.y + (im_scale * window_y));
+        const auto im_window_max = ImVec2 (im_window_min.x + im_window_size.x, im_window_min.y + im_window_size.y);
+        dl->AddRectFilled (im_window_min, im_window_max, 0xFF00FFDD);
+
+        const auto im_container_size = ImVec2 (im_scale * container_width, im_scale * container_height);
+        const auto im_container_min = ImVec2 (im_window_min.x + (im_scale * container_x), im_window_min.y + (im_scale * container_y));
+        const auto im_container_max = ImVec2 (im_container_min.x + im_container_size.x, im_container_min.y + im_container_size.y);
+        dl->AddRectFilled (im_container_min, im_container_max, 0xFF0099FF);
+
+        const auto im_canvas_size = ImVec2 (im_scale * canvas_width, im_scale * canvas_height);
+        const auto im_canvas_min = ImVec2 (im_container_min.x + (im_scale * canvas_x), im_container_min.y + (im_scale * canvas_y));
+        const auto im_canvas_max = ImVec2 (im_canvas_min.x + im_canvas_size.x, im_canvas_min.y + im_canvas_size.y);
+        dl->AddRectFilled (im_canvas_min, im_canvas_max, 0xFFFFC9FB);
+
+        ImGui::SetCursorScreenPos (ImVec2 (im_cp.x, im_cp.y + im_display_size.y));
+
+    }
     ImGui::End ();
     
 }
