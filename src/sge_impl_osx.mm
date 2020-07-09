@@ -515,11 +515,12 @@ std::unique_ptr<sge::core::engine>      g_sge;
 //################################################################################################//
 
 void calculate_sge_client_state (sge::core::client_state& client) {
+    NSRect e = [[NSScreen mainScreen] frame];
     client.is_resizing = g_is_resizing;
-    client.window_width = g_window_frame.size.width;
-    client.window_height = g_window_frame.size.height;
+    client.window_width = (int)g_window_frame.size.width;
+    client.window_height = (int)g_window_frame.size.height;
     client.window_position_x = (int)g_window_frame.origin.x;
-    client.window_position_y = (g_window_frame.size.height / 2.0f) - (int)g_window_frame.origin.y;
+    client.window_position_y = (int)e.size.height - (int)g_window_frame.size.height - (int)g_window_frame.origin.y;
     
     client.container_width = g_container_width;
     client.container_height = g_container_height;
@@ -528,7 +529,6 @@ void calculate_sge_client_state (sge::core::client_state& client) {
     client.container_position_x = 0;
     client.container_position_y = client.window_height - client.container_height;
     
-    NSRect e = [[NSScreen mainScreen] frame];
     client.max_container_width = (int)e.size.width;
     client.max_container_height = (int)e.size.height;
 }
