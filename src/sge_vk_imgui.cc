@@ -21,31 +21,63 @@ imgui::~imgui () {
 }
 
 void imgui::create () {
-    auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
-    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));
-    create_command_pool ();
-    create_command_buffers ();
     init ((float)presentation.extent ().width, (float)presentation.extent ().height);
     init_resources (presentation.imgui_render_pass (), get_queue ());
+    
+    auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
+    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));
+    
+    create_command_pool ();
+    create_command_buffers ();
 }
 
 void imgui::destroy () {
-    release ();
+    
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
+    state.command_buffers.clear();
+    
     vkDestroyCommandPool (context.logical_device, state.command_pool, context.allocation_callbacks);
     vkDestroySemaphore (context.logical_device, state.render_finished, context.allocation_callbacks);
+    
     state.render_finished = VK_NULL_HANDLE;
+    
+    for (auto& shaderModule : state.shaders) {
+        vkDestroyShaderModule (context.logical_device, shaderModule, context.allocation_callbacks);
+    }
+    state.shaders.clear();
+
+    state.vertex_buffer.destroy (context.allocation_callbacks);
+    state.index_buffer.destroy (context.allocation_callbacks);
+    
+    vkDestroyImage (context.logical_device, state.font_image, context.allocation_callbacks);
+    vkDestroyImageView (context.logical_device, state.font_view, context.allocation_callbacks);
+    vkFreeMemory (context.logical_device, state.font_memory, context.allocation_callbacks);
+    vkDestroySampler (context.logical_device, state.sampler, context.allocation_callbacks);
+    vkDestroyPipelineCache (context.logical_device, state.pipeline_cache, context.allocation_callbacks);
+    vkDestroyPipeline (context.logical_device, state.pipeline, context.allocation_callbacks);
+    vkDestroyPipelineLayout (context.logical_device, state.pipeline_layout, context.allocation_callbacks);
+    vkDestroyDescriptorPool (context.logical_device, state.descriptor_pool, context.allocation_callbacks);
+    vkDestroyDescriptorSetLayout (context.logical_device, state.descriptor_set_layout, context.allocation_callbacks);
+
 }
 
 void imgui::refresh () {
     ImGuiIO& io = ImGui::GetIO ();
     io.DisplaySize = ImVec2 ((float)presentation.extent ().width, (float)presentation.extent ().height);
+    /*
+    vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
+    state.command_buffers.clear();
+    
+    create_command_buffers ();
+    for (int i = 0; i < state.command_buffers.size (); i++) {
+        record_command_buffer (i);
+    }
+    */
 }
 
 void imgui::enqueue (image_index i) {
     record_command_buffer (i);
 }
-
 
 void imgui::create_command_pool () {
     auto pool_info = utils::init_VkCommandPoolCreateInfo (queue_identifier.family_index);
@@ -166,24 +198,6 @@ void imgui::init (float width, float height) {
     colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(0.70f, 0.70f, 0.70f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.20f, 0.20f, 0.20f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-}
-
-void imgui::release () {
-    for (auto& shaderModule : state.shaders) {
-        vkDestroyShaderModule (context.logical_device, shaderModule, context.allocation_callbacks);
-    }
-
-    state.vertex_buffer.destroy (context.allocation_callbacks);
-    state.index_buffer.destroy (context.allocation_callbacks);
-    vkDestroyImage (context.logical_device, state.font_image, context.allocation_callbacks);
-    vkDestroyImageView (context.logical_device, state.font_view, context.allocation_callbacks);
-    vkFreeMemory (context.logical_device, state.font_memory, context.allocation_callbacks);
-    vkDestroySampler (context.logical_device, state.sampler, context.allocation_callbacks);
-    vkDestroyPipelineCache (context.logical_device, state.pipeline_cache, context.allocation_callbacks);
-    vkDestroyPipeline (context.logical_device, state.pipeline, context.allocation_callbacks);
-    vkDestroyPipelineLayout (context.logical_device, state.pipeline_layout, context.allocation_callbacks);
-    vkDestroyDescriptorPool (context.logical_device, state.descriptor_pool, context.allocation_callbacks);
-    vkDestroyDescriptorSetLayout (context.logical_device, state.descriptor_set_layout, context.allocation_callbacks);
 }
 
 VkPipelineShaderStageCreateInfo imgui::load_shader (std::string fileName, VkShaderStageFlagBits stage) {

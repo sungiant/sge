@@ -67,10 +67,17 @@ struct device_buffer {
     void destroy (const VkAllocationCallbacks* ac) {
         if (buffer) {
             vkDestroyBuffer (device, buffer, ac);
+            buffer = VK_NULL_HANDLE;
         }
         if (memory) {
             vkFreeMemory (device, memory, ac);
+            memory = VK_NULL_HANDLE;
         }
+    
+        descriptor = {};
+        size = 0;
+        alignment = 0;
+        mapped = nullptr;
     }
 };
 

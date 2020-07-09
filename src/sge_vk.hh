@@ -17,7 +17,7 @@ namespace sge::vk {
         std::unique_ptr<kernel>             kernel;
         std::unique_ptr<presentation>       presentation;
         std::unique_ptr<compute_target>     compute_target;
-        std::unique_ptr<canvas_render>  canvas_render;
+        std::unique_ptr<canvas_render>      canvas_render;
         std::unique_ptr<imgui>              imgui;
 
         struct {
