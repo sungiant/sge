@@ -67,7 +67,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
         );
     compute_target->create ();
 
-    fullscreen_render = std::make_unique<class fullscreen_render> (
+    canvas_render = std::make_unique<class canvas_render> (
         kernel->primary_context (),
         kernel->primary_work_queue (),
         *presentation.get (),
@@ -76,7 +76,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
             return state.canvas_viewport;
         }
     );
-    fullscreen_render->create ();
+    canvas_render->create ();
 
     // ImGUI
     imgui = std::make_unique<class imgui> (
@@ -91,8 +91,8 @@ void vk::destroy () {
     imgui->destroy ();
     imgui.reset ();
 
-	fullscreen_render->destroy ();
-	fullscreen_render.reset ();
+	canvas_render->destroy ();
+	canvas_render.reset ();
 
     compute_target->destroy ();
     compute_target.reset ();
@@ -129,7 +129,7 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
 }
 
 void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags, float dt) {
-    
+
 	bool refresh = false;
 
     VkResult* failure = nullptr;
@@ -180,19 +180,19 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 
         // todo: switch to using: https://www.khronos.org/blog/vulkan-timeline-semaphores
         submit (
-        	fullscreen_render->get_command_buffer (image_index),
-            fullscreen_render->get_queue (),
+        	canvas_render->get_command_buffer (image_index),
+            canvas_render->get_queue (),
             wait_on,
             stage_flags,
-            fullscreen_render->get_render_finished ());
+            canvas_render->get_render_finished ());
 
-        VkSemaphore render_finished[] = { fullscreen_render->get_render_finished () };
+        VkSemaphore render_finished[] = { canvas_render->get_render_finished () };
 
         if (state.imgui_on) {
             submit (
                 imgui->get_command_buffer (image_index),
                 imgui->get_queue (),
-                fullscreen_render->get_render_finished (),
+                canvas_render->get_render_finished (),
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 imgui->get_render_finished ());
 
@@ -233,7 +233,7 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
         state.canvas_viewport = calculate_canvas_viewport ();
 
         compute_target->recreate ();
-		fullscreen_render->refresh_full ();
+		canvas_render->refresh_full ();
 		imgui->refresh ();
     }
     else {

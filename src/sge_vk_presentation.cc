@@ -28,7 +28,7 @@ presentation:: presentation (const struct context& context, const queue_identifi
     , state ()
 {}
 
-void presentation::configure (const std::vector<queue_identifier>& external_queues_requiring_swapchain_access) {    
+void presentation::configure (const std::vector<queue_identifier>& external_queues_requiring_swapchain_access) {
     auto& xs = state.queue_families_requiring_swapchain_access;
 
     xs.clear ();
@@ -119,8 +119,8 @@ void presentation::destroy_r () {
     // render passes
     vkDestroyRenderPass (context.logical_device, state.imgui_render_pass, context.allocation_callbacks);
     state.imgui_render_pass = VK_NULL_HANDLE;
-    vkDestroyRenderPass (context.logical_device, state.fullscreen_render_pass, context.allocation_callbacks);
-    state.fullscreen_render_pass = VK_NULL_HANDLE;
+    vkDestroyRenderPass (context.logical_device, state.canvas_render_pass, context.allocation_callbacks);
+    state.canvas_render_pass = VK_NULL_HANDLE;
 
     vkDestroyImageView (context.logical_device, state.depth_stencil_view, context.allocation_callbacks);
     vkDestroyImage (context.logical_device, state.depth_stencil_image, context.allocation_callbacks);
@@ -173,7 +173,7 @@ void presentation::create_surface () {
     //    VkResult vkCreateMetalSurfaceEXT (instance (), &surface_create_info, context.allocation_callbacks, &state.surface);
     //    assert (result == VK_SUCCESS);
     //}
-#elif TARGET_LINUX  
+#elif TARGET_LINUX
     auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (const_cast<xcb_connection_t*>(app_connection), app_window);
     vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
 #else
@@ -333,7 +333,7 @@ void presentation::create_render_passes () {
     renderPassInfo.dependencyCount = (uint32_t) dependencies.size ();
     renderPassInfo.pDependencies = dependencies.data ();
 
-    vk_assert (vkCreateRenderPass (context.logical_device, &renderPassInfo, context.allocation_callbacks, &state.fullscreen_render_pass));
+    vk_assert (vkCreateRenderPass (context.logical_device, &renderPassInfo, context.allocation_callbacks, &state.canvas_render_pass));
 
     attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;    // don't clear colour
     attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;        // do clear depth
@@ -392,7 +392,7 @@ void presentation::create_framebuffers () {
     attachments[1] = state.depth_stencil_view;
 
     auto framebufferInfo = utils::init_VkFramebufferCreateInfo ();
-    framebufferInfo.renderPass = state.fullscreen_render_pass;
+    framebufferInfo.renderPass = state.canvas_render_pass;
     framebufferInfo.attachmentCount = 2;
     framebufferInfo.pAttachments = attachments;
     framebufferInfo.width = state.swapchain_extent.width;

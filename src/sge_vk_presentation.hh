@@ -38,7 +38,7 @@ public:
     size_t                              num_frame_buffers                      ()                   const { return state.swapchain_frame_buffers.size (); }
     const VkFramebuffer&                frame_buffer                           (image_index i)      const { return state.swapchain_frame_buffers[i]; }
     const VkSemaphore&                  image_available                        ()                   const { return state.image_available; }
-    const VkRenderPass&                 fullscreen_render_pass                 ()                   const { return state.fullscreen_render_pass; }
+    const VkRenderPass&                 canvas_render_pass                 ()                   const { return state.canvas_render_pass; }
     const VkRenderPass&                 imgui_render_pass                      ()                   const { return state.imgui_render_pass; }
     const VkExtent2D&                   extent                                 ()                   const { return state.swapchain_extent; }
     const VkSwapchainKHR&               swapchain                              ()                   const { return state.swapchain; }
@@ -59,7 +59,7 @@ private:
         VkExtent2D                      swapchain_extent;
         std::vector<VkImage>            swapchain_images;
         std::vector<VkImageView>        swapchain_image_views;
-        VkRenderPass                    fullscreen_render_pass;
+        VkRenderPass                    canvas_render_pass;
         VkRenderPass                    imgui_render_pass;
         std::vector<VkFramebuffer>      swapchain_frame_buffers;
         VkSemaphore                     image_available;

@@ -1,6 +1,6 @@
-// SGE-VK-FULLSCREEN-RENDER
+// SGE-VK-CANVAS-RENDER
 // ---------------------------------- //
-// Noddy pipeline for quad rendering.
+// Pipeline for the user app canvas.
 // ---------------------------------- //
 
 #pragma once
@@ -16,20 +16,20 @@ namespace sge::vk {
 
 class presentation;
 
-class fullscreen_render {
+class canvas_render {
 public:
 
     typedef std::function<const VkDescriptorImageInfo&()> tex_fn;
     typedef std::function<VkViewport ()> viewport_fn;
 
-    fullscreen_render (
+    canvas_render (
         const context&,
         const queue_identifier,
         const class presentation&,
         const tex_fn&, // the texture to render
         const viewport_fn&);
 
-    ~fullscreen_render () {}
+    ~canvas_render () {}
 
     const VkQueue                       get_queue                               ()                  const { return context.get_queue (identifier); };
     const VkCommandBuffer               get_command_buffer                      (image_index i)     const { return state.command_buffers[i]; }
@@ -38,11 +38,11 @@ public:
     void                                create                                  ();
     void                                destroy                                 ();
     void                                refresh_full                            ();
-    
+
     void                                refresh_command_buffers                 ();
-    
+
 private:
-    
+
     struct state {
         VkDescriptorSetLayout           descriptor_set_layout;
         VkDescriptorPool                descriptor_pool;

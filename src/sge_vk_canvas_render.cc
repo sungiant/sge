@@ -1,4 +1,4 @@
-#include "sge_vk_fullscreen_render.hh"
+#include "sge_vk_canvas_render.hh"
 
 #include "sge_vk_presentation.hh"
 #include "sge_utils.hh"
@@ -6,7 +6,7 @@
 namespace sge::vk {
 
 
-fullscreen_render::fullscreen_render (const struct context& context, const queue_identifier qid, const class presentation& p, const tex_fn& tex, const viewport_fn& vp)
+canvas_render::canvas_render (const struct context& context, const queue_identifier qid, const class presentation& p, const tex_fn& tex, const viewport_fn& vp)
     : context (context)
     , identifier (qid)
     , presentation (p)
@@ -16,7 +16,7 @@ fullscreen_render::fullscreen_render (const struct context& context, const queue
     state.current_viewport = get_viewport_fn ();
 }
 
-void fullscreen_render::create () {
+void canvas_render::create () {
     const auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
     vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));;
 
@@ -26,7 +26,7 @@ void fullscreen_render::create () {
 }
 
 
-void fullscreen_render::destroy () {
+void canvas_render::destroy () {
     destroy_r ();
 
     vkDestroyCommandPool (context.logical_device, state.command_pool, context.allocation_callbacks);
@@ -39,14 +39,14 @@ void fullscreen_render::destroy () {
     state.render_finished = VK_NULL_HANDLE;
 }
 
-void fullscreen_render::create_r () {
+void canvas_render::create_r () {
     create_pipeline ();
     create_descriptor_pool ();
     create_descriptor_set ();
     create_command_buffers ();
 }
 
-void fullscreen_render::destroy_r () {
+void canvas_render::destroy_r () {
 
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
     vkFreeDescriptorSets (context.logical_device, state.descriptor_pool, 1, &state.descriptor_set);
@@ -60,23 +60,23 @@ void fullscreen_render::destroy_r () {
     state.pipeline_layout = VK_NULL_HANDLE;
 }
 
-void fullscreen_render::refresh_full () {
+void canvas_render::refresh_full () {
     destroy_r ();
 
     state.current_viewport = get_viewport_fn ();
 
     create_r ();
 }
-    
-void fullscreen_render::refresh_command_buffers () {
+
+void canvas_render::refresh_command_buffers () {
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
 
     state.current_viewport = get_viewport_fn ();
-    
+
     create_command_buffers ();
 }
 
-void fullscreen_render::create_descriptor_set_layout () {
+void canvas_render::create_descriptor_set_layout () {
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings = {
         utils::init_VkDescriptorSetLayoutBinding (
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -88,12 +88,12 @@ void fullscreen_render::create_descriptor_set_layout () {
     vk_assert (vkCreateDescriptorSetLayout (context.logical_device, &descriptor_layout, context.allocation_callbacks, &state.descriptor_set_layout));
 }
 
-void fullscreen_render::create_command_pool () {
+void canvas_render::create_command_pool () {
     const auto pool_info = utils::init_VkCommandPoolCreateInfo (identifier.family_index, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     vk_assert (vkCreateCommandPool (context.logical_device, &pool_info, context.allocation_callbacks, &state.command_pool));
 }
 
-void fullscreen_render::create_descriptor_pool () {
+void canvas_render::create_descriptor_pool () {
 
     std::vector<VkDescriptorPoolSize> pool_sizes = {
         utils::init_VkDescriptorPoolSize (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
@@ -114,7 +114,7 @@ void fullscreen_render::create_descriptor_pool () {
 
 }
 
-void fullscreen_render::create_descriptor_set () {
+void canvas_render::create_descriptor_set () {
 
     VkDescriptorSetLayout layouts[] = { state.descriptor_set_layout };
     const auto allocate_info = utils::init_VkDescriptorSetAllocateInfo (state.descriptor_pool, layouts, 1);
@@ -135,12 +135,12 @@ void fullscreen_render::create_descriptor_set () {
     vkUpdateDescriptorSets (context.logical_device, (uint32_t) write_descriptor_sets.size (), write_descriptor_sets.data (), 0, NULL);
 }
 
-void fullscreen_render::create_pipeline () {
+void canvas_render::create_pipeline () {
 
     std::vector<uint8_t> vert;
     std::vector<uint8_t> frag;
-    sge::utils::get_file_stream (vert, "sge_fullscreen_render.vert.spv");
-    sge::utils::get_file_stream (frag, "sge_fullscreen_render.frag.spv");
+    sge::utils::get_file_stream (vert, "sge_canvas_render.vert.spv");
+    sge::utils::get_file_stream (frag, "sge_canvas_render.frag.spv");
     VkShaderModule vertex_shader       = utils::create_shader_module (context.logical_device, context.allocation_callbacks, vert);
     VkShaderModule fragment_shader     = utils::create_shader_module (context.logical_device, context.allocation_callbacks, frag);
 
@@ -168,13 +168,13 @@ void fullscreen_render::create_pipeline () {
     const auto pipeline_layout_info = utils::init_VkPipelineLayoutCreateInfo(1, &state.descriptor_set_layout);
 
     vk_assert (vkCreatePipelineLayout (context.logical_device, &pipeline_layout_info, context.allocation_callbacks, &state.pipeline_layout));
-     
+
     const std::vector<VkDynamicState> dynamic_states_to_enable = { VK_DYNAMIC_STATE_VIEWPORT };
     const auto dynamic_state = utils::init_VkPipelineDynamicStateCreateInfo (dynamic_states_to_enable);
-     
+
     const auto depth_stencil_state = utils::init_VkPipelineDepthStencilStateCreateInfo (VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
 
-    auto pipeline_info = utils::init_VkGraphicsPipelineCreateInfo (state.pipeline_layout, presentation.fullscreen_render_pass ());
+    auto pipeline_info = utils::init_VkGraphicsPipelineCreateInfo (state.pipeline_layout, presentation.canvas_render_pass ());
     pipeline_info.stageCount = 2;
     pipeline_info.pStages = shader_stages;
     pipeline_info.pVertexInputState = &empty_input_state;
@@ -195,7 +195,7 @@ void fullscreen_render::create_pipeline () {
 }
 
 
-void fullscreen_render::create_command_buffers () {
+void canvas_render::create_command_buffers () {
 
     state.command_buffers.resize (presentation.num_frame_buffers ());
 
@@ -204,7 +204,7 @@ void fullscreen_render::create_command_buffers () {
     vk_assert (vkAllocateCommandBuffers (context.logical_device, &allocate_info, state.command_buffers.data ()));
 
     auto render_pass_begin_info = utils::init_VkRenderPassBeginInfo ();
-    render_pass_begin_info.renderPass = presentation.fullscreen_render_pass ();
+    render_pass_begin_info.renderPass = presentation.canvas_render_pass ();
     render_pass_begin_info.renderArea.offset = VkOffset2D{ (int32_t)state.current_viewport.x, (int32_t)state.current_viewport.y };
     render_pass_begin_info.renderArea.extent = VkExtent2D{ (uint32_t)state.current_viewport.width, (uint32_t)state.current_viewport.height };
 
@@ -224,13 +224,13 @@ void fullscreen_render::create_command_buffers () {
 
         render_pass_begin_info.clearValueCount = (uint32_t) clear_values.size ();
         render_pass_begin_info.pClearValues = clear_values.data ();
-         
+
         vkCmdSetViewport(state.command_buffers[i], 0, 1, &state.current_viewport);
         vkCmdBeginRenderPass (state.command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
         vkCmdBindPipeline (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline);
         vkCmdBindDescriptorSets (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline_layout, 0, 1, &state.descriptor_set, 0, NULL);
-         
+
         vkCmdDraw (state.command_buffers[i], 3, 1, 0, 0);
 
         vkCmdEndRenderPass (state.command_buffers[i]);
