@@ -81,23 +81,23 @@ typedef std::variant<input_binary_control, input_quaternary_control, input_chara
 typedef std::unordered_map<input_control_identifier, input_control_value> input_state;
 
 struct client_state {
-    bool is_resizing; // todo: surely this isn't needed and is just a function of changes in the values below.
+    bool is_resizing = false; // todo: surely this isn't needed and is just a function of changes in the values below.
+    
+    int window_width = 0;
+    int window_height = 0;
+    int window_position_x = 0;
+    int window_position_y = 0;
     
     // the size in pixels of the area SGE is currently contained within (this does not include the OS window borders).
-    int container_width;
-    int container_height;
-    int container_position_x;
-    int container_position_y;
-
-    int window_width;
-    int window_height;
-    int window_position_x;
-    int window_position_y;
+    int container_width = 0;
+    int container_height = 0;
+    int container_position_x = 0;
+    int container_position_y = 0;
 
     // the maximum possible size the rendering area could be (i.e. in fullscreen mode -
     // equivalent to the primary monitor's resolution).
-    int max_container_width;
-    int max_container_height;
+    int max_container_width = 0;
+    int max_container_height = 0;
 };
 
 typedef std::function <void (void)>         void_fn;

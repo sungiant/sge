@@ -504,19 +504,33 @@ bool                                    g_fullscreen;
 bool                                    g_is_resizing;
 int                                     g_container_width;
 int                                     g_container_height;
+
+
+
+
+NSRect                                  g_window_frame;
 std::optional<sge::math::point2>        g_target_window_size;
 std::unique_ptr<sge::core::engine>      g_sge;
 
 //################################################################################################//
 
-void calculate_sge_client_state (sge::core::client_state& container) {
-    container.is_resizing = g_is_resizing;
-    container.current_width = g_container_width;
-    container.current_height = g_container_height;
-
+void calculate_sge_client_state (sge::core::client_state& client) {
+    client.is_resizing = g_is_resizing;
+    client.window_width = g_window_frame.size.width;
+    client.window_height = g_window_frame.size.height;
+    client.window_position_x = (int)g_window_frame.origin.x;
+    client.window_position_y = (g_window_frame.size.height / 2.0f) - (int)g_window_frame.origin.y;
+    
+    client.container_width = g_container_width;
+    client.container_height = g_container_height;
+    
+    // this is a guess
+    client.container_position_x = 0;
+    client.container_position_y = client.window_height - client.container_height;
+    
     NSRect e = [[NSScreen mainScreen] frame];
-    container.max_width = (int)e.size.width;
-    container.max_height = (int)e.size.height;
+    client.max_container_width = (int)e.size.width;
+    client.max_container_height = (int)e.size.height;
 }
 
 void calculate_sge_input_state (sge::core::input_state& input) {
@@ -739,7 +753,8 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     NSPoint point = [[view window] mouseLocationOutsideOfEventStream];
     g_mouse_position_x = point.x;//std::clamp <int>(point.x, 0, g_container_width);
     g_mouse_position_y = g_container_height-point.y;// g_container_height - std::clamp<int> (point.y, 0, g_container_height);
-
+    
+    g_window_frame = [_window frame];
     g_gamepad.update();
 
     // update the engine
@@ -895,6 +910,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     [[_window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
     [[_window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
     [[_window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
+    g_window_frame = [_window frame];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender { return YES; }
