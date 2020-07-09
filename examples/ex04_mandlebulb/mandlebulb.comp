@@ -13,25 +13,28 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
 
+struct Ray { vec3 position; vec3 direction; };
+
 bool is_zero (float f) { return (f >= -EPSILON) && (f <= EPSILON); }
 
 vec3 qtransform (vec3 vector, vec4 q) {
-  float ii = q.x * q.x; float jj = q.y * q.y; float kk = q.z * q.z;
-  float ui = q.w * q.x; float uj = q.w * q.y; float uk = q.w * q.z;
-  float ij = q.x * q.y; float ik = q.x * q.z; float jk = q.y * q.z;
+  const float ii = q.x * q.x; const float jj = q.y * q.y; const float kk = q.z * q.z;
+  const float ui = q.w * q.x; const float uj = q.w * q.y; const float uk = q.w * q.z;
+  const float ij = q.x * q.y; const float ik = q.x * q.z; const float jk = q.y * q.z;
   return vec3 (
     + vector.x - (2.0 * vector.x * (jj + kk)) + (2.0 * vector.y * (ij - uk)) + (2.0 * vector.z * (ik + uj)),
     + vector.y + (2.0 * vector.x * (ij + uk)) - (2.0 * vector.y * (ii + kk)) + (2.0 * vector.z * (jk - ui)),
     + vector.z + (2.0 * vector.x * (ik - uj)) + (2.0 * vector.y * (jk + ui)) - (2.0 * vector.z * (ii + jj)));
 }
 
-struct Ray { vec3 position; vec3 direction; };
-struct MarchResult { bool has_value; float distance; int stepCount; };
+//-------------------------------------------------------------------------------------------------------------------//
 
+struct MarchResult { bool has_value; float distance; int stepCount; };
 
 //-------------------------------------------------------------------------------------------------------------------//
 
 layout (local_size_x = 16, local_size_y = 16) in;
+
 layout (binding = 0, rgba8) uniform writeonly image2D img;
 
 layout (push_constant) uniform PUSH {
@@ -39,25 +42,12 @@ layout (push_constant) uniform PUSH {
 } push;
 
 layout (binding = 1) uniform UBO {
-    // 4
-    vec3 position;
-    float gamma;
-    // 4
-    vec4 orientation;
-    // 4
-    int marching_step_limit;
-    int fractal_step_limit;
-    float anim_speed;
-    float anim_range;
-    // 4
-    vec3 d;
-    float fractal_power;
-    // 4
-    vec3 e;
-    float brightness_amount;
-    // 4
-    vec3 glow_colour;
-    float glow_amount;
+    vec3 position; float gamma;                                                             // 4
+    vec4 orientation;                                                                       // 4
+    int marching_step_limit; int fractal_step_limit; float anim_speed; float anim_range;    // 4
+    vec3 d; float fractal_power;                                                            // 4
+    vec3 e; float brightness_amount;                                                        // 4
+    vec3 glow_colour; float glow_amount;                                                    // 4
 } ubo;
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -73,7 +63,7 @@ float mandlebulb_sdf (vec3 position) {
         float theta = acos (z.z / r);
         float phi = 2.0 * atan (z.y, z.x);
         dr = pow (r, power - 1.0) * power * dr + 1.0;
-        float zr = pow (r, power);
+        const float zr = pow (r, power);
         theta = theta * power;
         phi = phi * power;
         z = vec3 (sin (theta) * cos (phi), sin (phi) * sin (theta), cos (theta)) * zr;
@@ -87,8 +77,8 @@ MarchResult march (Ray ray, float start, float end) {
     int stepsTaken = 0;
     while (stepsTaken <= ubo.marching_step_limit) {
         stepsTaken++;
-        float d = mandlebulb_sdf (ray.position + (ray.direction * distanceCovered));
-        float nextStepSize = max (MINIMUM_STEP, d);
+        const float d = mandlebulb_sdf (ray.position + (ray.direction * distanceCovered));
+        const float nextStepSize = max (MINIMUM_STEP, d);
         distanceCovered += nextStepSize;
         if (distanceCovered > end) return MarchResult (false, distanceCovered, stepsTaken);
         if (nextStepSize < TOLERANCE) return MarchResult (true, distanceCovered, stepsTaken);
@@ -112,12 +102,9 @@ vec4 run (vec2 uv, float aspect) {
     const float frustumDepth = CAM_FAR - CAM_NEAR;
     const MarchResult marchResult = march (ray, 0.0, frustumDepth);
     const float depth = marchResult.distance;
-
     const vec3 sp = ray.position + (ray.direction * depth);
-
     const float h = length (sp) / 2.0;
     const float t = clamp (h, 0.0, 1.0);
-
     const vec3 col = normalize (ubo.d.xyz + ubo.e.xyz * t);
 
     if (marchResult.has_value) {

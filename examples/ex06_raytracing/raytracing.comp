@@ -19,41 +19,42 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
 
+struct Ray { vec3 position; vec3 direction; };
+
 bool is_zero (float f) { return (f >= -EPSILON) && (f <= EPSILON); }
 
 vec3 qtransform (vec3 vector, vec4 q) {
-  float ii = q.x * q.x; float jj = q.y * q.y; float kk = q.z * q.z;
-  float ui = q.w * q.x; float uj = q.w * q.y; float uk = q.w * q.z;
-  float ij = q.x * q.y; float ik = q.x * q.z; float jk = q.y * q.z;
+  const float ii = q.x * q.x; const float jj = q.y * q.y; const float kk = q.z * q.z;
+  const float ui = q.w * q.x; const float uj = q.w * q.y; const float uk = q.w * q.z;
+  const float ij = q.x * q.y; const float ik = q.x * q.z; const float jk = q.y * q.z;
   return vec3 (
     + vector.x - (2.0 * vector.x * (jj + kk)) + (2.0 * vector.y * (ij - uk)) + (2.0 * vector.z * (ik + uj)),
     + vector.y + (2.0 * vector.x * (ij + uk)) - (2.0 * vector.y * (ii + kk)) + (2.0 * vector.z * (jk - ui)),
     + vector.z + (2.0 * vector.x * (ik - uj)) + (2.0 * vector.y * (jk + ui)) - (2.0 * vector.z * (ii + jj)));
 }
 
-struct Ray { vec3 position; vec3 direction; };
+//-------------------------------------------------------------------------------------------------------------------//
 
-struct Sphere
-{
-	vec3 pos;
+struct Sphere {
+	vec3  pos;
 	float radius;
-	vec3 diffuse;
+	vec3  diffuse;
 	float specular;
-	int id;
+	int   id;
 };
 
-struct Plane
-{
-	vec3 normal;
+struct Plane {
+	vec3  normal;
 	float distance;
-	vec3 diffuse;
+	vec3  diffuse;
 	float specular;
-	int id;
+	int   id;
 };
 
 //-------------------------------------------------------------------------------------------------------------------//
 
 layout (local_size_x = 16, local_size_y = 16) in;
+
 layout (binding = 0, rgba8) uniform writeonly image2D img;
 
 layout (push_constant) uniform PUSH {
@@ -71,13 +72,11 @@ layout (binding = 1) uniform UBO {
     float fov;
 } ubo;
 
-layout (std140, binding = 2) buffer Spheres
-{
+layout (std140, binding = 2) buffer Spheres {
 	Sphere sbo_spheres[];
 };
 
-layout (std140, binding = 3) buffer Planes
-{
+layout (std140, binding = 3) buffer Planes {
 	Plane sbo_planes[];
 };
 

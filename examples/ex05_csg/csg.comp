@@ -44,32 +44,20 @@ const float INFINITY = 1.0 / 0.0;
 const float MINIMUM_STEP = 0.00001;
 const float TOLERANCE = 0.0001;
 const float NORM_SAMPLE = 0.001;
-const vec3 AMBIENT_COLOUR = vec3 (0.2, 0.2, 0.2);
-const vec3 SPECULAR_COLOUR = vec3 (1, 1, 1);
+const vec3  AMBIENT_COLOUR = vec3 (0.2, 0.2, 0.2);
+const vec3  SPECULAR_COLOUR = vec3 (1, 1, 1);
 const float EPSILON = 0.000001;
 
 //-------------------------------------------------------------------------------------------------------------------//
 
-struct Ray {
-    vec3 position;
-    vec3 direction;
-};
+struct Ray { vec3 position; vec3 direction; };
 
 bool is_zero (float f) { return (f >= -EPSILON) && (f <= EPSILON); }
 
-vec3 qtransform (vec3 vector, vec4 quaternion) {
-  float ii = quaternion.x * quaternion.x;
-  float jj = quaternion.y * quaternion.y;
-  float kk = quaternion.z * quaternion.z;
-
-  float ui = quaternion.w * quaternion.x;
-  float uj = quaternion.w * quaternion.y;
-  float uk = quaternion.w * quaternion.z;
-
-  float ij = quaternion.x * quaternion.y;
-  float ik = quaternion.x * quaternion.z;
-  float jk = quaternion.y * quaternion.z;
-
+vec3 qtransform (vec3 vector, vec4 q) {
+  const float ii = q.x * q.x; const float jj = q.y * q.y; const float kk = q.z * q.z;
+  const float ui = q.w * q.x; const float uj = q.w * q.y; const float uk = q.w * q.z;
+  const float ij = q.x * q.y; const float ik = q.x * q.z; const float jk = q.y * q.z;
   return vec3 (
     + vector.x - (2.0 * vector.x * (jj + kk)) + (2.0 * vector.y * (ij - uk)) + (2.0 * vector.z * (ik + uj)),
     + vector.y + (2.0 * vector.x * (ij + uk)) - (2.0 * vector.y * (ii + kk)) + (2.0 * vector.z * (jk - ui)),
@@ -625,10 +613,12 @@ void main() {
 
     if (push.no_change && (((ubo_settings.flags >> 3) & 1u) > 0)) {
         // nothing changed, don't bother
-        if (        gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 0, 0, 1)); }
-        if (dim.x - gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 1, 0, 1)); }
-        if (        gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 0, 1)); }
-        if (dim.x - gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 1, 1)); }
+        if ((((ubo_settings.flags >> 4) & 1u) > 0)) { // render markers to show we're not rendering
+            if (        gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 0, 0, 1)); }
+            if (dim.x - gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (1, 1, 0, 1)); }
+            if (        gl_GlobalInvocationID.x < 10 && dim.y - gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 0, 1)); }
+            if (dim.x - gl_GlobalInvocationID.x < 10 &&         gl_GlobalInvocationID.y < 10) { imageStore (img, ivec2 (gl_GlobalInvocationID.xy), vec4 (0, 1, 1, 1)); }
+        }
     }
     else {
         const vec3 bg = vec3 (.4) * (1. - (length(uv - vec2(0.5)) - .2));

@@ -45,18 +45,19 @@ struct UBO_CAMERA { // https://www.reddit.com/r/vulkan/comments/9spolm/help_with
 };
 
 struct UBO_SETTINGS {
+
     enum Flags {
-        CalculateAO = 0x01,
-        CalculateShadows = 0x03,
-        CalculateLighting = 0x07,
-        EnableLazyness = 0xf,
-        EnablebufferDownsizing = 0x10,
+        CalculateAO            = (1 << 0),
+        CalculateShadows       = (1 << 1),
+        CalculateLighting      = (1 << 2),
+        EnableLazyness         = (1 << 3),
+        RenderLazynessMarkers  = (1 << 4),
     };
 
     int         display_mode = 0;
     float       gamma = 2.2f;
     int         iterations = 64;
-    uint32_t    flags =  CalculateAO | CalculateShadows | CalculateLighting | EnableLazyness | EnablebufferDownsizing;
+    uint32_t    flags =  CalculateAO | CalculateShadows | CalculateLighting | EnableLazyness;
     float       soft_shadow_factor = 10.0f;
 
     bool operator == (const UBO_SETTINGS& ubo) const {
@@ -68,7 +69,6 @@ struct UBO_SETTINGS {
     }
     bool operator != (const UBO_SETTINGS& ubo) const { return !(*this == ubo); }
 };
-
 
 
 
