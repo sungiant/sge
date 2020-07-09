@@ -79,9 +79,9 @@ int main ()
 
         free(event);
 
-        sge::core::container_state container_state;
+        sge::core::client_state client_state;
         sge::core::input_state input_state;
-        g_sge->update (container_state, input_state);
+        g_sge->update (client_state, input_state);
 
     }
 

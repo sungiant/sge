@@ -441,7 +441,7 @@ void console (sge::app::configuration& configuration) {
     }
 }
 
-void calculate_sge_container_state (sge::core::client_state& container) {
+void calculate_sge_client_state (sge::core::client_state& container) {
 
     container.is_resizing = g_is_resizing;
 
@@ -635,14 +635,14 @@ int run (HINSTANCE hinst, HWND hwnd, sge::app::configuration& configuration) {
         g_gamepad.update ();
 
         // update the engine
-        sge::core::client_state container_state;
+        sge::core::client_state client_state;
         sge::core::input_state input_state;
 
 
-        calculate_sge_container_state (container_state);
+        calculate_sge_client_state (client_state);
         calculate_sge_input_state (input_state);
 
-        g_sge->update (container_state, input_state);
+        g_sge->update (client_state, input_state);
 
     }
 
@@ -764,7 +764,7 @@ int CALLBACK WinMain (HINSTANCE hinst, HINSTANCE hpinst, LPSTR lpcmdln, int ncmd
 
     assert (width (client_rect) == target_window_width);
     assert (height (client_rect) == target_window_height);
-    
+
     HDC windowHDC = GetDC (hwnd);
     g_fullscreen_width = GetDeviceCaps (windowHDC, DESKTOPHORZRES);
     g_fullscreen_height = GetDeviceCaps (windowHDC, DESKTOPVERTRES);

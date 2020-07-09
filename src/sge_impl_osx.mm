@@ -66,7 +66,7 @@ private:
         BUTTON_LEFT_THUMB = 10, BUTTON_RIGHT_THUMB = 11,
         BUTTON_OPTION_EXTRA = 12, BUTTON_OPTION_MIDDLE = 13,
     };
-        
+
     enum axis_identifier {
         AXIS_LEFT_X = 0, AXIS_LEFT_Y = 1, AXIS_RIGHT_X = 2, AXIS_RIGHT_Y = 3,
         AXIS_DPAD = 4, AXIS_LEFT_TRIGGER = 5, AXIS_RIGHT_TRIGGER = 6,
@@ -174,7 +174,7 @@ private:
         pthread_mutex_lock (&mutex);
         while (event_queue.size ())
             event_queue.pop();
-        
+
         // having this bit causes `IOHIDManagerClose` to assert... :/
         //for (auto& kvp : input_callback_data) {
             //IOReturn r = IOHIDDeviceClose (kvp.first, kIOHIDOptionsTypeSeizeDevice);
@@ -190,7 +190,7 @@ private:
           event_thread_loop = nullptr;
         }
         pthread_mutex_destroy (&mutex);
-        
+
         IOHIDManagerUnscheduleFromRunLoop (hid_manager, CFRunLoopGetCurrent (), kCFRunLoopCommonModes);
 
         IOReturn r = IOHIDManagerClose (hid_manager, kIOHIDOptionsTypeNone);
@@ -256,7 +256,7 @@ private:
         const int index = idx.value();
         assert (connections[index].has_value());
         auto& state = connections[index].value ().second;
-        
+
         if (type == identifier_type::BUTTON) {
             switch (identifier) {
                 #define CASE(x, y) { case BUTTON_ ## x: { if (value > 0) state.pressed_buttons.insert (y); else state.pressed_buttons.erase (y); break; } }
@@ -277,7 +277,7 @@ private:
                 case BUTTON_RIGHT_TRIGGER: { if (value > 0) state.right_trigger = 1.0f; else state.right_trigger = 0.0f; break; }
             }
         }
-        
+
         if (type == identifier_type::AXIS) {
             switch (identifier) {
                 // sticks
@@ -290,7 +290,7 @@ private:
                     else if (identifier == AXIS_LEFT_Y) state.left_stick.y = -v;
                     else if (identifier == AXIS_RIGHT_X) state.right_stick.x = v;
                     else if (identifier == AXIS_RIGHT_Y) state.right_stick.y = -v;
-                    
+
                     break;
                 }
                 // dpad
@@ -327,13 +327,13 @@ private:
     }
 
     static void get_device_info (IOHIDDeviceRef device, device_info& info) {
-        
+
         info.vendor_id = get_registry_int (device, CFSTR (kIOHIDVendorIDKey));
         info.product_id = get_registry_int (device, CFSTR (kIOHIDProductIDKey));
         info.product = get_registry_string (device, CFSTR (kIOHIDProductKey));
         info.manufacturer = get_registry_string (device, CFSTR (kIOHIDManufacturerKey));
-        
-        
+
+
         CFArrayRef elements = IOHIDDeviceCopyMatchingElements (device, nullptr, kIOHIDOptionsTypeNone);
         for (int i = 0; i < CFArrayGetCount (elements); i++) {
             IOHIDElementRef element = (IOHIDElementRef)CFArrayGetValueAtIndex (elements, i);
@@ -396,7 +396,7 @@ private:
 
     static void iohid_attached_callback (void* context, IOReturn result, void* sender, IOHIDDeviceRef device) {
         iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
-        
+
         device_info info = {};
         get_device_info(device, info);
         //bool ps4_dual_shock = (info.vendor_id == 1356 && info.product_id == 1476);
@@ -406,14 +406,14 @@ private:
         //if (r != kIOReturnSuccess) {
         //    std::cout << "Unexpected return code [" << r << "] from IOHIDDeviceOpen (" << device << ")" << '\n';
         //}
-        
+
         pthread_mutex_lock (&gp->mutex);
         gp->input_callback_data[device] = std::make_unique<input_reference> (*gp, device, info);
         gp->event_queue.push (attached_event { device });
         IOHIDDeviceRegisterInputValueCallback (device, iohid_input_callback, gp->input_callback_data[device].get());
         IOHIDDeviceScheduleWithRunLoop (device, gp->event_thread_loop, kCFRunLoopDefaultMode);
         pthread_mutex_unlock (&gp->mutex);
-        
+
 
     }
 
@@ -423,7 +423,7 @@ private:
         //if (r != kIOReturnSuccess) {
         //    std::cout << "Unexpected return code [" << r << "] from IOHIDDeviceClose (" << device << ")." << '\n';
         //}
-        
+
         iokit_gamepad* gp = static_cast<iokit_gamepad*>(context);
         pthread_mutex_lock (&gp->mutex);
         gp->input_callback_data.erase (device);
@@ -432,15 +432,15 @@ private:
     }
 
     static void iohid_input_callback (void* context, IOReturn result, void* sender, IOHIDValueRef value) {
-       
-        
+
+
         input_reference* ir = static_cast<input_reference*>(context);
-        
+
         const IOHIDElementRef element = IOHIDValueGetElement (value);
         IOHIDElementType element_type = IOHIDElementGetType (element);
         const IOHIDElementCookie element_cookie = IOHIDElementGetCookie (element);
         const int int_value = IOHIDValueGetIntegerValue (value);
-        
+
         pthread_mutex_lock (&ir->parent.mutex);
 
         if (ir->parent.event_queue.size () < 512) {
@@ -483,7 +483,7 @@ private:
         }
         return std::nullopt;
     }
-    
+
 };
 
 
@@ -509,11 +509,11 @@ std::unique_ptr<sge::core::engine>      g_sge;
 
 //################################################################################################//
 
-void calculate_sge_container_state (sge::core::container_state& container) {
+void calculate_sge_client_state (sge::core::client_state& container) {
     container.is_resizing = g_is_resizing;
     container.current_width = g_container_width;
     container.current_height = g_container_height;
-    
+
     NSRect e = [[NSScreen mainScreen] frame];
     container.max_width = (int)e.size.width;
     container.max_height = (int)e.size.height;
@@ -529,8 +529,8 @@ void calculate_sge_input_state (sge::core::input_state& input) {
         input[identifier] = static_cast<wchar_t> (character);
         ++keyboard_i;
     }
-    
-    
+
+
     #define FN(x, y) { if (g_keyboard_pressed_fns.find (x) != g_keyboard_pressed_fns.end()) input[sge::core::input_control_identifier::kb_ ## y] = true; }
     FN (27, escape); FN (13, enter); FN (32, spacebar);
     FN (NSEventModifierFlagShift, shift); FN (NSEventModifierFlagControl, control); FN (NSEventModifierFlagOption, alt);
@@ -547,7 +547,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     FN (NSF7FunctionKey, f7); FN (NSF8FunctionKey, f8); FN (NSF9FunctionKey, f9);
     FN (NSF10FunctionKey, f10); FN (NSF11FunctionKey, f11); FN (NSF12FunctionKey, f12);
     #undef FN
-    
+
     for (wchar_t character : g_keyboard_pressed_characters) {
         switch (toupper (character)) {
             #define CASE(x, y) { case x: input[sge::core::input_control_identifier::kb_ ## y] = true; break; }
@@ -563,7 +563,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
             default: break;
         }
     }
-    
+
     for (wchar_t character : g_keyboard_pressed_characters) { // not sure how to get this to work
         if (g_keyboard_pressed_fns.find (NSEventModifierFlagNumericPad) != g_keyboard_pressed_fns.end()) {
             if (character == '0') { input[sge::core::input_control_identifier::kb_numpad_0]; continue; }
@@ -584,15 +584,15 @@ void calculate_sge_input_state (sge::core::input_state& input) {
             if (character == '=') { input[sge::core::input_control_identifier::kb_numpad_equals]; continue; }
         }
     }
-    
+
     {
         bool UNKNOWN = false; // urgh: https://stackoverflow.com/questions/12536356/how-to-detect-key-up-or-key-release-for-the-capslock-key-in-os-x
-        
+
         const bool caps_lk_locked = UNKNOWN;
         const bool caps_lk_pressed = g_keyboard_pressed_fns.find (NSEventModifierFlagCapsLock) != g_keyboard_pressed_fns.end();
         if (caps_lk_locked || caps_lk_pressed)
             input[sge::core::input_control_identifier::kq_caps_lk] = std::make_pair (caps_lk_locked, caps_lk_pressed);
-        
+
         const bool scr_lk_locked = UNKNOWN;
         const bool scr_lk_pressed = g_keyboard_pressed_fns.find (NSScrollLockFunctionKey) != g_keyboard_pressed_fns.end();
         if (scr_lk_locked || scr_lk_pressed)
@@ -610,7 +610,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     if (g_mouse_left) input[sge::core::input_control_identifier::mb_left] = true;
     if (g_mouse_middle) input[sge::core::input_control_identifier::mb_middle] = true;
     if (g_mouse_right) input[sge::core::input_control_identifier::mb_right] = true;
-    
+
     // gamepad
     input[sge::core::input_control_identifier::ga_left_trigger_0] = g_gamepad.get_left_trigger ();
     input[sge::core::input_control_identifier::ga_right_trigger_0] = g_gamepad.get_right_trigger ();
@@ -637,7 +637,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     IF (iokit_gamepad::button::action_west,     sge::core::input_control_identifier::gb_x_0);
     IF (iokit_gamepad::button::action_north,    sge::core::input_control_identifier::gb_y_0);
     #undef IF
-    
+
 }
 
 @implementation NSWindow (TitleBarHeight)
@@ -678,9 +678,9 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     [self.view.window makeKeyAndOrderFront:self];
     _view = (MTKView *) self.view;
     //CAMetalLayer *metalLayer = (CAMetalLayer*)_view.layer;
-    
+
     _view.delegate = self;
-    
+
     g_sge->setup (self.view);
 
     g_sge->register_set_window_title_callback ([self](const char* s) {
@@ -688,7 +688,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     });
     g_sge->register_set_window_fullscreen_callback ([self](bool v) {
         bool is_fullscreen = ((_window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen);
-        
+
         if (is_fullscreen) {
             [_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenNone];
         } else {
@@ -697,14 +697,14 @@ void calculate_sge_input_state (sge::core::input_state& input) {
         if(is_fullscreen != v) {
              [_window toggleFullScreen:nil];
         }
-        
+
         if (is_fullscreen && g_target_window_size.has_value ()) {
 
             NSRect frame = [_window frame];
             frame.size.width = g_target_window_size.value().x;
             frame.size.height = g_target_window_size.value().y + _window.titlebarHeight;
             [_window setFrame: frame display: YES animate: false];
-            
+
             g_target_window_size.reset ();
         }
 
@@ -723,7 +723,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     g_sge->register_shutdown_request_callback ([self]() {
         [NSApp terminate:self];
     });
-    
+
     g_sge->start ();
 }
 
@@ -739,17 +739,17 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     NSPoint point = [[view window] mouseLocationOutsideOfEventStream];
     g_mouse_position_x = point.x;//std::clamp <int>(point.x, 0, g_container_width);
     g_mouse_position_y = g_container_height-point.y;// g_container_height - std::clamp<int> (point.y, 0, g_container_height);
-    
+
     g_gamepad.update();
 
     // update the engine
-    sge::core::container_state container_state;
+    sge::core::client_state client_state;
     sge::core::input_state input_state;
 
-    calculate_sge_container_state (container_state);
+    calculate_sge_client_state (client_state);
     calculate_sge_input_state (input_state);
 
-    g_sge->update (container_state, input_state);
+    g_sge->update (client_state, input_state);
 
     g_is_resizing = false;
 }
@@ -786,18 +786,18 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     else                                                    g_keyboard_pressed_fns.erase  (NSEventModifierFlagCommand);
     if ([e modifierFlags] & NSEventModifierFlagNumericPad)  g_keyboard_pressed_fns.insert (NSEventModifierFlagNumericPad);
     else                                                    g_keyboard_pressed_fns.erase  (NSEventModifierFlagNumericPad);
-    
+
 }
 -(void)keyDown:(NSEvent *) e {
     if ([e isARepeat])
         return;
-    
+
     unsigned short characterHit = [[e charactersIgnoringModifiers] characterAtIndex:0];
-    
+
     if ([e modifierFlags] & NSEventModifierFlagShift) {
         ;
     }
-    
+
 #if SGE_OSX_INPUT_DEBUG
     std::cout << "key down: " << characterHit << std::endl;
 #endif
@@ -806,7 +806,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     g_keyboard_pressed_characters.erase (toupper (characterHit));
     g_keyboard_pressed_characters.insert (characterHit);
 
-    
+
     if ((characterHit >= 0xF700 && characterHit <= 0xF8FF)
         || characterHit == 13 // enter
         || characterHit == 32 // spacebar
@@ -829,7 +829,7 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     if ([e modifierFlags] & NSEventModifierFlagShift) {
         ;
     }
-    
+
 #if SGE_OSX_INPUT_DEBUG
     std::cout << "key up: " << characterHit << std::endl;
 #endif
@@ -863,16 +863,16 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     _controller = [[metal_view_controller alloc] initWithNibName:nil bundle:nil];
     auto sm = NSWindowStyleMaskTitled | NSWindowStyleMaskResizable;
     _window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:sm backing:NSBackingStoreBuffered defer:NO];
-    
+
     [_window makeFirstResponder:_controller];
-    
+
     // only allow fullscreen to be enabled from the engine (not from the green window button) as the
     // engine does not query the host's full screen state and assumes it doesn't change beneath its feet.
     [_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenNone];
-    
+
     metal_view_controller *controller = (metal_view_controller*)_controller;
     [controller setWindow: _window];
-    
+
     return self;
 }
 - (void)dealloc {
@@ -887,11 +887,11 @@ void calculate_sge_input_state (sge::core::input_state& input) {
     [_window setTitle:appName];
     [_window makeKeyAndOrderFront:self];
     [_window setContentViewController:_controller];
-    
+
     [[_window standardWindowButton:NSWindowCloseButton] setHidden:NO];
     [[_window standardWindowButton:NSWindowMiniaturizeButton] setHidden:NO];
     [[_window standardWindowButton:NSWindowZoomButton] setHidden:NO];
-    
+
     [[_window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
     [[_window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
     [[_window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
