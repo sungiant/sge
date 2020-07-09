@@ -441,7 +441,7 @@ void console (sge::app::configuration& configuration) {
     }
 }
 
-void calculate_sge_container_state (sge::core::container_state& container) {
+void calculate_sge_container_state (sge::core::client_state& container) {
 
     container.is_resizing = g_is_resizing;
 
@@ -635,7 +635,7 @@ int run (HINSTANCE hinst, HWND hwnd, sge::app::configuration& configuration) {
         g_gamepad.update ();
 
         // update the engine
-        sge::core::container_state container_state;
+        sge::core::client_state container_state;
         sge::core::input_state input_state;
 
 

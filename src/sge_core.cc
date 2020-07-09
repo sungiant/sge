@@ -21,8 +21,8 @@ bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
 }
 int api_impl::system__get_state_int (runtime::system_int_state z) const {
     switch (z) {
-        case runtime::system_int_state::max_canvas_width: return engine_state.container.max_container_width;
-        case runtime::system_int_state::max_canvas_height: return engine_state.container.max_container_height;
+        case runtime::system_int_state::max_canvas_width: return engine_state.client.max_container_width;
+        case runtime::system_int_state::max_canvas_height: return engine_state.client.max_container_height;
         case runtime::system_int_state::canvas_offset_x: return engine_state.graphics.get_user_viewport_x ();
         case runtime::system_int_state::canvas_offset_y: return engine_state.graphics.get_user_viewport_y();
         case runtime::system_int_state::canvas_width: return engine_state.graphics.get_user_viewport_width ();
@@ -350,8 +350,8 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
         }
 
         if ((engine_tasks.change_canvas_width.has_value () || engine_tasks.change_canvas_height.has_value ()) && engine_state.host.set_window_size_fn.has_value ()) {
-            const int vw = engine_tasks.change_canvas_width.has_value () ? engine_tasks.change_canvas_width.value () : engine_state.container.container_width;
-            const int vh = engine_tasks.change_canvas_height.has_value() ? engine_tasks.change_canvas_height.value () : engine_state.container.container_height;
+            const int vw = engine_tasks.change_canvas_width.has_value () ? engine_tasks.change_canvas_width.value () : engine_state.client.container_width;
+            const int vh = engine_tasks.change_canvas_height.has_value() ? engine_tasks.change_canvas_height.value () : engine_state.client.container_height;
 
             const int adjusted_size_x = vw;
             const int adjusted_size_y = engine_state.graphics.state.imgui_on ? vh + imgui::ext::guess_main_menu_bar_height () : vh;
@@ -472,12 +472,12 @@ void engine::setup (
 #if TARGET_WIN32
     engine_state->platform.hinst = z_hinst;
     engine_state->platform.hwnd = z_hwnd;
-    engine_state->graphics.create (z_hinst, z_hwnd, engine_state->container.container_width, engine_state->container.container_height);
+    engine_state->graphics.create (z_hinst, z_hwnd, engine_state->client.container_width, engine_state->client.container_height);
 #elif TARGET_MACOSX
     engine_state->platform.view = z_view;
-    engine_state->graphics.create (z_view, engine_state->container.current_width, engine_state->container.current_height);
+    engine_state->graphics.create (z_view, engine_state->client.container_width, engine_state->client.container_height);
 #elif TARGET_LINUX
-    engine_state->graphics.create (z_connection, z_window, engine_state->container.current_width, engine_state->container.current_height);
+    engine_state->graphics.create (z_connection, z_window, engine_state->client.container_width, engine_state->client.container_height);
 #else
 #error
 #endif
@@ -528,7 +528,7 @@ void engine::start () {
     engine_state->graphics.create_systems (std::bind(&engine::imgui, this));
 }
 
-void engine::update (container_state& z_container, input_state& z_input) {
+void engine::update (client_state& z_container, input_state& z_input) {
 
     engine_state->host.container_just_changed = false;
     
@@ -539,14 +539,14 @@ void engine::update (container_state& z_container, input_state& z_input) {
         std::cout << "caps lk (" << locked << ", " << pressed << ")" << '\n';
     }*/
 
-    if (z_container.container_width != engine_state->container.container_width
-        || z_container.container_height != engine_state->container.container_height
+    if (z_container.container_width != engine_state->client.container_width
+        || z_container.container_height != engine_state->client.container_height
         || z_container.is_resizing) {
         engine_state->host.container_just_changed = true;
     }
 
     // copy new state provided by the host
-    engine_state->container = z_container;
+    engine_state->client = z_container;
     engine_state->input = z_input;
 
     internal_update (*user_response, *engine_state, *engine_tasks);
@@ -673,7 +673,7 @@ void engine::imgui () {
 void engine::about_window (bool* show) {
     const int w  = 240;
     ImGui::SetNextWindowSize(ImVec2 (w, 260), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(ImVec2 ((engine_state->container.container_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
+    ImGui::SetNextWindowPos(ImVec2 ((engine_state->client.container_width / 2.0f) - (w/2.0f), 130), ImGuiCond_Once);
     ImGui::Begin("About", show, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
     static bool first_run = true;
@@ -725,18 +725,18 @@ void engine::host_window (bool* show) {
     ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
     ImGui::Begin("SGE Host", show, ImGuiWindowFlags_NoCollapse);
 
-    const int display_width = engine_state->container.max_container_width;
-    const int display_height = engine_state->container.max_container_height;
+    const int display_width = engine_state->client.max_container_width;
+    const int display_height = engine_state->client.max_container_height;
 
-    const int window_width = engine_state->container.window_width;
-    const int window_height = engine_state->container.window_height;
-    const int window_x = engine_state->container.window_position_x;
-    const int window_y = engine_state->container.window_position_y;
+    const int window_width = engine_state->client.window_width;
+    const int window_height = engine_state->client.window_height;
+    const int window_x = engine_state->client.window_position_x;
+    const int window_y = engine_state->client.window_position_y;
 
-    const int container_width = engine_state->container.container_width;
-    const int container_height = engine_state->container.container_height;
-    const int container_x = engine_state->container.container_position_x;
-    const int container_y = engine_state->container.container_position_y;
+    const int container_width = engine_state->client.container_width;
+    const int container_height = engine_state->client.container_height;
+    const int container_x = engine_state->client.container_position_x;
+    const int container_y = engine_state->client.container_position_y;
 
     const int canvas_width = engine_state->graphics.get_user_viewport_width ();
     const int canvas_height = engine_state->graphics.get_user_viewport_height ();
