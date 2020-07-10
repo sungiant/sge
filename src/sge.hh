@@ -57,6 +57,8 @@
 #undef max
 #undef near
 #undef far
+
+#define vsnprintf _vsnprintf
 #endif
 
 #if TARGET_LINUX
