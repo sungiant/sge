@@ -24,6 +24,8 @@ set (MVK_FRAMEWORK $ENV{MOLTEN_VK}/macOS/framework/MoltenVK.framework)
 add_library (sge ${SOURCE_LIST} ${MVK_FRAMEWORK})
 
 target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/)
+target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/ext/)
+target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/impl/)
 target_include_directories (sge PUBLIC $ENV{MOLTEN_VK}/include)
 
 target_link_libraries (sge ${MVK_FRAMEWORK})
@@ -33,6 +35,8 @@ elseif (G_TARGET STREQUAL "LINUX")
 add_library (sge ${SOURCE_LIST})
 
 target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/)
+target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/ext/)
+target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/impl/)
 
 target_link_libraries (sge xcb)
 
