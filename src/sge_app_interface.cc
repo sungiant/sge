@@ -3,7 +3,6 @@
 #include "sge_app.hh"
 
 #include "sge_ext_overlay.hh"
-
 #include "sge_ext_presentation.hh"
 #include "sge_ext_gizmo.hh"
 
@@ -35,6 +34,7 @@ extensions& get_standard_extensions () {
             { sge::runtime::type_id<sge::ext::instrumentation>(), [] (const sge::runtime::api& x) { return new sge::ext::instrumentation (x); }},
             { sge::runtime::type_id<sge::ext::freecam>(), [] (const sge::runtime::api& x) { return new sge::ext::freecam (x); }},
             { sge::runtime::type_id<sge::ext::gizmo>(), [] (const sge::runtime::api& x) { return new sge::ext::gizmo (x); }},
+            { sge::runtime::type_id<sge::ext::console> (), [](const sge::runtime::api& x) { return new sge::ext::console (x); }},
         };
         standard_extensions->systems = {
             { sge::runtime::type_id<sge::ext::presentation>(), [] (sge::runtime::api& x) { return new sge::ext::presentation (x); }},

@@ -30,9 +30,7 @@ public:
     void                                refresh                                 ();
     void                                enqueue                                 ();
     void                                update                                  (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&);
-
     void                                append_pre_render_submissions           (std::vector<VkSemaphore>&, std::vector<VkPipelineStageFlags>&);
-
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
     void                                end_of_frame                            ();
 
@@ -58,7 +56,7 @@ private:
         std::vector<dataspan>           latest_blob_infos; // keep track of sizes needed for user storage blobs as these can change at runtime.
 
         std::vector<std::optional<dataspan>> pending_blob_changes;
-        
+
         VkExtent2D                      current_size;
     };
 
@@ -81,14 +79,11 @@ private:
     void                                destroy_command_buffer                  ();
     void                                record_command_buffer                   (VkExtent2D);
     void                                run_command_buffer                      ();
-
     void                                prepare_texture_target                  (VkFormat, VkExtent2D);
     void                                destroy_texture_target                  ();
-
     void                                prepare_uniform_buffers                 ();
     void                                update_uniform_buffer                   (int);
     void                                destroy_uniform_buffers                 ();
-
     void                                prepare_blob_buffers                    ();
     void                                prepare_blob_buffer                     (int, dataspan);
     void                                copy_blob_from_staging_to_storage       (int);

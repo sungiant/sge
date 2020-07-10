@@ -3,11 +3,11 @@
 #include "sge.hh"
 
 namespace sge::ext {
-    
+
 class gamepad : public runtime::view {
-    
+
 public:
-    
+
     bool is_button_down (runtime::gamepad_button z)             const { return buttons_current.find (z) != buttons_current.end (); }
     bool is_button_up (runtime::gamepad_button z)               const { return buttons_current.find (z) == buttons_current.end (); }
     bool was_button_down (runtime::gamepad_button z)            const { return buttons_previous.find (z) != buttons_previous.end (); }
@@ -31,7 +31,7 @@ private:
     }
 
 public:
-    
+
     gamepad (const runtime::api& z) : runtime::view (z, "Gamepad") {
         buttons_current.reserve((size_t) runtime::gamepad_button::COUNT);
         buttons_previous.reserve((size_t) runtime::gamepad_button::COUNT);
@@ -39,29 +39,29 @@ public:
 
     virtual void update () override {
         uint32_t sz = 0;
-        
+
         { // buttons
             static std::array<runtime::gamepad_button, (size_t) runtime::gamepad_button::COUNT> buttons_arr;
-            
+
             buttons_previous = buttons_current;
             buttons_current.clear();
-            
+
             sge.input__gamepad_pressed_buttons (&sz, nullptr);
             assert (sz <= buttons_arr.size ());
             sge.input__gamepad_pressed_buttons (&sz, buttons_arr.data());
-            
+
             for (uint32_t i = 0; i < sz; ++i)
                 buttons_current.insert(buttons_arr[i]);
         }
-        
+
         { // axes
             static std::array<runtime::gamepad_axis, (size_t) runtime::gamepad_axis::COUNT> axes_arr_keys;
             static std::array<float, (size_t) runtime::gamepad_axis::COUNT> axes_arr_values;
-            
+
             sge.input__gamepad_analogue_axes (&sz, nullptr, nullptr);
             assert (sz <= axes_arr_keys.size () && sz <= axes_arr_values.size ());
             sge.input__gamepad_analogue_axes (&sz, axes_arr_keys.data(), axes_arr_values.data());
-            
+
             for (uint32_t i = 0; i < sz; ++i)
                 axes_current[axes_arr_keys[i]] = axes_arr_values[i];
         }

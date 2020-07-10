@@ -5,7 +5,7 @@ file (GLOB_RECURSE SOURCES ${G_ROOT_DIR}/src/*.cc ${G_ROOT_DIR}/src/*.c)
 
 set (SOURCE_LIST ${INCLUDES} ${SOURCES})
 
-filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/sge_impl_*") # remove platform specific code
+filter_items(SOURCE_LIST "${G_ROOT_DIR}/src/impl/sge_impl_*") # remove platform specific code
 
 ################################################################################
 
@@ -14,6 +14,8 @@ if (G_TARGET STREQUAL "WIN32")
 add_library (sge ${SOURCE_LIST})
 
 target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/)
+target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/ext/)
+target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/impl/)
 
 elseif (G_TARGET STREQUAL "MACOSX")
 

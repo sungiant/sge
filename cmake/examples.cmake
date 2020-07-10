@@ -18,8 +18,8 @@ set (SOURCE_LIST ${SOURCES} ${INCLUDES} ${RESOURCES})
 if (G_TARGET STREQUAL "WIN32")
 
 # add relevant platform specific code
-file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/sge_impl_win*.hh)
-file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/sge_impl_win*.cc)
+file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/impl/sge_impl_win*.hh)
+file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/impl/sge_impl_win*.cc)
 set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
 
 add_executable (${PROJ} WIN32 ${SOURCE_LIST})
@@ -27,8 +27,8 @@ add_executable (${PROJ} WIN32 ${SOURCE_LIST})
 elseif (G_TARGET STREQUAL "MACOSX")
 
 # add relevant platform specific code
-file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/sge_impl_osx*.hh)
-file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/sge_impl_osx*.cc ${G_ROOT_DIR}/src/sge_impl_osx*.mm)
+file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/impl/sge_impl_osx*.hh)
+file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/impl/sge_impl_osx*.cc ${G_ROOT_DIR}/src/impl/sge_impl_osx*.mm)
 set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
 
 add_executable (${PROJ} MACOSX_BUNDLE ${SOURCE_LIST})
@@ -42,8 +42,8 @@ target_link_libraries (${PROJ} "-framework MetalKit")
 
 elseif (G_TARGET STREQUAL "LINUX")
 
-file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/sge_impl_linux*.hh)
-file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/sge_impl_linux*.cc)
+file (GLOB_RECURSE PLATFORM_INCLUDES ${G_ROOT_DIR}/src/impl/sge_impl_linux*.hh)
+file (GLOB_RECURSE PLATFORM_SOURCES ${G_ROOT_DIR}/src/impl/sge_impl_linux*.cc)
 set (SOURCE_LIST ${SOURCE_LIST} ${PLATFORM_INCLUDES} ${PLATFORM_SOURCES})
 
 add_executable (${PROJ} ${SOURCE_LIST})

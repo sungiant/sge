@@ -226,14 +226,15 @@ void canvas_render::create_command_buffers () {
         render_pass_begin_info.pClearValues = clear_values.data ();
 
         vkCmdSetViewport(state.command_buffers[i], 0, 1, &state.current_viewport);
-        vkCmdBeginRenderPass (state.command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
+
+        vkCmdBeginRenderPass (state.command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline);
         vkCmdBindDescriptorSets (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline_layout, 0, 1, &state.descriptor_set, 0, NULL);
-
         vkCmdDraw (state.command_buffers[i], 3, 1, 0, 0);
-
         vkCmdEndRenderPass (state.command_buffers[i]);
+
+
 
         vk_assert (vkEndCommandBuffer (state.command_buffers[i]));
     }

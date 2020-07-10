@@ -13,7 +13,7 @@ const point2 point2::zero = point2 (0, 0);
 const point2 point2::one = point2 (1.0f, 1);
 const point2 point2::unit_x = point2 (1, 0);
 const point2 point2::unit_y = point2 (0, 1);
-    
+
 const vector2 vector2::zero = vector2 (0.0f, 0.0f);
 const vector2 vector2::one = vector2 (1.0f, 1.0f);
 const vector2 vector2::unit_x = vector2 (1.0f, 0.0f);
@@ -30,14 +30,14 @@ const vector3 vector3::backward = vector3 (0.0f, 0.0f, 1.0f);
 const vector3 vector3::left = vector3 (-1.0f, 0.0f, 0.0f);
 const vector3 vector3::down = vector3 (0.0f, -1.0f, 0.0f);
 const vector3 vector3::forward = vector3 (0.0f, 0.0f, -1.0f);
-    
+
 const vector4 vector4::zero = vector4 (0.0f, 0.0f, 0.0f, 0.0f);
 const vector4 vector4::one = vector4 (1.0f, 1.0f, 1.0f, 1.0f);
 const vector4 vector4::unit_x = vector4 (1.0f, 0.0f, 0.0f, 0.0f);
 const vector4 vector4::unit_y = vector4 (0.0f, 1.0f, 0.0f, 0.0f);
 const vector4 vector4::unit_z = vector4 (0.0f, 0.0f, 1.0f, 0.0f);
 const vector4 vector4::unit_w = vector4 (0.0f, 0.0f, 0.0f, 1.0f);
-    
+
 const quaternion quaternion::zero = quaternion (0.0f, 0.0f, 0.0f, 0.0f);
 const quaternion quaternion::identity = quaternion { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -50,7 +50,7 @@ const matrix43 matrix43::identity = matrix43 (1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f
 const matrix44 matrix44::zero = matrix44 (0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 const matrix44 matrix44::identity = matrix44 (1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-    
+
 
 #if RUN_TESTS
 test::framework run;
@@ -96,7 +96,7 @@ vector4& vector4::operator*= (const matrix44& m) { matrix44::product(*this, m, *
 // ------------------------------------------------------------------------------------------------------------------ //
 // Quaternion inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
-    
+
 vector3& quaternion::rotate (vector3& v) const {
     const vector3 cp = v;
     v.x = cp.x - (2.0f * cp.x * (j*j + k*k)) + (2.0f * cp.y * (i*j - u*k)) + (2.0f * cp.z * (i*k + u*j));
@@ -194,7 +194,7 @@ quaternion& quaternion::set_from_rotation (const matrix33& m) {
         const float s = sqrt (1.0f + m.r2c2 - m.r0c0 - m.r1c1) * 2.0f;
         u = (m.r0c1 - m.r1c0) / s; i = (m.r2c0 + m.r0c2) / s; j = (m.r2c1 + m.r1c2) / s; k = 0.25f * s;
     }
-    
+
     assert (is_unit());
     return *this;
 }
@@ -202,8 +202,6 @@ quaternion& quaternion::set_from_rotation (const matrix33& m) {
 // ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 33 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
-    
-
 void matrix33::product (const matrix33& l, const matrix33& r, matrix33& result){ // [3x3] * [3x3] => [3x3]
     matrix33 t;// incase the result is also a parameter
     t.r0c0 = l.r0c0*r.r0c0 + l.r0c1*r.r1c0 + l.r0c2*r.r2c0;
@@ -417,7 +415,7 @@ matrix43& matrix43::set_rotation_component (const quaternion& q) {
     r3c2 = 0.0f;
     return *this;
 }
-    
+
 // ------------------------------------------------------------------------------------------------------------------ //
 // Matrix 44 inline definitions
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -653,16 +651,16 @@ matrix44& matrix44::set_as_perspective_fov_rh (const float fov, const float aspe
     // where:
     // yScale = cot(fovY/2)
     // xScale = yScale / aspect ratio
-    
+
     //http://www.codinglabs.net/article_world_view_projection_matrix.aspx
     const float y_scale = 1.0f / tan (fov * 0.5f);
     const float x_scale = y_scale / aspect;
-    
+
     r0c0 = x_scale; r0c1 = 0.0f;    r0c2 = 0.0f;                       r0c3 =  0.0f;
     r1c0 = 0.0f;    r1c1 = y_scale; r1c2 = 0.0f;                       r1c3 =  0.0f;
     r2c0 = 0.0f;    r2c1 = 0.0f;    r2c2 = -(near+far)/(near-far);     r2c3 = -1.0f;
     r3c0 = 0.0f;    r3c1 = 0.0f;    r3c2 = (2.0f*near*far)/(near-far); r3c3 =  0.0f;
-    
+
     return *this;
 }
 

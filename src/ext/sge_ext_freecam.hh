@@ -45,14 +45,7 @@ struct freecam : public runtime::view {
     }
     
     virtual void update () override {
-        static bool flag = false;
-        
-        if (!flag) {
-            flag = true;
-            position = default_position;
-            orientation = default_orientation;
-        }
-        
+
         const float dt = sge.timer__get_delta ();
 
         const auto& keyboard = *static_cast <ext::keyboard*> (sge.extension_get (runtime::type_id<ext::keyboard>()));

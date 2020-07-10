@@ -13,7 +13,7 @@ api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tas
 
 bool api_impl::system__get_state_bool (runtime::system_bool_state z) const {
     switch (z){
-        
+
         case runtime::system_bool_state::fullscreen: return engine_state.host.is_fullscreen;
         case runtime::system_bool_state::imgui: return engine_state.graphics.state.imgui_on;
         default: assert (false); return false;
@@ -72,7 +72,7 @@ void api_impl::input__keyboard_pressed_characters (uint32_t* z_size, wchar_t* z_
     }
     assert (idx == *z_size);
 }
-    
+
 std::optional<runtime::keyboard_key> convert_to_keyboard_key (input_control_identifier z) {
     #define CASE1(x) { case input_control_identifier::kb_ ## x: return runtime::keyboard_key::x; }
     #define CASE2(x, y) { case input_control_identifier::kb_ ## x: return runtime::keyboard_key::y; }
@@ -93,7 +93,7 @@ std::optional<runtime::keyboard_key> convert_to_keyboard_key (input_control_iden
     #undef CASE2
     #undef CASE1
 }
-    
+
 std::optional<runtime::gamepad_button> convert_to_gamepad_button (input_control_identifier z) {
     #define CASE(x) { case input_control_identifier::gb_ ## x ## _0: return runtime::gamepad_button::x; }
     switch (z) {
@@ -105,7 +105,7 @@ std::optional<runtime::gamepad_button> convert_to_gamepad_button (input_control_
     }
     #undef CASE
 }
-    
+
 std::optional<runtime::gamepad_axis> convert_to_gamepad_axis (input_control_identifier z) {
     #define CASE(x, y) { case input_control_identifier::ga_ ## x ## _0: return runtime::gamepad_axis::y; }
     switch (z) {
@@ -220,7 +220,7 @@ void api_impl::input__gamepad_pressed_buttons (uint32_t* z_size, runtime::gamepa
     }
     const int first = static_cast<int>(input_control_identifier::gb_dpad_up_0);
     const int last = static_cast<int>(input_control_identifier::gb_y_0); // right now the runtime api doesn't support multiple gamepads
-    
+
     uint32_t idx = 0;
     for (int i = first; i <= last; ++i) {
         const auto id = static_cast<input_control_identifier> (i);
@@ -235,9 +235,9 @@ void api_impl::input__gamepad_pressed_buttons (uint32_t* z_size, runtime::gamepa
                 z_keys[idx++] = v.value();
         }
     }
-    
+
     assert (idx == *z_size || !z_keys);
-    
+
 }
 
 void api_impl::input__gamepad_analogue_axes (uint32_t* z_size, runtime::gamepad_axis* z_keys, float* z_values) const {
@@ -246,7 +246,7 @@ void api_impl::input__gamepad_analogue_axes (uint32_t* z_size, runtime::gamepad_
     }
     const int first = static_cast<int>(input_control_identifier::ga_left_stick_x_0);
     const int last = static_cast<int>(input_control_identifier::ga_right_trigger_0); // right now the runtime api doesn't support multiple gamepads
-    
+
     uint32_t idx = 0;
     for (int i = first; i <= last; ++i) {
         const auto id = static_cast<input_control_identifier> (i);
@@ -298,7 +298,7 @@ void api_impl::system__set_state_int (runtime::system_int_state z, int v) {
         default: break;
     }
 }
-    
+
 void api_impl::system__set_state_string (runtime::system_string_state z, const char* v) {
     switch (z){
         case runtime::system_string_state::title: engine_tasks.change_window_title = std::string (v); break;
@@ -314,15 +314,26 @@ runtime::extension* api_impl::extension_get  (size_t id) const {
 };
 
 
+void api_impl::tty_debug (const char *, const char *) const {
+    //enqueue
+};
+
+void api_impl::tty_info (const char *, const char *) const {
+    //enqueue
+};
+
+void api_impl::tty_warning (const char *, const char *) const {
+    //enqueue
+};
+
+void api_impl::tty_error (const char *, const char *) const {
+    //enqueue
+};
 
 
 
-
-
-
-    
 //--------------------------------------------------------------------------------------------------------------------//
-    
+
 
 void internal_update (sge::app::response& user_response, engine_state& engine_state, engine_tasks& engine_tasks) {
     const auto tStart = std::chrono::high_resolution_clock::now ();
@@ -373,14 +384,14 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
         ImGuiIO& io = ImGui::GetIO ();
         const auto& input = engine_state.input;
         static int mouse_wheel_last_frame = 0;
-        
+
         const int mouse_wheel_this_frame = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
                ? std::get<input_digital_control> (input.at (input_control_identifier::md_scrollwheel))
                : 0;
         const int mouse_wheel_delta = mouse_wheel_this_frame - mouse_wheel_last_frame;
-        
+
         mouse_wheel_last_frame = mouse_wheel_this_frame;
-        
+
         auto p = (input.find (input_control_identifier::mp_position) != input.end ())
             ? std::get<input_point_control> (input.at (input_control_identifier::mp_position))
         : sge::math::point2 { 0, 0 };
@@ -422,11 +433,11 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
         }
     }
 }
-    
+
 
 
 engine::engine () {
-    
+
     app::initialise ();
 }
 
@@ -458,11 +469,11 @@ void engine::setup (
         "\n\n";
 
     engine_state = std::make_unique<struct engine_state> ();
-    
+
     std::stringstream ss;
     ss << SGE_VERSION_MAJOR (SGE_VERSION) << "." << SGE_VERSION_MINOR (SGE_VERSION) << "." << SGE_VERSION_PATCH (SGE_VERSION);
     engine_state->version = ss.str();
-    
+
     engine_tasks = std::make_unique<struct engine_tasks> ();
 
     auto configuration = sge::app::get_configuration ();
@@ -483,7 +494,7 @@ void engine::setup (
 #endif
 
     engine_api = std::make_unique<api_impl> (*engine_state, *engine_tasks, engine_extensions);
-    
+
     auto& standard_extensions = sge::app::internal::get_standard_extensions ();
 
     // I am certain that this can be done in a much better way with some template wizardary.
@@ -493,30 +504,30 @@ void engine::setup (
         runtime::view* view = new_fn (*engine_api);
         engine_extensions[id] = std::unique_ptr<runtime::extension> (view);
     }
-    
+
     for (int i = 0; i < standard_extensions.systems.size(); ++i) {
         size_t id = standard_extensions.systems[i].first;
         auto& new_fn = standard_extensions.systems[i].second;
         runtime::system* system = new_fn (*engine_api);
         engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
     }
-    
+
     auto& user_extensions = sge::app::get_extensions ();
-    
+
     for (int i = 0; i < user_extensions.views.size(); ++i) {
         size_t id = user_extensions.views[i].first;
         auto& new_fn = user_extensions.views[i].second;
         runtime::view* view = new_fn (*engine_api);
         engine_extensions[id] = std::unique_ptr<runtime::extension> (view);
     }
-    
+
     for (int i = 0; i < user_extensions.systems.size(); ++i) {
         size_t id = user_extensions.systems[i].first;
         auto& new_fn = user_extensions.systems[i].second;
         runtime::system* system = new_fn (*engine_api);
         engine_extensions[id] = std::unique_ptr<runtime::extension> (system);
     }
-    
+
     user_response = std::make_unique<struct app::response> (app::get_content ().uniforms.size (), app::get_content ().blobs.size ());
     user_api = app::internal::create_user_api (*engine_api);
 
@@ -531,7 +542,7 @@ void engine::start () {
 void engine::update (client_state& z_container, input_state& z_input) {
 
     engine_state->host.container_just_changed = false;
-    
+
     /*
     if (z_input.find(input_control_identifier::kq_caps_lk) != z_input.end()) {
         bool locked = std::get<input_quaternary_control> (z_input.at (input_control_identifier::kq_caps_lk)).first;
@@ -561,7 +572,7 @@ void engine::update (client_state& z_container, input_state& z_input) {
     sge::app::update (*user_response, *user_api);
 
 }
-    
+
 void engine::stop () {
     sge::app::stop (*user_api);
 }
@@ -574,21 +585,21 @@ void engine::shutdown () {
     engine_tasks.reset ();
     engine_state.reset ();
 }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //====================================================================================================================//
 
 void engine::imgui () {
@@ -598,10 +609,10 @@ void engine::imgui () {
     static bool show_engine_graphics_window = false;
     static bool show_engine_memory_window = false;
     static bool show_dear_imgui_demo_window = false;
-    
+
     // top level imgui fn, all imgui calls are from this call.
     if (ImGui::BeginMainMenuBar()) {
-        
+
         if (ImGui::BeginMenu("SGE")) {
             if (ImGui::MenuItem("About", NULL, show_about_window)) {
                 show_about_window = !show_about_window;
@@ -614,25 +625,25 @@ void engine::imgui () {
 #endif
             ImGui::EndMenu();
         }
-        
+
         if (ImGui::BeginMenu("Engine")) {
-            
+
             if (ImGui::MenuItem("Host", NULL, show_engine_host_window)) {
                 show_engine_host_window = !show_engine_host_window;
             }
-            
+
             if (ImGui::MenuItem("Graphics", NULL, show_engine_graphics_window)) {
                 show_engine_graphics_window = !show_engine_graphics_window;
             }
-            
+
             if (ImGui::MenuItem("Memory", NULL, show_engine_memory_window)) {
                 show_engine_memory_window = !show_engine_memory_window;
             }
-            
-            
+
+
             ImGui::EndMenu();
         }
-        
+
         if (ImGui::BeginMenu("Runtime")) {
             for (auto& kvp : engine_extensions) {
                 const size_t id = kvp.first;
@@ -640,35 +651,35 @@ void engine::imgui () {
             }
             ImGui::EndMenu();
         }
-        
+
         if (ImGui::BeginMenu("User")) {
             ImGui::EndMenu();
         }
-        
+
         if (ImGui::BeginMenu("Help")) {
             if (ImGui::MenuItem("Dear ImGui Demo", NULL, show_dear_imgui_demo_window)) {
                 show_dear_imgui_demo_window = !show_dear_imgui_demo_window;
             }
             ImGui::EndMenu();
         }
-                
+
         ImGui::EndMainMenuBar();
     }
     for (auto& kvp : engine_extensions) {
         const size_t id = kvp.first;
         engine_extensions[id]->invoke_debug_ui();
     }
-    
+
     if (show_about_window)           about_window    (&show_about_window);
     if (show_engine_host_window)     host_window     (&show_engine_host_window);
     if (show_engine_graphics_window) graphics_window (&show_engine_graphics_window);
     if (show_engine_memory_window)   memory_window   (&show_engine_memory_window);
-    
+
     if (show_dear_imgui_demo_window) ImGui::ShowDemoWindow();
-    
+
     sge::app::debug_ui (*user_response, *user_api);
 }
-    
+
 
 void engine::about_window (bool* show) {
     const int w  = 240;
@@ -686,7 +697,7 @@ void engine::about_window (bool* show) {
     static math::vector3 toy_obj_pos = math::vector3 { 0, 0.0f, -1 };
     static math::quaternion toy_obj_orientation = math::quaternion::identity;
     static float toy_obj_t = 0.0f, toy_obj_speed = 0.8f;
-    
+
     if (first_run) {
         //std::vector<data::vertex_pos_norm> verts;
         //data::get_teapot (verts, toy_obj_indices, 1.0f, 4);
@@ -698,7 +709,7 @@ void engine::about_window (bool* show) {
 
     toy_obj_t += engine_state->instrumentation.frameTimer * toy_obj_speed;
     toy_obj_orientation = math::quaternion().set_from_yaw_pitch_roll(toy_obj_t, 2.0 * toy_obj_t, -toy_obj_t);
-    
+
     imgui::ext::draw_user_triangles (
         toy_container,
         true,
@@ -712,7 +723,7 @@ void engine::about_window (bool* show) {
         toy_obj_pos,
         toy_obj_orientation,
         0x00000000);
-    
+
     ImGui::Text ("SGE ~ Simple Graphics Engine");
     ImGui::Text ("      written by A.J.Pook");
     ImGui::Text ("      copyright © 2020");
@@ -783,29 +794,29 @@ void engine::host_window (bool* show) {
 
     }
     ImGui::End ();
-    
+
 }
 
 void engine::graphics_window (bool* show) {
     ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
-    
+
     ImGui::Begin("SGE Graphics", show, ImGuiWindowFlags_NoCollapse);
-    
+
     ImGui::Text ("Compute target size: %dx%d",
         engine_state->graphics.compute_target->current_width (),
         engine_state->graphics.compute_target->current_height ());
-    
-    
+
+
     ImGui::End ();
 }
 
 void engine::memory_window (bool* show) {
     ImGui::SetNextWindowPos(ImVec2 (100, 130), ImGuiCond_Once);
     ImGui::Begin("SGE Memory", show, ImGuiWindowFlags_NoCollapse);
-    
+
     //engine_state->graphics.kernel->custom_allocator->debug_ui_content();
     ImGui::End ();
 }
-    
+
 }
 

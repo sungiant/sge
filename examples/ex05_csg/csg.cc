@@ -334,10 +334,12 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         bool shadows = (us.flags >> 1) & 1u;
         bool lighting = (us.flags >> 2) & 1u;
         bool lazy = (us.flags >> 3) & 1u;
+        bool lazy_markers = (us.flags >> 4) & 1u;
         if (ImGui::RadioButton("enable AO", ao)) { us.flags ^= (1u << 0); }
         if (ImGui::RadioButton("enable shadows", shadows)) { us.flags ^= (1u << 1); }
         if (ImGui::RadioButton("enable lighting", lighting)) { us.flags ^= (1u << 2); }
         if (ImGui::RadioButton("enable lazyness", lazy)) { us.flags ^= (1u << 3); }
+        if (ImGui::RadioButton ("render lazyness markers", lazy_markers)) { us.flags ^= (1u << 4); }
 
         ImGui::SliderFloat("shadow_factor", &us.soft_shadow_factor, 1.0f, 100.0f);
 
