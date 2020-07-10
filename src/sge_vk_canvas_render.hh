@@ -37,7 +37,8 @@ public:
 
     void                                create                                  ();
     void                                destroy                                 ();
-    void                                refresh_full                            ();
+    void                                create_r ();
+    void                                destroy_r ();
 
     void                                refresh_command_buffers                 ();
 
@@ -65,8 +66,6 @@ private:
 
 private:
 
-    void                                create_r                                ();
-    void                                destroy_r                               ();
     void                                create_descriptor_set_layout            ();
     void                                create_command_pool                     ();
     void                                create_descriptor_pool                  ();

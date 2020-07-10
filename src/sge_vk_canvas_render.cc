@@ -40,6 +40,7 @@ void canvas_render::destroy () {
 }
 
 void canvas_render::create_r () {
+    state.current_viewport = get_viewport_fn ();
     create_pipeline ();
     create_descriptor_pool ();
     create_descriptor_set ();
@@ -58,14 +59,6 @@ void canvas_render::destroy_r () {
     state.pipeline = VK_NULL_HANDLE;
     vkDestroyPipelineLayout (context.logical_device, state.pipeline_layout, context.allocation_callbacks);
     state.pipeline_layout = VK_NULL_HANDLE;
-}
-
-void canvas_render::refresh_full () {
-    destroy_r ();
-
-    state.current_viewport = get_viewport_fn ();
-
-    create_r ();
 }
 
 void canvas_render::refresh_command_buffers () {

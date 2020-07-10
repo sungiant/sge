@@ -1,4 +1,4 @@
-#include <sge_app.hh>
+﻿#include <sge_app.hh>
 
 sge::app::configuration config = {};
 sge::app::content computation = {};
@@ -53,6 +53,7 @@ void initialise () {
 void start (const sge::app::api& sge) {
     sge.freecam.set_active (true);
     sge.freecam.default_position = { 2.0f, 1.50f, 2.5f };
+    sge.freecam.position = sge.freecam.default_position;
 }
 
 void stop (const sge::app::api& sge) {}

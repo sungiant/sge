@@ -12,6 +12,16 @@
 
 namespace sge::core {
 
+struct guid {
+    uint8_t data[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    static guid empty;
+    inline bool operator == (const guid& other) const;
+    inline bool operator  < (const guid& other) const;
+    static guid random ();
+    std::string str () const;
+};
+
+
 // ! WARNING - ORDER HERE IS IMPORTANT
 // ! Review the implementation of the input functions of the runtime api before making changes here.
 enum class input_control_identifier {
@@ -105,6 +115,19 @@ typedef std::function <void (const char*)>  string_fn;
 typedef std::function <void (bool)>         bool_fn;
 typedef std::function <void (int, int)>     point_fn;
 
+
+struct log {
+    guid id;
+    std::chrono::high_resolution_clock::time_point timestamp;
+    runtime::log_level level;
+    std::wstring channel;
+    std::wstring message;
+};
+
+struct log_database {
+    std::vector<log> logs;
+};
+
 // collection of copided information about the host
 // (the host is the authority on this data).
 struct host_state {
@@ -147,7 +170,7 @@ struct instrumentation_state {
     float totalTimer = 0.0f;
     uint32_t frameCounter = 0;
     uint32_t lastFPS = 0;
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastTimestamp;
+    std::chrono::high_resolution_clock::time_point lastTimestamp;
 };
 
 
@@ -170,6 +193,7 @@ struct engine_state {
     instrumentation_state instrumentation;
     graphics_state graphics;
 
+    log_database logging;
 };
 
 // Stuff for the engine to do when it gets round to it.
@@ -181,6 +205,7 @@ struct engine_tasks {
     std::optional<int>                  change_canvas_width;
     std::optional<int>                  change_canvas_height;
     std::optional<std::monostate>       shutdown_request;
+    std::vector<log>                    new_logs;
 };
 
 
@@ -223,10 +248,7 @@ public:
     void                    input__gamepad_analogue_axes        (uint32_t*, runtime::gamepad_axis*, float*)     const;
     void                    input__touches                      (uint32_t*, uint32_t*, int*, int*)              const;
 
-    void                    tty_debug                           (const char*, const char*)                      const;
-    void                    tty_info                            (const char*, const char*)                      const;
-    void                    tty_warning                         (const char*, const char*)                      const;
-    void                    tty_error                           (const char*, const char*)                      const;
+    void                    tty_log                             (runtime::log_level, const wchar_t*, const wchar_t*)  const;
     
     runtime::extension*     extension_get                       (size_t)                                        const;
 };
@@ -275,6 +297,10 @@ public:
     void host_window (bool*);
     void graphics_window (bool*);
     void memory_window (bool*);
+
+private:
+    void process_log (const log&);
+    void internal_update (sge::app::response&, struct engine_state&, struct engine_tasks&);
 };
 
 }

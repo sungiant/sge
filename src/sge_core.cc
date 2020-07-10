@@ -3,6 +3,57 @@
 #include "sge_app_interface.hh"
 
 namespace sge::core {
+
+guid guid::empty = {};
+
+bool guid::operator == (const guid& other) const {
+    for (int i = 0; i < 16; ++i) {
+        if (data[i] != other.data[i])
+            return false;
+    }
+    return true;
+}
+
+bool guid::operator < (const guid& other) const {
+    for (int i = 0; i < 16; ++i) {
+        if (data[i] < other.data[i])
+            return true;
+    }
+    return false;
+}
+
+guid guid::random () {
+    std::random_device rd;
+    auto seed_data = std::array<int, std::mt19937::state_size> {};
+    std::generate (std::begin (seed_data), std::end (seed_data), std::ref (rd));
+    std::seed_seq seq (std::begin (seed_data), std::end (seed_data));
+    std::mt19937 generator (seq);
+    std::uniform_int_distribution<uint32_t>  distribution;
+    guid g;
+    for (int i = 0; i < 16; i += 4)
+        *reinterpret_cast<uint32_t*> (g.data + i) = distribution (generator);
+
+    // Mask in Variant 1-0 in Bit[7..6]
+    g.data[8] &= 0x3F;
+    g.data[8] |= 0x80;
+    // Mask in Version 4 (random based Guid) in Bits[15..13]
+    g.data[7] &= 0x0F;
+    g.data[7] |= 0x40;
+    return g; // See: https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Guid.cs
+}
+
+std::string guid::str () const {
+    char b[256];
+    sprintf (b, "(%d,%d,%d,%d)(%d,%d,%d,%d)(%d,%d,%d,%d)(%d,%d,%d,%d)",
+        data[0], data[1], data[2], data[3],
+        data[4], data[5], data[6], data[7],
+        data[8], data[9], data[10], data[11],
+        data[12], data[13], data[14], data[15]);
+    std::string r (b);
+    return r;
+}
+
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 api_impl::api_impl (const core::engine_state& z_state, core::engine_tasks& z_tasks, std::unordered_map<size_t, std::unique_ptr<runtime::extension>>& z_exts)
@@ -314,28 +365,42 @@ runtime::extension* api_impl::extension_get  (size_t id) const {
 };
 
 
-void api_impl::tty_debug (const char *, const char *) const {
-    //enqueue
-};
+void api_impl::tty_log (runtime::log_level level, const wchar_t* channel, const wchar_t* message)  const {
 
-void api_impl::tty_info (const char *, const char *) const {
-    //enqueue
-};
-
-void api_impl::tty_warning (const char *, const char *) const {
-    //enqueue
-};
-
-void api_impl::tty_error (const char *, const char *) const {
-    //enqueue
-};
+    engine_tasks.new_logs.emplace_back (log{ guid::random (), std::chrono::high_resolution_clock::now (), level, channel, message });
+}
 
 
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void engine::process_log (const log& z_log) {
 
-void internal_update (sge::app::response& user_response, engine_state& engine_state, engine_tasks& engine_tasks) {
+    const char* level;
+    switch (z_log.level) {
+        case runtime::log_level::debug: level = "DEBUG"; break;
+        case runtime::log_level::info: level = "INFO"; break;
+        case runtime::log_level::warning: level = "WARN"; break;
+        case runtime::log_level::error: level = "ERROR"; break;
+    };
+
+
+#if TARGET_WIN32
+    OutputDebugString ("[");
+    OutputDebugString (level);
+    OutputDebugString ("][");
+    OutputDebugStringW (z_log.channel.c_str ());
+    OutputDebugString ("] ");
+    OutputDebugStringW (z_log.message.c_str());
+    OutputDebugString ("\n");
+#else
+    printf ("%lld [%s][%ls] %ls \n", z_log.timestamp.time_since_epoch ().count (), level, z_log.channel.c_str (), z_log.message.c_str ());
+#endif
+
+    // todo: probably want to persist this lot somewhere and also provide access to it.
+}
+
+void engine::internal_update (sge::app::response& user_response, struct engine_state& engine_state, struct  engine_tasks& engine_tasks) {
     const auto tStart = std::chrono::high_resolution_clock::now ();
 
     // USER TASKS
@@ -377,6 +442,14 @@ void internal_update (sge::app::response& user_response, engine_state& engine_st
             engine_state.host.shutdown_request_fn.value() ();
             engine_tasks.shutdown_request.reset ();
         }
+
+        {
+            for (int i = 0; i < engine_tasks.new_logs.size (); ++i) {
+                process_log (engine_tasks.new_logs[i]);
+            }
+            engine_tasks.new_logs.clear ();
+        }
+
     }
 
     // IMGUI

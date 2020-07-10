@@ -56,6 +56,8 @@ enum class system_int_state     {
 
 enum class system_string_state  { title, gpu_name, engine_version, COUNT };
 
+enum class log_level { debug, info, warning, error, };
+
 class extension;
 
 // the runtime api is a low level interface for interacting with SGE at runtime.
@@ -64,38 +66,36 @@ struct api {
 
     // ----------------------------------
 
-    virtual bool                    system__get_state_bool              (system_bool_state)                     const = 0;
-    virtual int                     system__get_state_int               (system_int_state)                      const = 0;
-    virtual const char*             system__get_state_string            (system_string_state)                   const = 0;
-    virtual bool                    system__did_container_just_change   ()                                      const = 0;
-    virtual void                    system__request_shutdown            ()                                            = 0;
-    virtual void                    system__toggle_state_bool           (system_bool_state)                           = 0;
-    virtual void                    system__set_state_bool              (system_bool_state, bool)                     = 0;
-    virtual void                    system__set_state_int               (system_int_state, int)                       = 0;
-    virtual void                    system__set_state_string            (system_string_state, const char*)            = 0;
-  //virtual void                    system__set_cursor                  (int, int, int, int, bool*, bool*)      const = 0;
+    virtual bool                    system__get_state_bool              (system_bool_state)                             const = 0;
+    virtual int                     system__get_state_int               (system_int_state)                              const = 0;
+    virtual const char*             system__get_state_string            (system_string_state)                           const = 0;
+    virtual bool                    system__did_container_just_change   ()                                              const = 0;
+    virtual void                    system__request_shutdown            ()                                                    = 0;
+    virtual void                    system__toggle_state_bool           (system_bool_state)                                   = 0;
+    virtual void                    system__set_state_bool              (system_bool_state, bool)                             = 0;
+    virtual void                    system__set_state_int               (system_int_state, int)                               = 0;
+    virtual void                    system__set_state_string            (system_string_state, const char*)                    = 0;
+  //virtual void                    system__set_cursor                  (int, int, int, int, bool*, bool*)              const = 0;
 
-    virtual uint32_t                timer__get_fps                      ()                                      const = 0;
-    virtual float                   timer__get_delta                    ()                                      const = 0;
-    virtual float                   timer__get_time                     ()                                      const = 0;
+    virtual uint32_t                timer__get_fps                      ()                                              const = 0;
+    virtual float                   timer__get_delta                    ()                                              const = 0;
+    virtual float                   timer__get_time                     ()                                              const = 0;
 
-    virtual void                    input__keyboard_pressed_characters  (uint32_t*, wchar_t*)                   const = 0;
-    virtual void                    input__keyboard_pressed_keys        (uint32_t*, keyboard_key*)              const = 0;
-    virtual void                    input__keyboard_pressed_locks       (uint32_t*, keyboard_lock*)             const = 0;
-    virtual void                    input__keyboard_locked_locks        (uint32_t*, keyboard_lock*)             const = 0;
-    virtual void                    input__mouse_pressed_buttons        (uint32_t*, mouse_button*)              const = 0;
-    virtual void                    input__mouse_position               (int*, int*)                            const = 0;
-    virtual void                    input__mouse_scrollwheel            (int*)                                  const = 0;
-    virtual void                    input__gamepad_pressed_buttons      (uint32_t*, gamepad_button*)            const = 0;
-    virtual void                    input__gamepad_analogue_axes        (uint32_t*, gamepad_axis*, float*)      const = 0;
-    virtual void                    input__touches                      (uint32_t*, uint32_t*, int*, int*)      const = 0;
+    virtual void                    input__keyboard_pressed_characters  (uint32_t*, wchar_t*)                           const = 0;
+    virtual void                    input__keyboard_pressed_keys        (uint32_t*, keyboard_key*)                      const = 0;
+    virtual void                    input__keyboard_pressed_locks       (uint32_t*, keyboard_lock*)                     const = 0;
+    virtual void                    input__keyboard_locked_locks        (uint32_t*, keyboard_lock*)                     const = 0;
+    virtual void                    input__mouse_pressed_buttons        (uint32_t*, mouse_button*)                      const = 0;
+    virtual void                    input__mouse_position               (int*, int*)                                    const = 0;
+    virtual void                    input__mouse_scrollwheel            (int*)                                          const = 0;
+    virtual void                    input__gamepad_pressed_buttons      (uint32_t*, gamepad_button*)                    const = 0;
+    virtual void                    input__gamepad_analogue_axes        (uint32_t*, gamepad_axis*, float*)              const = 0;
+    virtual void                    input__touches                      (uint32_t*, uint32_t*, int*, int*)              const = 0;
 
-    virtual void                    tty_debug                           (const char *, const char *)            const = 0;
-    virtual void                    tty_info                            (const char *, const char *)            const = 0;
-    virtual void                    tty_warning                         (const char *, const char *)            const = 0;
-    virtual void                    tty_error                           (const char *, const char *)            const = 0;
+    virtual void                    tty_log                             (log_level, const wchar_t*, const wchar_t*)     const = 0;
+  //virtual void                    tty_retrieve                        ()                                              const = 0;
     
-    virtual extension*              extension_get                       (size_t)                                const = 0; // needs a better home...
+    virtual extension*              extension_get                       (size_t)                                        const = 0; // needs a better home...
 };
 
 

@@ -26,13 +26,13 @@ public:
 
     void                                create                                  ();
     void                                destroy                                 ();
-    void                                recreate                                ();
-    void                                refresh                                 ();
     void                                enqueue                                 ();
     void                                update                                  (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&);
     void                                append_pre_render_submissions           (std::vector<VkSemaphore>&, std::vector<VkPipelineStageFlags>&);
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
     void                                end_of_frame                            ();
+    void                                create_r ();
+    void                                destroy_r ();
 
     int current_width () const { return state.current_size.width; }
     int current_height () const { return state.current_size.height; }
@@ -57,7 +57,7 @@ private:
 
         std::vector<std::optional<dataspan>> pending_blob_changes;
 
-        VkExtent2D                      current_size;
+        VkExtent2D                      current_size = { 0, 0 };
     };
 
     const context&                      context;
@@ -66,10 +66,8 @@ private:
     state                               state;
     const std::function<VkExtent2D()>   get_size_fn;
 
-    void                                create_r                                ();
-    void                                create_rl                               ();
+    void                                create_rl ();
     void                                destroy_rl                              ();
-    void                                destroy_r                               ();
     void                                create_buffer                           ();
     void                                create_descriptor_set_layout            ();
     void                                create_descriptor_set                   ();

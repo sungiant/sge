@@ -31,7 +31,8 @@ public:
     void                                configure                              (const std::vector<queue_identifier>&);
 
     void                                create                                 ();
-    void                                refresh                                ();
+    void                                create_r ();
+    void                                destroy_r ();
     void                                destroy                                ();
     std::variant<VkResult, image_index> next_image                             ();
 
@@ -93,8 +94,6 @@ private:
     void                                create_render_passes                   ();
     void                                create_framebuffers                    ();
     void                                create_depth_stencil                   ();
-    void                                create_r                               ();
-    void                                destroy_r                              ();
 };
 
 }

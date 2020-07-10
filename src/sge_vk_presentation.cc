@@ -57,10 +57,6 @@ void presentation::create () {
     create_r ();
 }
 
-void presentation::refresh () {
-    destroy_r ();
-    create_r ();
-}
 
 void presentation::destroy () {
     // refreshable

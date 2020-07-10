@@ -224,16 +224,23 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 
     // RECREATE
     if (refresh) {
-        presentation->refresh ();
+        presentation->destroy_r ();
+        presentation->create_r ();
 
         if (presentation->in_limbo ())
             return;
 
+        canvas_render->destroy_r ();
+        compute_target->destroy_r ();
+
+
         state.compute_size = calculate_compute_size ();
         state.canvas_viewport = calculate_canvas_viewport ();
 
-        compute_target->recreate ();
-        canvas_render->refresh_full ();
+        compute_target->create_r ();
+        canvas_render->create_r ();
+
+
         imgui->refresh ();
     }
     else {

@@ -12,8 +12,6 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
     , content (z_content)
     , get_size_fn (z_size_fn)
 {
-    state.current_size = get_size_fn ();
-    assert (state.current_size.width > 0 && state.current_size.height > 0);
 }
 
     
@@ -39,19 +37,6 @@ void compute_target::end_of_frame () {
     state.pending_blob_changes.resize (num_blobs);
 }
 
-void compute_target::recreate () {
-    destroy_r ();
-
-    state.current_size = get_size_fn ();
-    assert (state.current_size.width > 0 && state.current_size.height > 0);
-
-    create_r ();
-}
-void compute_target::refresh () {
-    destroy_rl ();
-    create_rl ();
-}
-
 void compute_target::create () {
     auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
     vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.compute_complete));
@@ -63,6 +48,11 @@ void compute_target::create () {
 }
 
 void compute_target::create_r () {
+
+
+    state.current_size = get_size_fn ();
+    assert (state.current_size.width > 0 && state.current_size.height > 0);
+
     prepare_texture_target (VK_FORMAT_R8G8B8A8_UNORM, state.current_size);
     prepare_uniform_buffers ();
     prepare_blob_buffers ();
