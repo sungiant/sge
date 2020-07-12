@@ -87,7 +87,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [ ] Intelligent Vulkan queue selection.
 - [ ] Host independent from core.
 - [ ] App api review.
-- [ ] Improve graphics context refresh logic.
+- [x] Improve graphics context refresh logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Complete dynamic csg tree SBO implementation.
 - [ ] Resolve/query issue with having more than one SBO with Molten VK.

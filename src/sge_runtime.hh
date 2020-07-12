@@ -39,7 +39,7 @@ enum class gamepad_axis         { left_trigger, right_trigger, left_stick_vertic
 
 enum class system_bool_state    { fullscreen, imgui, hide_cusor, COUNT };
 enum class system_int_state     {
-    // Maximum extent of the user renderable viewport on current monitor in the current scaling mode 
+    // Maximum extent of the user renderable viewport on current monitor in the current scaling mode
     // * this is not always the native resolution of the monitor as OS DPI scaling may be enabled or the computer itself may be set to use a different resolution.
     // * if the if the application moves to a different monitor of a different resolution/orientation this value will change
     // * this information can be useful to the user as it can help determine things like the velocity of mouse movements in proportion to the context of the hosting application.
@@ -48,7 +48,7 @@ enum class system_int_state     {
     canvas_width, canvas_height,
     // Current user renderable viewport offset within parent (engine) container
     // * ideally this wouldn't need to be here as the user shouldn't have to know about this detail.
-    // * the user viewport is not always the full frame as the engine may instantiate UI around it, this is fine, 
+    // * the user viewport is not always the full frame as the engine may instantiate UI around it, this is fine,
     //   however, right now ImGui is used by both the engine and the user and has no awareness of this - this means
     //   that the user can position ImGui UI outside of the cavas viewport within which they should be confined to.
     canvas_offset_x, canvas_offset_y, // todo: investigate a better solution.
@@ -92,7 +92,7 @@ struct api {
     virtual void                    input__gamepad_analogue_axes        (uint32_t*, gamepad_axis*, float*)              const = 0;
     virtual void                    input__touches                      (uint32_t*, uint32_t*, int*, int*)              const = 0;
 
-    virtual void                    tty_log                             (log_level, const wchar_t*, const wchar_t*)     const = 0;
+    virtual void                    tty__log                            (log_level, const wchar_t*, const wchar_t*)     const = 0;
   //virtual void                    tty_retrieve                        ()                                              const = 0;
     
     virtual extension*              extension_get                       (size_t)                                        const = 0; // needs a better home...

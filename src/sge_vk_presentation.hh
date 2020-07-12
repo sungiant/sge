@@ -16,6 +16,8 @@ class kernel;
 class presentation {
 
 public:
+    enum class surface_status : uint8_t { OK, ZERO, LOST, FATAL };
+    enum class swapchain_status : uint8_t { OK, SUBOPTIMAL, OUT_OF_DATE, LOST, FATAL };
 
     presentation (const struct context&, const queue_identifier& qid
 #if TARGET_WIN32
@@ -34,7 +36,9 @@ public:
     void                                create_r ();
     void                                destroy_r ();
     void                                destroy                                ();
-    std::variant<VkResult, image_index> next_image                             ();
+    
+    std::variant<swapchain_status, image_index> next_image                             ();
+    surface_status                      check_surface_status                   ();
 
     size_t                              num_frame_buffers                      ()                   const { return state.swapchain_frame_buffers.size (); }
     const VkFramebuffer&                frame_buffer                           (image_index i)      const { return state.swapchain_frame_buffers[i]; }

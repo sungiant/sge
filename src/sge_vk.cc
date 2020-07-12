@@ -128,124 +128,108 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
     submit (command_buffer, queue, wait_on, stageFlags, sx);
 }
 
-void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags, float dt) {
+VkSemaphore vk::submit_all (sge::vk::image_index image_index) {
+    // system enqueues
+    compute_target->enqueue ();
 
-    bool refresh = false;
-
-    VkResult* failure = nullptr;
-    std::variant<VkResult, image_index> image_index_opt;
-    if (presentation->in_limbo ()) {
-        refresh = true;
-    }
-    else {
-        image_index_opt = presentation->next_image ();
-        failure = std::get_if<VkResult> (&image_index_opt);
+    if (state.imgui_on) {
+        imgui->enqueue (image_index);
     }
 
-    if (failure) {
-        switch (*failure) {
-            case VK_ERROR_OUT_OF_DATE_KHR:
-                refresh = true;
-                break;
-            case VK_ERROR_SURFACE_LOST_KHR:
-                refresh = false;
-                break;
-            default: break;
-        }
-    }
+    std::vector<VkSemaphore> wait_on = { presentation->image_available () }; // + user compute complete
+    std::vector<VkPipelineStageFlags> stage_flags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-    if (!failure && !refresh) {
-        if (!utils::equal (calculate_compute_size (), state.compute_size)) { refresh = true; }
-        if (!utils::equal (calculate_canvas_viewport (), state.canvas_viewport)) { refresh = true; }
+    compute_target->append_pre_render_submissions (wait_on, stage_flags);
 
-        compute_target->update (push_flag, ubo_flags, sbo_flags);
-    }
+    // todo: switch to using: https://www.khronos.org/blog/vulkan-timeline-semaphores
+    submit (
+        canvas_render->get_command_buffer (image_index),
+        canvas_render->get_queue (),
+        wait_on,
+        stage_flags,
+        canvas_render->get_render_finished ());
 
-
-    if (!failure && !refresh) {
-
-
-        // system enqueues
-        compute_target->enqueue ();
-
-        auto image_index = std::get<sge::vk::image_index> (image_index_opt);
-        if (state.imgui_on) {
-            imgui->enqueue (image_index);
-        }
-
-        std::vector<VkSemaphore> wait_on = { presentation->image_available () }; // + user compute complete
-        std::vector<VkPipelineStageFlags> stage_flags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-        compute_target->append_pre_render_submissions (wait_on, stage_flags);
-
-        // todo: switch to using: https://www.khronos.org/blog/vulkan-timeline-semaphores
+    if (state.imgui_on) {
         submit (
-            canvas_render->get_command_buffer (image_index),
-            canvas_render->get_queue (),
-            wait_on,
-            stage_flags,
-            canvas_render->get_render_finished ());
-
-        VkSemaphore render_finished[] = { canvas_render->get_render_finished () };
-
-        if (state.imgui_on) {
-            submit (
-                imgui->get_command_buffer (image_index),
-                imgui->get_queue (),
-                canvas_render->get_render_finished (),
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                imgui->get_render_finished ());
-
-            render_finished[0] = imgui->get_render_finished ();
-        }
-
-        VkSwapchainKHR swap_chain[] = { presentation->swapchain () };
-        auto present_info = utils::init_VkPresentInfoKHR ();
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores = render_finished;
-        present_info.swapchainCount = 1;
-        present_info.pSwapchains = swap_chain;
-        present_info.pImageIndices = &image_index;
-
-        auto p_queue = kernel->get_queue (kernel->primary_work_queue ());
-        VkResult result = vkQueuePresentKHR (p_queue, &present_info);
-
-        if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
-            vk_assert (vkQueueWaitIdle (p_queue));
-            refresh = true;
-        }
-        else {
-            vk_assert (result);
-            vk_assert (vkQueueWaitIdle (p_queue));
-        }
+            imgui->get_command_buffer (image_index),
+            imgui->get_queue (),
+            canvas_render->get_render_finished (),
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            imgui->get_render_finished ());
+        return imgui->get_render_finished ();
     }
+    else
+    {
+        return canvas_render->get_render_finished ();
+    }
+}
 
-    vk_assert (vkDeviceWaitIdle (kernel->primary_context ().logical_device));
+void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags, float dt) {
+    const auto surface_status = presentation->check_surface_status ();
+    const bool surface_ok = surface_status == presentation::surface_status::OK;
+    const bool surface_minimised = surface_status == presentation::surface_status::ZERO;
 
-    // RECREATE
-    if (refresh) {
-        presentation->destroy_r ();
-        presentation->create_r ();
+    std::variant<presentation::swapchain_status, image_index> swapchain_status = presentation::swapchain_status::FATAL;
 
-        if (presentation->in_limbo ())
-            return;
+    if (surface_ok) {
+        swapchain_status = presentation->next_image ();
 
-        canvas_render->destroy_r ();
-        compute_target->destroy_r ();
+        {
+            const presentation::swapchain_status* swapchain_issue = std::get_if<presentation::swapchain_status> (&swapchain_status);
+            if (swapchain_issue && (*swapchain_issue == presentation::swapchain_status::OUT_OF_DATE || *swapchain_issue == presentation::swapchain_status::SUBOPTIMAL)) {
+                // an issue we can deal with, fix it and crack on
+                presentation->destroy_r ();
+                presentation->create_r ();
+                swapchain_status = presentation->next_image ();
+                assert (!std::get_if<presentation::swapchain_status> (&swapchain_status)); // make sure we fixed the issue
+            }
+            else if (swapchain_issue) {
+                assert (false);
+                return; // there's an issue we the swapchain that we currently can't deal with. not expected as surface status check should catch these issues first.
+            }
+        }
 
+        assert (std::get_if<image_index> (&swapchain_status)); // at this point the swapchain should be ok
+    }
+    else if (!surface_minimised) return; // lost
 
-        state.compute_size = calculate_compute_size ();
-        state.canvas_viewport = calculate_canvas_viewport ();
+    const bool swapchain_ok = std::get_if<image_index> (&swapchain_status);
 
-        compute_target->create_r ();
-        canvas_render->create_r ();
+    if (surface_ok && swapchain_ok) {
 
+        const VkExtent2D required_compute_size = calculate_compute_size ();
+        const VkViewport required_canvas_viewport = calculate_canvas_viewport ();
+        const bool compute_size_needs_refresh = !utils::equal (required_compute_size, state.compute_size);
+        const bool canvas_viewport_needs_refresh = !utils::equal (required_canvas_viewport, state.canvas_viewport) || compute_size_needs_refresh;
+
+        if (canvas_viewport_needs_refresh)  canvas_render->destroy_r ();
+        if (compute_size_needs_refresh)     compute_target->destroy_r ();
+
+        state.compute_size = required_compute_size;
+        state.canvas_viewport = required_canvas_viewport;
 
         imgui->refresh ();
+
+        if (compute_size_needs_refresh)     compute_target->create_r ();
+        if (canvas_viewport_needs_refresh)  canvas_render->create_r ();
     }
-    else {
-        compute_target->end_of_frame ();
+
+    // pre-update
+    compute_target->update (push_flag, ubo_flags, sbo_flags);
+
+    if (surface_ok && swapchain_ok) {
+
+        auto p_queue = kernel->get_queue (kernel->primary_work_queue ());
+        const uint32_t image_index = std::get<sge::vk::image_index> (swapchain_status);
+        const VkSemaphore all_done = submit_all (image_index);
+        const auto present_info = utils::init_VkPresentInfoKHR (all_done, presentation->swapchain (), image_index);
+        const VkResult result = vkQueuePresentKHR (p_queue, &present_info); // ignore the result as any error we'll deal with next frame.
+        vk_assert (vkQueueWaitIdle (p_queue));
+        vk_assert (vkDeviceWaitIdle (kernel->primary_context ().logical_device));
     }
+
+    // post-update
+    compute_target->end_of_frame ();
 }
 
 
