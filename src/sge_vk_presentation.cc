@@ -69,6 +69,21 @@ void presentation::destroy () {
     state.image_available = VK_NULL_HANDLE;
 }
 
+presentation::surface_status presentation::check_surface_status () {
+    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR (identifier.physical_device, state.surface, &state.surface_capabilities);
+
+    if (result == VK_ERROR_SURFACE_LOST_KHR)
+        return surface_status::LOST;
+
+    if (result != VK_SUCCESS)
+        return surface_status::FATAL;
+
+    if (state.surface_capabilities.currentExtent.width == 00 || state.surface_capabilities.currentExtent.height == 0)
+        return surface_status::ZERO;
+
+    return surface_status::OK;
+}
+
 void presentation::create_r () {
 
     vk_assert (vkGetPhysicalDeviceSurfaceCapabilitiesKHR (identifier.physical_device, state.surface, &state.surface_capabilities));
@@ -134,16 +149,21 @@ void presentation::destroy_r () {
 
 }
 
-std::variant<VkResult, image_index> presentation::next_image () {
+std::variant<presentation::swapchain_status, image_index> presentation::next_image () {
     uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR (context.logical_device, state.swapchain, std::numeric_limits<uint64_t>::max (), state.image_available, VK_NULL_HANDLE, &image_index);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_ERROR_SURFACE_LOST_KHR) {
-        return result;
+    const VkResult result = vkAcquireNextImageKHR (context.logical_device, state.swapchain, std::numeric_limits<uint64_t>::max (), state.image_available, VK_NULL_HANDLE, &image_index);
+    switch (result) {
+        case VK_SUCCESS:                                        return image_index;
+        case VK_SUBOPTIMAL_KHR:                                 return presentation::swapchain_status::SUBOPTIMAL;
+        case VK_ERROR_OUT_OF_DATE_KHR:                          return presentation::swapchain_status::OUT_OF_DATE;
+        case VK_ERROR_SURFACE_LOST_KHR:                         return presentation::swapchain_status::LOST;
+        case VK_TIMEOUT:                                        // not expecting this as timeout is currently max ulong
+        case VK_NOT_READY:
+        case VK_ERROR_OUT_OF_HOST_MEMORY:
+        case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+        case VK_ERROR_DEVICE_LOST:
+        case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:      return presentation::swapchain_status::FATAL;
     }
-
-    assert (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR);
-    return image_index;
 }
 
 void presentation::create_surface () {

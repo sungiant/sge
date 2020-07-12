@@ -47,6 +47,7 @@ namespace sge::vk {
 
     private:
 
+        VkSemaphore submit_all (sge::vk::image_index);
         VkExtent2D calculate_compute_size ();
         VkViewport calculate_canvas_viewport ();
 

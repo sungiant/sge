@@ -365,7 +365,7 @@ runtime::extension* api_impl::extension_get  (size_t id) const {
 };
 
 
-void api_impl::tty_log (runtime::log_level level, const wchar_t* channel, const wchar_t* message)  const {
+void api_impl::tty__log (runtime::log_level level, const wchar_t* channel, const wchar_t* message)  const {
 
     engine_tasks.new_logs.emplace_back (log{ guid::random (), std::chrono::high_resolution_clock::now (), level, channel, message });
 }

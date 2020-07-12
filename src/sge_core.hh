@@ -248,7 +248,7 @@ public:
     void                    input__gamepad_analogue_axes        (uint32_t*, runtime::gamepad_axis*, float*)     const;
     void                    input__touches                      (uint32_t*, uint32_t*, int*, int*)              const;
 
-    void                    tty_log                             (runtime::log_level, const wchar_t*, const wchar_t*)  const;
+    void                    tty__log                             (runtime::log_level, const wchar_t*, const wchar_t*)  const;
     
     runtime::extension*     extension_get                       (size_t)                                        const;
 };

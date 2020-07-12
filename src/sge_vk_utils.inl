@@ -645,6 +645,19 @@ inline VkPresentInfoKHR init_VkPresentInfoKHR () {
     return present_info;
 }
 
+inline VkPresentInfoKHR init_VkPresentInfoKHR (const VkSemaphore& wait_semaphore, const VkSwapchainKHR& swapchain, const uint32_t& image_index) {
+    VkPresentInfoKHR present_info = {};
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.pNext = nullptr;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &wait_semaphore;
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &swapchain;
+    present_info.pImageIndices = &image_index;
+    //present_info.pResults;
+    return present_info;
+}
+
 inline VkSwapchainCreateInfoKHR init_VkSwapchainCreateInfoKHR () {
     VkSwapchainCreateInfoKHR create_info = {};
     create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
