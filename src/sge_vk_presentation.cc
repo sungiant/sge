@@ -28,6 +28,11 @@ presentation:: presentation (const struct context& context, const queue_identifi
     , state ()
 {}
 
+
+presentation::~presentation () {
+    assert (state.resource_status == 0);
+};
+
 void presentation::configure (const std::vector<queue_identifier>& external_queues_requiring_swapchain_access) {
     auto& xs = state.queue_families_requiring_swapchain_access;
 
@@ -135,12 +140,12 @@ void presentation::create_surface () {
     //        0,
     //        metal_layer
     //    };
-    //    VkResult vkCreateMetalSurfaceEXT (instance (), &surface_create_info, context.allocation_callbacks, &state.surface);
+    //    VkResult vkCreateMetalSurfaceEXT (instance (), &surface_create_info, context.allocation_callbacks, &state.surface.value);
     //    assert (result == VK_SUCCESS);
     //}
 #elif TARGET_LINUX
     auto surface_create_info = utils::init_VkXcbSurfaceCreateInfoKHR (const_cast<xcb_connection_t*>(app_connection), app_window);
-    vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
+    vk_assert (vkCreateXcbSurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface.value));
 #else
 #error
 #endif
