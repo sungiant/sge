@@ -15,7 +15,7 @@ presentation:: presentation (const struct context& context, const queue_identifi
 #endif
 )
     : context (context)
-    , identifier (qid)
+    , queue_id (qid)
 #if TARGET_WIN32
     , app_hinst (hi)
     , app_hwnd (hw)
@@ -37,12 +37,12 @@ void presentation::configure (const std::vector<queue_identifier>& external_queu
     auto& xs = state.queue_families_requiring_swapchain_access;
 
     xs.clear ();
-    xs.emplace_back (identifier.family_index);
+    xs.emplace_back (queue_id.family_index);
 
     for (auto& qid : external_queues_requiring_swapchain_access) {
         // make sure all queues neededing access to the swap chain are on the same physical device.
         // i don't think it is possible to give a queue on a different device direct access.
-        assert (qid.physical_device == identifier.physical_device);
+        assert (qid.physical_device == queue_id.physical_device);
         if (std::find (xs.begin (), xs.end (), qid.family_index) == state.queue_families_requiring_swapchain_access.end ()) {
             xs.emplace_back (qid.family_index);
         }
@@ -52,7 +52,7 @@ void presentation::configure (const std::vector<queue_identifier>& external_queu
 }
 
 presentation::surface_status presentation::check_surface_status () {
-    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR (identifier.physical_device, state.surface.value, &state.surface.capabilities);
+    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR (queue_id.physical_device, state.surface.value, &state.surface.capabilities);
 
     if (result == VK_ERROR_SURFACE_LOST_KHR)
         return surface_status::LOST;
@@ -121,7 +121,7 @@ void presentation::destroy_synchronisation () {
 //--------------------------------------------------------------------------------------------------------------------//
 
 void presentation::create_surface () {
-    auto physical_device = identifier.physical_device;
+    auto physical_device = queue_id.physical_device;
 
 #if TARGET_WIN32
     auto surface_create_info = utils::init_VkWin32SurfaceCreateInfoKHR (app_hinst, app_hwnd);
@@ -162,7 +162,7 @@ void presentation::create_surface () {
     vk_assert (vkGetPhysicalDeviceSurfaceCapabilitiesKHR (physical_device, state.surface.value, &state.surface.capabilities));
 
     VkBool32 surface_supported;
-    vk_assert (vkGetPhysicalDeviceSurfaceSupportKHR (physical_device, identifier.family_index, state.surface.value, &surface_supported));
+    vk_assert (vkGetPhysicalDeviceSurfaceSupportKHR (physical_device, queue_id.family_index, state.surface.value, &surface_supported));
     assert (surface_supported);
 }
 

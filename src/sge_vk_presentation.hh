@@ -81,7 +81,7 @@ private:
 
 
     const context&                              context;
-    const queue_identifier                      identifier;
+    const queue_identifier                      queue_id;
 #if TARGET_WIN32
     const HINSTANCE                             app_hinst;
     const HWND                                  app_hwnd;
