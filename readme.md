@@ -77,34 +77,30 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 ### 0.1.0 - Remaining tasks
 
-- [x] Configurable storage buffers.
-- [x] OSX gamepad rewrite.
-- [x] CI integration.
-- [x] API dependency stabilisation - `sge::runtime` to be independent from `sge::core`.
-- [x] Mouse control for free camera.
-- [x] Improve and make configurable SGE built-in ImGui windows and extension windows.
-- [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
-- [ ] Intelligent Vulkan queue selection.
-- [ ] Host independent from core.
-- [ ] App api review.
-- [x] Improve graphics context refresh logic.
+- [x] Improve Vulkan queue selection logic.
 - [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Complete dynamic csg tree SBO implementation.
 - [ ] Resolve/query issue with having more than one SBO with Molten VK.
+- [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
+- [ ] Clean separation between host, engine, runtime, and app.
+
+### Backlog
+
 - [ ] Linux host implementation.
-- [ ] Review codebase abstractions and type naming and simplify where needed, resolve inconsistencies.
-
-### 0.2.0
-
 - [ ] Compute shader input/output textures to be user configurable (formats selection, depth write option).
-- [ ] User shape/model rendering support (allow amalgamation of 3D primitives into compute generated scenes).
 - [ ] User control over multiple parallel compute pipelines.
-- [ ] Engine update and render loops on their own threads.
-
-### 0.X.0
-
+- [ ] Runtime 3D drawing api.
+- [ ] Engine post processing.
+- [ ] Engine update and render loops on separate threads.
 - [ ] Runtime shader compilation via glslang runtime integration.
-- [ ] Qt host implementation.
+
+### Nice to have
+
+- [ ] Managed user windows.
+- [ ] All logging (engine and user) routed via single system.  Remove Win32 console.  Log visualisation extension, log to disk extension.
+- [ ] Gizmo extension made clickable.
+- [ ] Improve VK allocation logic (calculate exact amount needed on GPU for entire app lifetime, use a single allocation).
+- [ ] Fixed size container and string types.
 
 ## Getting started
 

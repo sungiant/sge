@@ -78,13 +78,12 @@ allocator::operator VkAllocationCallbacks () const {
 };
 
 void allocator::debug_ui () const {
-    ImGui::Begin ("SGE VK allocator");
-    {
-        ImGui::Text ("allocation count: %d", allocation_count);
-        ImGui::Text ("reallocation count: %d", reallocation_count);
-        ImGui::Text ("free count: %d", free_count);
-    }
-    ImGui::End ();
+
+    ImGui::Text ("VK Allocator");
+    ImGui::Text ("allocation count: %d", allocation_count);
+    ImGui::Text ("reallocation count: %d", reallocation_count);
+    ImGui::Text ("free count: %d", free_count);
+
 }
 
 allocator::~allocator () {}

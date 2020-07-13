@@ -46,7 +46,7 @@ struct texture {
         uint32_t texture_width,
         uint32_t texture_height,
         struct context& context,
-        VkQueue copy_queue,
+        queue_identifier copy_queue,
         VkFilter filter = VK_FILTER_LINEAR,
         VkImageUsageFlags image_usage_flags = VK_IMAGE_USAGE_SAMPLED_BIT,
         VkImageLayout image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -61,7 +61,7 @@ struct texture {
         auto alloc_info = utils::init_VkMemoryAllocateInfo ();
         VkMemoryRequirements memory_requirements;
 
-        VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+        VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, copy_queue, true);
 
         VkBuffer staging_buffer;
         VkDeviceMemory staging_memory;

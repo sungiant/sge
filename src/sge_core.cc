@@ -84,7 +84,7 @@ int api_impl::system__get_state_int (runtime::system_int_state z) const {
 const char* api_impl::system__get_state_string (runtime::system_string_state z) const {
     switch (z) {
         case runtime::system_string_state::title: return engine_state.host.window_title.c_str ();
-        case runtime::system_string_state::gpu_name: return engine_state.graphics.kernel->get_physical_device_name();
+        case runtime::system_string_state::gpu_name: return engine_state.graphics.kernel->primary_context().physical_device_info.name.c_str();
         case runtime::system_string_state::engine_version: {
             return engine_state.version.c_str ();
         }
@@ -875,10 +875,7 @@ void engine::graphics_window (bool* show) {
 
     ImGui::Begin("SGE Graphics", show, ImGuiWindowFlags_NoCollapse);
 
-    ImGui::Text ("Compute target size: %dx%d",
-        engine_state->graphics.compute_target->current_width (),
-        engine_state->graphics.compute_target->current_height ());
-
+    engine_state->graphics.debug_ui ();
 
     ImGui::End ();
 }

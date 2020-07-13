@@ -9,7 +9,6 @@
 #include "sge_math.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_context.hh"
-#include "sge_vk_types.hh"
 
 namespace sge::vk {
 
@@ -28,9 +27,9 @@ public:
     void                                destroy                     ();
     void                                enqueue                     (image_index);
 
-    const VkQueue                       get_queue                   ()                              const { return context.get_queue (queue_identifier); };
-    const VkCommandBuffer               get_command_buffer          (image_index i)                 const { return state.command_buffers[i]; }
-    const VkSemaphore                   get_render_finished         ()                              const { return state.render_finished; }
+    const VkQueue                       get_queue                   ()                const { return context.get_queue (identifier); };
+    const VkCommandBuffer               get_command_buffer          (image_index i)   const { return state.command_buffers[i]; }
+    const VkSemaphore                   get_render_finished         ()                const { return state.render_finished; }
 
 private:
 
@@ -62,7 +61,7 @@ private:
     };
 
     const context&                      context;
-    const queue_identifier              queue_identifier;
+    const queue_identifier              identifier;
     const presentation&                 presentation;
     const std::function <void()>        imgui_fn;
     state                               state;
@@ -70,7 +69,7 @@ private:
     void                                init                        (float, float);
     void                                release                     ();
     VkPipelineShaderStageCreateInfo     load_shader                 (std::string, VkShaderStageFlagBits);
-    void                                init_resources              (VkRenderPass, VkQueue);
+    void                                init_resources              (VkRenderPass, queue_identifier);
     void                                update_buffers              ();
     void                                draw_frame                  (VkCommandBuffer);
     void                                record_command_buffer       (int32_t);

@@ -45,9 +45,11 @@ namespace sge::vk {
         int get_user_viewport_width  () const { return state.canvas_viewport.width; }
         int get_user_viewport_height () const { return state.canvas_viewport.height; }
 
+        void debug_ui ();
+
     private:
 
-        VkSemaphore submit_all (sge::vk::image_index);
+        VkSemaphore submit_all (image_index);
         VkExtent2D calculate_compute_size ();
         VkViewport calculate_canvas_viewport ();
 

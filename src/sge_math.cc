@@ -1,6 +1,6 @@
 #include "sge_math.hh"
 
-#define RUN_TESTS 1
+#define RUN_TESTS 0
 
 #if RUN_TESTS
 #include "sge_math_test.hh"

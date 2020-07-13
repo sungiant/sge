@@ -14,7 +14,7 @@ compute_target::compute_target (const struct vk::context& z_context, const struc
 {
 }
 
-    
+
 void compute_target::end_of_frame () {
     const int num_blobs = content.blobs.size ();
 
@@ -113,12 +113,8 @@ void compute_target::enqueue () {
     vk_assert (vkQueueSubmit (context.get_queue (identifier), 1, &submitInfo, state.fence));
 }
 
-void compute_target::append_pre_render_submissions (std::vector<VkSemaphore>& wait_on, std::vector<VkPipelineStageFlags>& stage_flags) {
-    wait_on.emplace_back (state.compute_complete);
-    stage_flags.emplace_back (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-}
 
-void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {  
+void compute_target::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std::optional<dataspan>>& sbo_flags) {
 
     if (push_flag) {
         record_command_buffer (state.current_size);
@@ -179,7 +175,7 @@ void compute_target::destroy_uniform_buffers () {
 
 void compute_target::copy_blob_from_staging_to_storage (int blob_idx) {
     assert (state.blob_staging_buffers[blob_idx].size == state.blob_storage_buffers[blob_idx].size);
-    VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, identifier, true);
     VkBufferCopy copy_region = {};
     copy_region.size = state.blob_staging_buffers[blob_idx].size;
     vkCmdCopyBuffer (
@@ -187,9 +183,8 @@ void compute_target::copy_blob_from_staging_to_storage (int blob_idx) {
         state.blob_staging_buffers[blob_idx].buffer,
         state.blob_storage_buffers[blob_idx].buffer,
         1, &copy_region);
-    VkQueue queue = context.get_queue (identifier);
-    context.flush_command_buffer (copy_command, queue, true);
-    vkQueueWaitIdle (queue);
+
+    context.flush_command_buffer (copy_command, identifier, true);
 }
 
 void compute_target::prepare_blob_buffers () {
@@ -275,7 +270,7 @@ void compute_target::prepare_texture_target (VkFormat format, const VkExtent2D s
     vk_assert (vkAllocateMemory (context.logical_device, &memAllocInfo, context.allocation_callbacks, &state.compute_tex.device_memory));
     vk_assert (vkBindImageMemory (context.logical_device, state.compute_tex.image, state.compute_tex.device_memory, 0));
 
-    VkCommandBuffer layoutCmd = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    VkCommandBuffer layoutCmd = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, identifier, true);
 
     state.compute_tex.image_layout = VK_IMAGE_LAYOUT_GENERAL;
     utils::set_image_layout (
@@ -286,8 +281,7 @@ void compute_target::prepare_texture_target (VkFormat format, const VkExtent2D s
         state.compute_tex.image_layout);
 
     VkQueue queue = context.get_queue (identifier);
-    context.flush_command_buffer (layoutCmd, queue, true);
-    vk_assert (vkQueueWaitIdle (queue));
+    context.flush_command_buffer (layoutCmd, identifier, true);
 
     auto sampler = utils::init_VkSamplerCreateInfo ();
     sampler.magFilter = VK_FILTER_LINEAR;

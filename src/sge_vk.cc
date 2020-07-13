@@ -41,7 +41,7 @@ void vk::create (int w, int h) {
     kernel->create ();
 
     // Create presentation
-    presentation = std::make_unique<class presentation> (kernel->primary_context (), kernel->primary_work_queue ()
+    presentation = std::make_unique<class presentation> (kernel->primary_context (), kernel->primary_graphics_queue_id ()
 #if TARGET_WIN32
         , hi, hw
 #elif TARGET_MACOSX
@@ -61,7 +61,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
 
     compute_target = std::make_unique<class compute_target> (
         kernel->primary_context (),
-        kernel->primary_work_queue (),
+        kernel->primary_compute_queue_id (),
         sge::app::get_content (),
         [this]() { return state.compute_size; }
         );
@@ -69,7 +69,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
 
     canvas_render = std::make_unique<class canvas_render> (
         kernel->primary_context (),
-        kernel->primary_work_queue (),
+        kernel->primary_graphics_queue_id (),
         *presentation.get (),
         [this]() { return compute_target->get_pre_render_texture ().descriptor; },
         [this]() {
@@ -81,7 +81,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
     // ImGUI
     imgui = std::make_unique<class imgui> (
         kernel->primary_context (),
-        kernel->primary_work_queue (),
+        kernel->primary_graphics_queue_id (),
         *presentation.get (),
         z_imgui_fn);
     imgui->create ();
@@ -128,7 +128,7 @@ void submit (const VkCommandBuffer& command_buffer, const VkQueue& queue, const 
     submit (command_buffer, queue, wait_on, stageFlags, sx);
 }
 
-VkSemaphore vk::submit_all (sge::vk::image_index image_index) {
+VkSemaphore vk::submit_all (image_index image_index) {
     // system enqueues
     compute_target->enqueue ();
 
@@ -136,10 +136,10 @@ VkSemaphore vk::submit_all (sge::vk::image_index image_index) {
         imgui->enqueue (image_index);
     }
 
-    std::vector<VkSemaphore> wait_on = { presentation->image_available () }; // + user compute complete
-    std::vector<VkPipelineStageFlags> stage_flags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    std::vector<VkSemaphore> wait_on = { presentation->image_available (), compute_target->get_compute_finished () }; // + user compute complete
+    std::vector<VkPipelineStageFlags> stage_flags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT  };
 
-    compute_target->append_pre_render_submissions (wait_on, stage_flags);
+    assert (wait_on.size () == stage_flags.size ());
 
     // todo: switch to using: https://www.khronos.org/blog/vulkan-timeline-semaphores
     submit (
@@ -158,8 +158,7 @@ VkSemaphore vk::submit_all (sge::vk::image_index image_index) {
             imgui->get_render_finished ());
         return imgui->get_render_finished ();
     }
-    else
-    {
+    else {
         return canvas_render->get_render_finished ();
     }
 }
@@ -218,19 +217,27 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
     compute_target->update (push_flag, ubo_flags, sbo_flags);
 
     if (surface_ok && swapchain_ok) {
-
-        auto p_queue = kernel->get_queue (kernel->primary_work_queue ());
         const uint32_t image_index = std::get<sge::vk::image_index> (swapchain_status);
+
         const VkSemaphore all_done = submit_all (image_index);
+
         const auto present_info = utils::init_VkPresentInfoKHR (all_done, presentation->swapchain (), image_index);
-        const VkResult result = vkQueuePresentKHR (p_queue, &present_info); // ignore the result as any error we'll deal with next frame.
-        vk_assert (vkQueueWaitIdle (p_queue));
-        vk_assert (vkDeviceWaitIdle (kernel->primary_context ().logical_device));
+        const VkResult result = vkQueuePresentKHR (kernel->primary_graphics_queue (), &present_info); // ignore the result as any error we'll deal with next frame.
     }
 
     // post-update
     compute_target->end_of_frame ();
+
+    vk_assert (vkDeviceWaitIdle (kernel->primary_context ().logical_device));
 }
 
+void vk::debug_ui () {
+
+    ImGui::Text ("Compute target size: %dx%d", compute_target->current_width (), compute_target->current_height ());
+
+    ImGui::Separator ();
+
+    kernel->debug_ui ();
+}
 
 };

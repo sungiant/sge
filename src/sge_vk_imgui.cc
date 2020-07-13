@@ -9,7 +9,7 @@ namespace sge::vk {
 
 imgui::imgui (const struct context& z_context, const struct queue_identifier z_queue_identifier, const class presentation& z_presentation, const std::function <void()>& z_imgui_fn)
     : context (z_context)
-    , queue_identifier (z_queue_identifier)
+    , identifier (z_queue_identifier)
     , presentation (z_presentation)
     , imgui_fn (z_imgui_fn)
 {
@@ -22,25 +22,25 @@ imgui::~imgui () {
 
 void imgui::create () {
     init ((float)presentation.extent ().width, (float)presentation.extent ().height);
-    init_resources (presentation.imgui_render_pass (), get_queue ());
-    
+    init_resources (presentation.imgui_render_pass (), identifier);
+
     auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
     vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));
-    
+
     create_command_pool ();
     create_command_buffers ();
 }
 
 void imgui::destroy () {
-    
+
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
     state.command_buffers.clear();
-    
+
     vkDestroyCommandPool (context.logical_device, state.command_pool, context.allocation_callbacks);
     vkDestroySemaphore (context.logical_device, state.render_finished, context.allocation_callbacks);
-    
+
     state.render_finished = VK_NULL_HANDLE;
-    
+
     for (auto& shaderModule : state.shaders) {
         vkDestroyShaderModule (context.logical_device, shaderModule, context.allocation_callbacks);
     }
@@ -48,7 +48,7 @@ void imgui::destroy () {
 
     state.vertex_buffer.destroy (context.allocation_callbacks);
     state.index_buffer.destroy (context.allocation_callbacks);
-    
+
     vkDestroyImage (context.logical_device, state.font_image, context.allocation_callbacks);
     vkDestroyImageView (context.logical_device, state.font_view, context.allocation_callbacks);
     vkFreeMemory (context.logical_device, state.font_memory, context.allocation_callbacks);
@@ -67,7 +67,7 @@ void imgui::refresh () {
     /*
     vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
     state.command_buffers.clear();
-    
+
     create_command_buffers ();
     for (int i = 0; i < state.command_buffers.size (); i++) {
         record_command_buffer (i);
@@ -80,7 +80,7 @@ void imgui::enqueue (image_index i) {
 }
 
 void imgui::create_command_pool () {
-    auto pool_info = utils::init_VkCommandPoolCreateInfo (queue_identifier.family_index);
+    auto pool_info = utils::init_VkCommandPoolCreateInfo (identifier.family_index);
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     vk_assert (vkCreateCommandPool (context.logical_device, &pool_info, context.allocation_callbacks, &state.command_pool));
 }
@@ -113,11 +113,11 @@ void imgui::record_command_buffer (int32_t i) {
     render_pass_info.renderArea.extent = presentation.extent ();
     render_pass_info.clearValueCount = 2;
     render_pass_info.pClearValues = clear_values;
-    
+
     ImGui::NewFrame ();
     imgui_fn ();
     ImGui::Render ();
-    
+
     update_buffers ();
 
     render_pass_info.framebuffer = presentation.frame_buffer (i);
@@ -141,14 +141,14 @@ void imgui::init (float width, float height) {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(width, height);
     io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-    
+
 
     ImGuiStyle& style = ImGui::GetStyle();
     style.FrameRounding = 4.0f;
     style.WindowBorderSize = 0.0f;
     style.PopupBorderSize = 0.0f;
     style.GrabRounding = 4.0f;
-    
+
     ImVec4* colors = style.Colors;
     colors[ImGuiCol_Text]                   = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
     colors[ImGuiCol_TextDisabled]           = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
@@ -210,7 +210,7 @@ VkPipelineShaderStageCreateInfo imgui::load_shader (std::string fileName, VkShad
     return shader_stage;
 }
 
-void imgui::init_resources (VkRenderPass renderPass, VkQueue copy_queue) {
+void imgui::init_resources (VkRenderPass renderPass, queue_identifier copy_queue) {
     ImGuiIO& io = ImGui::GetIO();
     unsigned char* font_data;
     int tex_width, tex_height;
@@ -264,7 +264,7 @@ void imgui::init_resources (VkRenderPass renderPass, VkQueue copy_queue) {
     memcpy (staging_buffer.mapped, font_data, upload_size);
     staging_buffer.unmap ();
 
-    VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    VkCommandBuffer copy_command = context.create_command_buffer (VK_COMMAND_BUFFER_LEVEL_PRIMARY, identifier, true);
 
     utils::set_image_layout (
         copy_command,

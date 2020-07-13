@@ -6,7 +6,6 @@
 #pragma once
 
 #include "sge.hh"
-#include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"
 #include "sge_vk_context.hh"
@@ -31,9 +30,9 @@ public:
 
     ~canvas_render () {}
 
-    const VkQueue                       get_queue                               ()                  const { return context.get_queue (identifier); };
-    const VkCommandBuffer               get_command_buffer                      (image_index i)     const { return state.command_buffers[i]; }
-    const VkSemaphore                   get_render_finished                     ()                  const { return state.render_finished; }
+    const VkQueue                       get_queue                               ()                const { return context.get_queue (identifier); };
+    const VkCommandBuffer               get_command_buffer                      (image_index i)   const { return state.command_buffers[i]; }
+    const VkSemaphore                   get_render_finished                     ()                const { return state.render_finished; }
 
     void                                create                                  ();
     void                                destroy                                 ();

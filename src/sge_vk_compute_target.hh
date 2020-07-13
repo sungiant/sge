@@ -7,7 +7,6 @@
 
 #include "sge.hh"
 #include "sge_app_interface.hh"
-#include "sge_vk_types.hh"
 #include "sge_vk_buffer.hh"
 #include "sge_vk_utils.hh"
 #include "sge_vk_context.hh"
@@ -28,11 +27,11 @@ public:
     void                                destroy                                 ();
     void                                enqueue                                 ();
     void                                update                                  (bool&, std::vector<bool>&, std::vector<std::optional<dataspan>>&);
-    void                                append_pre_render_submissions           (std::vector<VkSemaphore>&, std::vector<VkPipelineStageFlags>&);
     const texture&                      get_pre_render_texture                  () const { return state.compute_tex; }
     void                                end_of_frame                            ();
     void                                create_r ();
     void                                destroy_r ();
+    const VkSemaphore                   get_compute_finished ()                              const { return state.compute_complete; }
 
     int current_width () const { return state.current_size.width; }
     int current_height () const { return state.current_size.height; }

@@ -86,40 +86,24 @@ presentation::surface_status presentation::check_surface_status () {
 
 void presentation::create_r () {
 
-    vk_assert (vkGetPhysicalDeviceSurfaceCapabilitiesKHR (identifier.physical_device, state.surface, &state.surface_capabilities));
-
-    const bool non_surface = state.surface_capabilities.currentExtent.width == 0 && state.surface_capabilities.currentExtent.height == 0;
-
+    assert (check_surface_status() == surface_status::OK);
 
 #if SGE_DEBUG_MODE
 
-    if (!in_limbo()) {
-        std::cout << "Refreshing for surface: " <<
-            "" << state.surface_capabilities.currentExtent.width <<
-            " x " << state.surface_capabilities.currentExtent.height << "\n";
-    }
-#endif
+    std::cout << "Refreshing for surface: " <<
+        "" << state.surface_capabilities.currentExtent.width <<
+        " x " << state.surface_capabilities.currentExtent.height << "\n";
 
-    if (non_surface) {
-        state.was_last_call_to_create_r_successful = false;
-        return;
-    }
+#endif
 
     create_swapchain ();
     create_image_views ();
     create_depth_stencil ();
     create_render_passes ();
     create_framebuffers ();
-
-    state.was_last_call_to_create_r_successful = true;;
 }
 
 void presentation::destroy_r () {
-
-    assert (state.was_last_call_to_create_r_successful.has_value ());
-
-    if (state.was_last_call_to_create_r_successful.value () == false)
-        return;
 
     // frame buffers
     for (auto framebuffer : state.swapchain_frame_buffers) {
@@ -149,7 +133,7 @@ void presentation::destroy_r () {
 
 }
 
-std::variant<presentation::swapchain_status, image_index> presentation::next_image () {
+std::variant<presentation::swapchain_status, sge::vk::image_index> presentation::next_image () {
     uint32_t image_index;
     const VkResult result = vkAcquireNextImageKHR (context.logical_device, state.swapchain, std::numeric_limits<uint64_t>::max (), state.image_available, VK_NULL_HANDLE, &image_index);
     switch (result) {

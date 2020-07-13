@@ -6,16 +6,18 @@
 #pragma once
 
 #include "sge.hh"
-#include "sge_vk_types.hh"
+#include "sge_vk_context.hh"
 #include "sge_vk_allocator.hh"
 
 namespace sge::vk {
 
 class kernel;
 
+
 class presentation {
 
 public:
+
     enum class surface_status : uint8_t { OK, ZERO, LOST, FATAL };
     enum class swapchain_status : uint8_t { OK, SUBOPTIMAL, OUT_OF_DATE, LOST, FATAL };
 
@@ -30,28 +32,34 @@ public:
         );
     ~presentation () {};
 
-    void                                configure                              (const std::vector<queue_identifier>&);
+    void                                configure                               (const std::vector<queue_identifier>&);
 
-    void                                create                                 ();
+    void                                create                                  ();
     void                                create_r ();
     void                                destroy_r ();
-    void                                destroy                                ();
-    
-    std::variant<swapchain_status, image_index> next_image                             ();
-    surface_status                      check_surface_status                   ();
+    void                                destroy                                 ();
 
-    size_t                              num_frame_buffers                      ()                   const { return state.swapchain_frame_buffers.size (); }
-    const VkFramebuffer&                frame_buffer                           (image_index i)      const { return state.swapchain_frame_buffers[i]; }
-    const VkSemaphore&                  image_available                        ()                   const { return state.image_available; }
-    const VkRenderPass&                 canvas_render_pass                 ()                   const { return state.canvas_render_pass; }
-    const VkRenderPass&                 imgui_render_pass                      ()                   const { return state.imgui_render_pass; }
-    const VkExtent2D&                   extent                                 ()                   const { return state.swapchain_extent; }
-    const VkSwapchainKHR&               swapchain                              ()                   const { return state.swapchain; }
+    std::variant<swapchain_status, image_index> next_image                      ();
+    surface_status                      check_surface_status                    ();
 
+    size_t                              num_frame_buffers                       ()                   const { return state.swapchain_frame_buffers.size (); }
+    const VkFramebuffer&                frame_buffer                            (image_index i)      const { return state.swapchain_frame_buffers[i]; }
+    const VkSemaphore&                  image_available                         ()                   const { return state.image_available; }
+    const VkRenderPass&                 canvas_render_pass                      ()                   const { return state.canvas_render_pass; }
+    const VkRenderPass&                 imgui_render_pass                       ()                   const { return state.imgui_render_pass; }
+    const VkExtent2D&                   extent                                  ()                   const { return state.swapchain_extent; }
+    const VkSwapchainKHR&               swapchain                               ()                   const { return state.swapchain; }
 
-
-    bool in_limbo () { return state.was_last_call_to_create_r_successful.has_value () && state.was_last_call_to_create_r_successful.value () == false; }
 private:
+
+    enum resource : uint8_t {
+        SURFACE         = (1 << 0),
+        SWAPCHAIN       = (1 << 1),
+        IMAGE_VIEWS     = (1 << 2),
+        DEPTH_STENCIL   = (1 << 3),
+        RENDER_PASSES   = (1 << 4),
+        FRAMEBUFFERS    = (1 << 5),
+    };
 
     struct state {
         VkSurfaceKHR                    surface;
@@ -72,8 +80,6 @@ private:
         VkDeviceMemory                  depth_stencil_memory;
         VkImageView                     depth_stencil_view;
         std::vector<queue_family_index> queue_families_requiring_swapchain_access;
-
-        std::optional<bool>             was_last_call_to_create_r_successful;
     };
 
     const context&                      context;

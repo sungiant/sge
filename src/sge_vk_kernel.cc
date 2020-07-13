@@ -1,7 +1,7 @@
 #include "sge_vk_kernel.hh"
 
 #include "sge_vk_allocator.hh"
-#include "sge_vk_types.hh"
+#include "sge_vk_logging.hh"
 
 namespace sge::vk {
 
@@ -26,8 +26,6 @@ const std::vector<const char*> required_instance_extensions =
 const std::vector<const char*> required_device_layers = { "VK_LAYER_RENDERDOC_Capture" };
 const std::vector<const char*> required_device_extensions = { "VK_KHR_swapchain" };
 
-
-
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report (VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData) {
     (void) flags; (void) object; (void) location; (void) messageCode; (void) pUserData; (void) pLayerPrefix; // Unused arguments
     fprintf (stderr, "[vulkan] ObjectType: %i\n\t* Message: %s\n", objectType, pMessage);
@@ -48,10 +46,28 @@ const context& kernel::primary_context () const {
     return state.contexts.front ();
 }
 
-queue_identifier kernel::primary_work_queue () const {
+queue_identifier kernel::primary_graphics_queue_id () const {
     queue_identifier queue_identifier = {};
     queue_identifier.physical_device = primary_context ().physical_device;
-    queue_identifier.family_index = 0;
+    queue_identifier.family_index = primary_context ().physical_device_info.best_queue_family_for (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT);
+        //= primary_context ().physical_device_info.best_queue_family_for_graphics ().index;
+    queue_identifier.number = 0;
+    return queue_identifier;
+
+}
+queue_identifier kernel::primary_compute_queue_id () const {
+    queue_identifier queue_identifier = {};
+    queue_identifier.physical_device = primary_context ().physical_device;
+    queue_identifier.family_index
+        = primary_context ().physical_device_info.best_queue_family_for (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+        //= primary_context ().physical_device_info.best_queue_family_for_compute ().index;
+    queue_identifier.number = 0;
+    return queue_identifier;
+}
+queue_identifier kernel::primary_transfer_queue_id () const {
+    queue_identifier queue_identifier = {};
+    queue_identifier.physical_device = primary_context ().physical_device;
+    queue_identifier.family_index = primary_context ().physical_device_info.best_queue_family_for (VK_QUEUE_TRANSFER_BIT);
     queue_identifier.number = 0;
     return queue_identifier;
 }
@@ -79,13 +95,6 @@ VkAllocationCallbacks* kernel::allocation_callbacks () const {
     return nullptr;
 }
 
-void kernel::append_debug_fns (std::vector<std::function<void ()>>& debug_fns) {
-    if (custom_allocator.get ()) {
-        debug_fns.emplace_back ([this]() { custom_allocator->debug_ui (); });
-    }
-}
-
-
 //--------------------------------------------------------------------------------------------------------------------//
 
 void kernel::create () {
@@ -97,27 +106,32 @@ void kernel::create () {
     // todo: simplify and remove duplication
 
     state.contexts.clear ();
-    for (int i = 0; i < state.physical_devices.size (); ++i) {
+    for (auto& kvp : state.physical_device_info) {
+        VkPhysicalDevice physical_device = kvp.first;
+        const physical_device_info& physical_device_info = kvp.second;
+        VkDevice logical_device = get_logical_device (physical_device);
+        logical_device_info& logical_device_info = state.logical_device_info[logical_device];
         state.contexts.emplace_back (context (
             allocation_callbacks (),
             state.instance,
-            state.physical_devices[i],
-            get_logical_device (state.physical_devices[i]),
-            state.physical_device_info[state.physical_devices[i]],
-            state.logical_device_info[get_logical_device (state.physical_devices[i])],
-            state.logical_device_default_command_pool[get_logical_device (state.physical_devices[i])]
+            physical_device,
+            logical_device,
+            physical_device_info,
+            logical_device_info
         ));
     }
 }
 
 void kernel::destroy () {
     for (auto kvp : state.logical_device_info) {
-        vkDestroyCommandPool (kvp.first, state.logical_device_default_command_pool[kvp.first], allocation_callbacks ());
+
+        for (auto kvp2 : kvp.second.default_command_pools)
+            vkDestroyCommandPool (kvp.first, kvp2.second, allocation_callbacks ());
+
         vkDestroyDevice (kvp.first, allocation_callbacks ());
     }
     state.logical_device_info.clear ();
     state.physical_device_info.clear ();
-    state.physical_devices.clear ();
     state.device_map.clear ();
     state.device_map_inv.clear ();
 #if TARGET_MACOSX
@@ -161,45 +175,33 @@ void kernel::create_instance () {
 
 void kernel::get_physical_devices () {
 
-    // get groups
-    uint32_t deviceGroupCount = 0;
-    vkEnumeratePhysicalDeviceGroups (state.instance, &deviceGroupCount, nullptr);
-    state.device_group_properties.resize (deviceGroupCount);
-    vkEnumeratePhysicalDeviceGroups (state.instance, &deviceGroupCount, state.device_group_properties.data ());
+    //uint32_t deviceGroupCount = 0;
+    //vkEnumeratePhysicalDeviceGroups (state.instance, &deviceGroupCount, nullptr);
+    //std::vector<VkPhysicalDeviceGroupPropertiesKHR> device_group_properties (deviceGroupCount);
+    //vkEnumeratePhysicalDeviceGroups (state.instance, &deviceGroupCount, device_group_properties.data ());
 
     // get physical devices
     uint32_t physical_device_count = 0;
     vk_assert (vkEnumeratePhysicalDevices (state.instance, &physical_device_count, nullptr));
-    state.physical_devices.resize (physical_device_count);
-    vk_assert (vkEnumeratePhysicalDevices (state.instance, &physical_device_count, state.physical_devices.data ()));
+    std::vector<VkPhysicalDevice> physical_devices (physical_device_count);
+    vk_assert (vkEnumeratePhysicalDevices (state.instance, &physical_device_count, physical_devices.data ()));
 
     // get info
-    for (auto physical_device : state.physical_devices) {
+    for (auto physical_device : physical_devices) {
         
-        state.physical_device_info[physical_device] = vk::physical_device_info {};
+        VkPhysicalDeviceProperties vk_physical_device_properties = {};
+        vkGetPhysicalDeviceProperties (physical_device, &vk_physical_device_properties);
         
-        VkPhysicalDeviceProperties physical_device_properties = {};
-        vkGetPhysicalDeviceProperties (physical_device, &physical_device_properties);
-        
-        state.physical_device_info[physical_device].name = physical_device_properties.deviceName;
-        state.physical_device_info[physical_device].driver_version = physical_device_properties.driverVersion;
-        state.physical_device_info[physical_device].vulkan_api_version = physical_device_properties.apiVersion;
+        uint32_t vk_queue_family_properties_count = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties (physical_device, &vk_queue_family_properties_count, nullptr);
+        std::vector<VkQueueFamilyProperties> vk_queue_family_properties (vk_queue_family_properties_count);
+        vkGetPhysicalDeviceQueueFamilyProperties (physical_device, &vk_queue_family_properties_count, &vk_queue_family_properties[0]);
 
-        uint32_t queue_family_properties_count = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties (physical_device, &queue_family_properties_count, nullptr);
-        std::vector<VkQueueFamilyProperties> queue_family_properties (queue_family_properties_count);
-        vkGetPhysicalDeviceQueueFamilyProperties (physical_device, &queue_family_properties_count, &queue_family_properties[0]);
+        std::vector<queue_family_info> queue_families;
+        queue_families.reserve (vk_queue_family_properties_count);
 
-        state.physical_device_info[physical_device].queue_families.resize (queue_family_properties_count);
+        for (uint32_t i = 0; i < vk_queue_family_properties_count; ++i) {
 
-        for (uint32_t i = 0; i < queue_family_properties_count; ++i) {
-            auto& queue_family = state.physical_device_info[physical_device].queue_families[i];
-            queue_family.count = queue_family_properties[i].queueCount;
-            queue_family.flags = queue_family_properties[i].queueFlags;
-            queue_family.index = i;
-
-
-            // todo: move this logic to sge_vk_presentation
             VkBool32 can_present = false;
 #if TARGET_WIN32
             can_present = vkGetPhysicalDeviceWin32PresentationSupportKHR (physical_device, i);
@@ -216,21 +218,30 @@ void kernel::get_physical_devices () {
 #else
             can_present = false;
 #endif
-            queue_family.can_present = can_present;
+            queue_families.emplace_back (queue_family_info { i, vk_queue_family_properties[i].queueFlags, vk_queue_family_properties[i].queueCount, static_cast<bool>(can_present) });
 
         }
 
-        std::cout << "vulkan api version: " << VK_VERSION_MAJOR (physical_device_properties.apiVersion) << "." << VK_VERSION_MINOR (physical_device_properties.apiVersion) << "." << VK_VERSION_PATCH (physical_device_properties.apiVersion) << "\n";
-        std::cout << "vulkan driver version: " << VK_VERSION_MAJOR (physical_device_properties.driverVersion) << "." << VK_VERSION_MINOR (physical_device_properties.driverVersion) << "." << VK_VERSION_PATCH (physical_device_properties.driverVersion) << "\n";
+        state.physical_device_info.emplace (physical_device, vk::physical_device_info { vk_physical_device_properties.deviceName, vk_physical_device_properties.driverVersion, vk_physical_device_properties.apiVersion, queue_families });
     }
 }
 
 void kernel::create_logical_devices () {
+    std::cout << "\n" << " $$ Creating logical-devices." << "\n";
+    for (const auto& kvp : state.physical_device_info) {
+        const auto physical_device = kvp.first;
+        vk::logging::cout_device_extension_properties (physical_device);
+        std::cout << "\n";
+        vk::logging::cout_physical_device_properties (physical_device);
+        vk::logging::cout_physical_device_features (physical_device);
+        vk::logging::cout_physical_device_memory_properties (physical_device);
+        vk::logging::cout_physical_device_queue_family_properties (physical_device);
+        vk::logging::cout_physical_device_format_properties (physical_device, VK_FORMAT_R64G64B64A64_SFLOAT);
+    }
+    for (const auto& kvp : state.physical_device_info) {
 
-    for (auto physical_device : state.physical_devices) {
-
-        VkDevice logical_device;
-        auto& physical_device_info = state.physical_device_info[physical_device];
+        const auto physical_device = kvp.first;
+        auto& physical_device_info = kvp.second;
 
         std::vector<std::vector<float>> queue_priorities (physical_device_info.queue_families.size ());
         std::vector<VkDeviceQueueCreateInfo> queue_create_infos (physical_device_info.queue_families.size ());
@@ -249,6 +260,7 @@ void kernel::create_logical_devices () {
 #endif
         auto device_create_info = utils::init_VkDeviceCreateInfo (queue_create_infos, required_device_layers, required_device_extensions);
 
+        VkDevice logical_device;
         vk_assert (vkCreateDevice (physical_device, &device_create_info, allocation_callbacks (), &logical_device));
 
         state.device_map[logical_device] = physical_device;
@@ -262,14 +274,52 @@ void kernel::create_logical_devices () {
             for (uint32_t j = 0; j < queue_family.count; ++j) {
                 vkGetDeviceQueue (logical_device, queue_family.index, j, &state.logical_device_info[logical_device].queues[queue_family.index][j]);
             }
+
+            auto cmdPoolInfo = utils::init_VkCommandPoolCreateInfo (queue_family.index);
+            cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            VkCommandPool default_command_pool;
+            vk_assert (vkCreateCommandPool (logical_device, &cmdPoolInfo, allocation_callbacks (), &default_command_pool));
+            state.logical_device_info[logical_device].default_command_pools[queue_family.index] = default_command_pool;
         }
 
-        auto cmdPoolInfo = utils::init_VkCommandPoolCreateInfo (0);
-        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        VkCommandPool default_command_pool;
-        vk_assert (vkCreateCommandPool (logical_device, &cmdPoolInfo, allocation_callbacks (), &default_command_pool));
-        state.logical_device_default_command_pool[logical_device] = default_command_pool;
+
+
+
     }
 
 }
+
+void kernel::debug_ui () {
+
+    for (const auto& kvp : state.physical_device_info) {
+
+        const auto physical_device = kvp.first;
+        auto& physical_device_info = kvp.second;
+
+        ImGui::Text (physical_device_info.name.c_str ());
+        if (primary_context ().physical_device == physical_device)
+            ImGui::BulletText ("[PRIMARY]");
+        ImGui::BulletText ("Driver version: %s", utils::to_string_Version (physical_device_info.driver_version).c_str());
+        ImGui::BulletText ("Vulkan API version: %s", utils::to_string_Version (physical_device_info.vulkan_api_version).c_str ());
+
+    }
+    ImGui::Separator ();
+    /*
+    for (const auto& kvp : state.logical_device_info) {
+
+        const auto logical_device = kvp.first;
+        auto& logical_device_info = kvp.second;
+
+        logical_device_info.queues;
+    }
+
+    ImGui::Separator ();
+    */
+
+    if (custom_allocator)
+        custom_allocator->debug_ui ();
+    ImGui::Separator ();
+
+}
+
 }
