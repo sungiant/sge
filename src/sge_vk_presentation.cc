@@ -1,7 +1,7 @@
 #include "sge_vk_presentation.hh"
 
 #include "sge_vk_context.hh"
-#include "sge_vk_utils.hh"
+#include "sge_utils.hh"
 
 namespace sge::vk {
 
@@ -46,29 +46,6 @@ void presentation::configure (const std::vector<queue_identifier>& external_queu
     std::sort (xs.begin (), xs.end ());
 }
 
-void presentation::create () {
-
-    // semaphore
-    auto semaphore_create_info = utils::init_VkSemaphoreCreateInfo ();
-    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_create_info, context.allocation_callbacks, &state.image_available));
-    // surface
-    create_surface ();
-    // refreshable
-    create_r ();
-}
-
-
-void presentation::destroy () {
-    // refreshable
-    destroy_r ();
-    // surface
-    vkDestroySurfaceKHR (context.instance, state.surface, context.allocation_callbacks);
-    state.surface = VK_NULL_HANDLE;
-    // semaphore
-    vkDestroySemaphore (context.logical_device, state.image_available, context.allocation_callbacks);
-    state.image_available = VK_NULL_HANDLE;
-}
-
 presentation::surface_status presentation::check_surface_status () {
     const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR (identifier.physical_device, state.surface, &state.surface_capabilities);
 
@@ -82,55 +59,6 @@ presentation::surface_status presentation::check_surface_status () {
         return surface_status::ZERO;
 
     return surface_status::OK;
-}
-
-void presentation::create_r () {
-
-    assert (check_surface_status() == surface_status::OK);
-
-#if SGE_DEBUG_MODE
-
-    std::cout << "Refreshing for surface: " <<
-        "" << state.surface_capabilities.currentExtent.width <<
-        " x " << state.surface_capabilities.currentExtent.height << "\n";
-
-#endif
-
-    create_swapchain ();
-    create_image_views ();
-    create_depth_stencil ();
-    create_render_passes ();
-    create_framebuffers ();
-}
-
-void presentation::destroy_r () {
-
-    // frame buffers
-    for (auto framebuffer : state.swapchain_frame_buffers) {
-        vkDestroyFramebuffer (context.logical_device, framebuffer, context.allocation_callbacks);
-    }
-    state.swapchain_frame_buffers.clear ();
-
-    // render passes
-    vkDestroyRenderPass (context.logical_device, state.imgui_render_pass, context.allocation_callbacks);
-    state.imgui_render_pass = VK_NULL_HANDLE;
-    vkDestroyRenderPass (context.logical_device, state.canvas_render_pass, context.allocation_callbacks);
-    state.canvas_render_pass = VK_NULL_HANDLE;
-
-    vkDestroyImageView (context.logical_device, state.depth_stencil_view, context.allocation_callbacks);
-    vkDestroyImage (context.logical_device, state.depth_stencil_image, context.allocation_callbacks);
-    vkFreeMemory (context.logical_device, state.depth_stencil_memory, context.allocation_callbacks);
-
-    // image views
-    for (auto image_view : state.swapchain_image_views) {
-        vkDestroyImageView (context.logical_device, image_view, context.allocation_callbacks);
-    }
-    state.swapchain_image_views.clear ();
-
-    // swapchain
-    vkDestroySwapchainKHR (context.logical_device, state.swapchain, context.allocation_callbacks);
-    state.swapchain = VK_NULL_HANDLE;
-
 }
 
 std::variant<presentation::swapchain_status, sge::vk::image_index> presentation::next_image () {
@@ -149,6 +77,45 @@ std::variant<presentation::swapchain_status, sge::vk::image_index> presentation:
         case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:      return presentation::swapchain_status::FATAL;
     }
 }
+
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void presentation::create_resources (resource_flags flags) {
+    using namespace sge::utils;
+    if (get_flag_at_mask (flags, SEMAPHORE))     { assert (!get_flag_at_mask (state.resource_status, SEMAPHORE));     create_semaphore ();     set_flag_at_mask (state.resource_status, SEMAPHORE,     true ); }
+    if (get_flag_at_mask (flags, SURFACE))       { assert (!get_flag_at_mask (state.resource_status, SURFACE));       create_surface ();       set_flag_at_mask (state.resource_status, SURFACE,       true ); }
+    if (get_flag_at_mask (flags, SWAPCHAIN))     { assert (!get_flag_at_mask (state.resource_status, SWAPCHAIN));     create_swapchain ();     set_flag_at_mask (state.resource_status, SWAPCHAIN,     true ); }
+    if (get_flag_at_mask (flags, IMAGE_VIEWS))   { assert (!get_flag_at_mask (state.resource_status, IMAGE_VIEWS));   create_image_views ();   set_flag_at_mask (state.resource_status, IMAGE_VIEWS,   true ); }
+    if (get_flag_at_mask (flags, DEPTH_STENCIL)) { assert (!get_flag_at_mask (state.resource_status, DEPTH_STENCIL)); create_depth_stencil (); set_flag_at_mask (state.resource_status, DEPTH_STENCIL, true ); }
+    if (get_flag_at_mask (flags, RENDER_PASSES)) { assert (!get_flag_at_mask (state.resource_status, RENDER_PASSES)); create_render_passes (); set_flag_at_mask (state.resource_status, RENDER_PASSES, true ); }
+    if (get_flag_at_mask (flags, FRAMEBUFFERS))  { assert (!get_flag_at_mask (state.resource_status, FRAMEBUFFERS));  create_framebuffers ();  set_flag_at_mask (state.resource_status, FRAMEBUFFERS,  true ); }
+}
+
+void presentation::destroy_resources (resource_flags flags) {
+    using namespace sge::utils;
+    if (get_flag_at_mask (flags, FRAMEBUFFERS))  { assert ( get_flag_at_mask (state.resource_status, FRAMEBUFFERS));  destroy_framebuffers ();  set_flag_at_mask (state.resource_status, FRAMEBUFFERS,  false); }
+    if (get_flag_at_mask (flags, RENDER_PASSES)) { assert ( get_flag_at_mask (state.resource_status, RENDER_PASSES)); destroy_render_passes (); set_flag_at_mask (state.resource_status, RENDER_PASSES, false); }
+    if (get_flag_at_mask (flags, DEPTH_STENCIL)) { assert ( get_flag_at_mask (state.resource_status, DEPTH_STENCIL)); destroy_depth_stencil (); set_flag_at_mask (state.resource_status, DEPTH_STENCIL, false); }
+    if (get_flag_at_mask (flags, IMAGE_VIEWS))   { assert ( get_flag_at_mask (state.resource_status, IMAGE_VIEWS));   destroy_image_views ();   set_flag_at_mask (state.resource_status, IMAGE_VIEWS,   false); }
+    if (get_flag_at_mask (flags, SWAPCHAIN))     { assert ( get_flag_at_mask (state.resource_status, SWAPCHAIN));     destroy_swapchain ();     set_flag_at_mask (state.resource_status, SWAPCHAIN,     false); }
+    if (get_flag_at_mask (flags, SURFACE))       { assert ( get_flag_at_mask (state.resource_status, SURFACE));       destroy_surface ();       set_flag_at_mask (state.resource_status, SURFACE,       false); }
+    if (get_flag_at_mask (flags, SEMAPHORE))     { assert ( get_flag_at_mask (state.resource_status, SEMAPHORE));     destroy_semaphore ();     set_flag_at_mask (state.resource_status, SEMAPHORE,     false); }
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void presentation::create_semaphore () {
+    auto semaphore_create_info = utils::init_VkSemaphoreCreateInfo ();
+    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_create_info, context.allocation_callbacks, &state.image_available));
+}
+
+void presentation::destroy_semaphore () {
+    vkDestroySemaphore (context.logical_device, state.image_available, context.allocation_callbacks);
+    state.image_available = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 void presentation::create_surface () {
     auto physical_device = identifier.physical_device;
@@ -194,8 +161,15 @@ void presentation::create_surface () {
     VkBool32 surface_supported;
     vk_assert (vkGetPhysicalDeviceSurfaceSupportKHR (physical_device, identifier.family_index, state.surface, &surface_supported));
     assert (surface_supported);
-
 }
+
+void presentation::destroy_surface () {
+    vkDestroySurfaceKHR (context.instance, state.surface, context.allocation_callbacks);
+    state.surface = VK_NULL_HANDLE;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 void presentation::create_swapchain () {
 
@@ -232,14 +206,19 @@ void presentation::create_swapchain () {
     }
 
     vk_assert (vkCreateSwapchainKHR (context.logical_device, &swap_chain_create_info, context.allocation_callbacks, &state.swapchain));
-
     uint32_t swapchain_image_count = 0;
     vk_assert (vkGetSwapchainImagesKHR (context.logical_device, state.swapchain, &swapchain_image_count, nullptr));
     state.swapchain_images.resize (swapchain_image_count);
-
     vk_assert (vkGetSwapchainImagesKHR (context.logical_device, state.swapchain, &swapchain_image_count, state.swapchain_images.data ()));
 }
 
+
+void presentation::destroy_swapchain () {
+    vkDestroySwapchainKHR (context.logical_device, state.swapchain, context.allocation_callbacks);
+    state.swapchain = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 void presentation::create_image_views () {
     state.swapchain_image_views.resize (state.swapchain_images.size ());
@@ -262,6 +241,16 @@ void presentation::create_image_views () {
       vk_assert (vkCreateImageView (context.logical_device, &create_info, context.allocation_callbacks, &state.swapchain_image_views[i]));
     }
 }
+
+void presentation::destroy_image_views () {
+
+    for (auto image_view : state.swapchain_image_views) {
+        vkDestroyImageView (context.logical_device, image_view, context.allocation_callbacks);
+    }
+    state.swapchain_image_views.clear ();
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 void presentation::create_render_passes () {
 
@@ -341,6 +330,16 @@ void presentation::create_render_passes () {
     vk_assert (vkCreateRenderPass (context.logical_device, &renderPassInfo, context.allocation_callbacks, &state.imgui_render_pass));
 }
 
+
+void presentation::destroy_render_passes () {
+    vkDestroyRenderPass (context.logical_device, state.imgui_render_pass, context.allocation_callbacks);
+    state.imgui_render_pass = VK_NULL_HANDLE;
+    vkDestroyRenderPass (context.logical_device, state.canvas_render_pass, context.allocation_callbacks);
+    state.canvas_render_pass = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void presentation::create_depth_stencil () {
 
     VkFormat depthFormat;
@@ -384,6 +383,16 @@ void presentation::create_depth_stencil () {
     vk_assert (vkCreateImageView (context.logical_device, &imageViewCI, context.allocation_callbacks, &state.depth_stencil_view));
 }
 
+
+void presentation::destroy_depth_stencil () {
+    vkDestroyImageView (context.logical_device, state.depth_stencil_view, context.allocation_callbacks);
+    vkDestroyImage (context.logical_device, state.depth_stencil_image, context.allocation_callbacks);
+    vkFreeMemory (context.logical_device, state.depth_stencil_memory, context.allocation_callbacks);
+
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void presentation::create_framebuffers () {
 
     state.swapchain_frame_buffers.resize (state.swapchain_image_views.size ());
@@ -403,6 +412,13 @@ void presentation::create_framebuffers () {
         attachments[0] = state.swapchain_image_views[i];
         vk_assert (vkCreateFramebuffer (context.logical_device, &framebufferInfo, context.allocation_callbacks, &state.swapchain_frame_buffers[i]));
     }
+}
+
+void presentation::destroy_framebuffers () {
+    for (auto framebuffer : state.swapchain_frame_buffers) {
+        vkDestroyFramebuffer (context.logical_device, framebuffer, context.allocation_callbacks);
+    }
+    state.swapchain_frame_buffers.clear ();
 }
 
 }

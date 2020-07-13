@@ -21,6 +21,23 @@ public:
     enum class surface_status : uint8_t { OK, ZERO, LOST, FATAL };
     enum class swapchain_status : uint8_t { OK, SUBOPTIMAL, OUT_OF_DATE, LOST, FATAL };
 
+    enum resource_bit : uint32_t {
+        SEMAPHORE = (1 << 0),
+        SURFACE = (1 << 1),
+        SWAPCHAIN = (1 << 2),
+        IMAGE_VIEWS = (1 << 3),
+        DEPTH_STENCIL = (1 << 4),
+        RENDER_PASSES = (1 << 5),
+        FRAMEBUFFERS = (1 << 6),
+    };
+
+    typedef uint32_t resource_flags;
+
+    static const resource_flags static_resources = resource_bit::SEMAPHORE | resource_bit::SURFACE;
+    static const resource_flags transient_resources = resource_bit::SWAPCHAIN | resource_bit::IMAGE_VIEWS | resource_bit::DEPTH_STENCIL | resource_bit::RENDER_PASSES | resource_bit::FRAMEBUFFERS;
+    static const resource_flags all_resources = static_resources | transient_resources;
+
+
     presentation (const struct context&, const queue_identifier& qid
 #if TARGET_WIN32
         , HINSTANCE, HWND
@@ -34,10 +51,8 @@ public:
 
     void                                configure                               (const std::vector<queue_identifier>&);
 
-    void                                create                                  ();
-    void                                create_r ();
-    void                                destroy_r ();
-    void                                destroy                                 ();
+    void                                create_resources                        (resource_flags);
+    void                                destroy_resources                       (resource_flags);
 
     std::variant<swapchain_status, image_index> next_image                      ();
     surface_status                      check_surface_status                    ();
@@ -51,15 +66,21 @@ public:
     const VkSwapchainKHR&               swapchain                               ()                   const { return state.swapchain; }
 
 private:
+    void                                create_semaphore                        ();
+    void                                create_surface                          ();
+    void                                create_swapchain                        ();
+    void                                create_image_views                      ();
+    void                                create_render_passes                    ();
+    void                                create_framebuffers                     ();
+    void                                create_depth_stencil                    ();
 
-    enum resource : uint8_t {
-        SURFACE         = (1 << 0),
-        SWAPCHAIN       = (1 << 1),
-        IMAGE_VIEWS     = (1 << 2),
-        DEPTH_STENCIL   = (1 << 3),
-        RENDER_PASSES   = (1 << 4),
-        FRAMEBUFFERS    = (1 << 5),
-    };
+    void                                destroy_semaphore                       ();
+    void                                destroy_surface                         ();
+    void                                destroy_swapchain                       ();
+    void                                destroy_image_views                     ();
+    void                                destroy_render_passes                   ();
+    void                                destroy_framebuffers                    ();
+    void                                destroy_depth_stencil                   ();
 
     struct state {
         VkSurfaceKHR                    surface;
@@ -80,6 +101,8 @@ private:
         VkDeviceMemory                  depth_stencil_memory;
         VkImageView                     depth_stencil_view;
         std::vector<queue_family_index> queue_families_requiring_swapchain_access;
+
+        uint32_t                        resource_status;
     };
 
     const context&                      context;
@@ -96,14 +119,6 @@ private:
     state                               state;
 
 
-
-
-    void                                create_surface                         ();
-    void                                create_swapchain                       ();
-    void                                create_image_views                     ();
-    void                                create_render_passes                   ();
-    void                                create_framebuffers                    ();
-    void                                create_depth_stencil                   ();
 };
 
 }

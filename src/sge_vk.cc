@@ -51,7 +51,7 @@ void vk::create (int w, int h) {
 #endif
     );
 
-    presentation->create ();
+    presentation->create_resources (presentation::all_resources);
 
     state.compute_size = calculate_compute_size ();
     state.canvas_viewport = calculate_canvas_viewport ();
@@ -97,7 +97,7 @@ void vk::destroy () {
     compute_target->destroy ();
     compute_target.reset ();
 
-    presentation->destroy ();
+    presentation->destroy_resources (presentation::all_resources);
     presentation.reset ();
 
     kernel->destroy ();
@@ -177,8 +177,9 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
             const presentation::swapchain_status* swapchain_issue = std::get_if<presentation::swapchain_status> (&swapchain_status);
             if (swapchain_issue && (*swapchain_issue == presentation::swapchain_status::OUT_OF_DATE || *swapchain_issue == presentation::swapchain_status::SUBOPTIMAL)) {
                 // an issue we can deal with, fix it and crack on
-                presentation->destroy_r ();
-                presentation->create_r ();
+                presentation->destroy_resources (presentation::transient_resources);
+                presentation->create_resources (presentation::transient_resources);
+
                 swapchain_status = presentation->next_image ();
                 assert (!std::get_if<presentation::swapchain_status> (&swapchain_status)); // make sure we fixed the issue
             }
