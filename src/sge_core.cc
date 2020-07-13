@@ -374,7 +374,7 @@ void api_impl::tty__log (runtime::log_level level, const wchar_t* channel, const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void engine::process_log (const log& z_log) {
+void engine::process_user_log (const log& z_log) {
 
     const char* level;
     switch (z_log.level) {
@@ -383,7 +383,6 @@ void engine::process_log (const log& z_log) {
         case runtime::log_level::warning: level = "WARN"; break;
         case runtime::log_level::error: level = "ERROR"; break;
     };
-
 
 #if TARGET_WIN32
     OutputDebugString ("[");
@@ -445,7 +444,7 @@ void engine::internal_update (sge::app::response& user_response, struct engine_s
 
         {
             for (int i = 0; i < engine_tasks.new_logs.size (); ++i) {
-                process_log (engine_tasks.new_logs[i]);
+                process_user_log (engine_tasks.new_logs[i]);
             }
             engine_tasks.new_logs.clear ();
         }
