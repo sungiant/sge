@@ -394,7 +394,7 @@ inline VkDescriptorSetAllocateInfo init_VkDescriptorSetAllocateInfo (VkDescripto
     return allocate_info;
 }
 
-inline VkWriteDescriptorSet init_VkWriteDescriptorSet (VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo* buffer_info, uint32_t descriptor_count) {
+inline VkWriteDescriptorSet init_VkWriteDescriptorSet (VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, const VkDescriptorBufferInfo* buffer_info, uint32_t descriptor_count) {
     VkWriteDescriptorSet descriptor_set {};
     descriptor_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptor_set.pNext = nullptr;
@@ -409,7 +409,7 @@ inline VkWriteDescriptorSet init_VkWriteDescriptorSet (VkDescriptorSet dst_set, 
     return descriptor_set;
 }
 
-inline VkWriteDescriptorSet init_VkWriteDescriptorSet (VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *image_info, uint32_t descriptor_count) {
+inline VkWriteDescriptorSet init_VkWriteDescriptorSet (VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, const VkDescriptorImageInfo *image_info, uint32_t descriptor_count) {
     VkWriteDescriptorSet descriptor_set {};
     descriptor_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptor_set.pNext = nullptr;

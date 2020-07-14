@@ -2,6 +2,7 @@
 
 #include "sge_vk_allocator.hh"
 #include "sge_vk_logging.hh"
+#include "sge_math.hh"
 
 namespace sge::vk {
 

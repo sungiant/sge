@@ -26,16 +26,15 @@ public:
         SURFACE = (1 << 1),
         SWAPCHAIN = (1 << 2),
         DEPTH_STENCIL = (1 << 3),
-        RENDER_PASSES = (1 << 4),
-        FRAMEBUFFERS = (1 << 5),
+        RENDER_PASS = (1 << 4),
+        FRAMEBUFFER = (1 << 5),
     };
 
     typedef uint32_t resource_flags;
 
     static const resource_flags static_resources = resource_bit::SYNCHRONISATION | resource_bit::SURFACE;
-    static const resource_flags transient_resources = resource_bit::SWAPCHAIN | resource_bit::DEPTH_STENCIL | resource_bit::RENDER_PASSES | resource_bit::FRAMEBUFFERS;
+    static const resource_flags transient_resources = resource_bit::SWAPCHAIN | resource_bit::DEPTH_STENCIL | resource_bit::RENDER_PASS | resource_bit::FRAMEBUFFER;
     static const resource_flags all_resources = static_resources | transient_resources;
-
 
     presentation (const struct context&, const queue_identifier& qid
 #if TARGET_WIN32
@@ -96,30 +95,30 @@ private:
         std::vector<queue_family_index>         queue_families_requiring_swapchain_access;
         uint32_t                                resource_status;
         struct {
-            VkSemaphore                         image_available;
+            VkSemaphore                         image_available     = VK_NULL_HANDLE;
         }                                       synchronisation;
         struct {
-            VkSurfaceKHR                        value;
+            VkSurfaceKHR                        value               = VK_NULL_HANDLE;
             VkSurfaceCapabilitiesKHR            capabilities;
             std::vector<VkSurfaceFormatKHR>     formats;
             std::vector<VkPresentModeKHR>       present_modes;
         }                                       surface;
         struct {
-            VkSwapchainKHR                      value;
+            VkSwapchainKHR                      value               = VK_NULL_HANDLE;
             VkSurfaceFormatKHR                  surface_format;
             VkPresentModeKHR                    present_mode;
-            VkExtent2D                          extent;
+            VkExtent2D                          extent              = {0, 0};
             std::vector<VkImage>                images;
             std::vector<VkImageView>            image_views;
         }                                       swapchain;
         struct {
-            VkImage                             image;
-            VkDeviceMemory                      memory;
-            VkImageView                         view;
+            VkImage                             image               = VK_NULL_HANDLE;
+            VkDeviceMemory                      memory              = VK_NULL_HANDLE;
+            VkImageView                         view                = VK_NULL_HANDLE;
         }                                       depth_stencil;
         struct {
-            VkRenderPass                        canvas;
-            VkRenderPass                        imgui;
+            VkRenderPass                        canvas              = VK_NULL_HANDLE;
+            VkRenderPass                        imgui               = VK_NULL_HANDLE;
         }                                       render_pass;
         struct {
             std::vector<VkFramebuffer>          value;

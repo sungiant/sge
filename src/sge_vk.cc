@@ -84,11 +84,11 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
         kernel->primary_graphics_queue_id (),
         *presentation.get (),
         z_imgui_fn);
-    imgui->create ();
+    imgui->create_resources (imgui::static_resources);
 
 }
 void vk::destroy () {
-    imgui->destroy ();
+    imgui->destroy_resources (imgui::all_resources);
     imgui.reset ();
 
     canvas_render->destroy ();
@@ -133,10 +133,10 @@ VkSemaphore vk::submit_all (image_index image_index) {
     compute_target->enqueue ();
 
     if (state.imgui_on) {
-        imgui->enqueue (image_index);
+        imgui->record (image_index);
     }
 
-    std::vector<VkSemaphore> wait_on = { presentation->image_available (), compute_target->get_compute_finished () }; // + user compute complete
+    std::vector<VkSemaphore> wait_on = { presentation->image_available (), compute_target->get_compute_finished () };
     std::vector<VkPipelineStageFlags> stage_flags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT  };
 
     assert (wait_on.size () == stage_flags.size ());
@@ -208,8 +208,6 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
         state.compute_size = required_compute_size;
         state.canvas_viewport = required_canvas_viewport;
 
-        imgui->refresh ();
-
         if (compute_size_needs_refresh)     compute_target->create_r ();
         if (canvas_viewport_needs_refresh)  canvas_render->create_r ();
     }
@@ -239,6 +237,10 @@ void vk::debug_ui () {
     ImGui::Separator ();
 
     kernel->debug_ui ();
+
+    ImGui::Separator ();
+    
+    imgui->debug_ui ();
 }
 
 };

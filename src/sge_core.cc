@@ -454,6 +454,7 @@ void engine::internal_update (sge::app::response& user_response, struct engine_s
     // IMGUI
     {
         ImGuiIO& io = ImGui::GetIO ();
+
         const auto& input = engine_state.input;
         static int mouse_wheel_last_frame = 0;
 
