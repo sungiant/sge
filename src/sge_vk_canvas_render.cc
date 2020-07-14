@@ -16,58 +16,46 @@ canvas_render::canvas_render (const struct context& context, const queue_identif
     state.current_viewport = get_viewport_fn ();
 }
 
-void canvas_render::create () {
-    const auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
-    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));;
+//--------------------------------------------------------------------------------------------------------------------//
 
-    create_descriptor_set_layout ();
-    create_command_pool ();
-    create_r ();
+void canvas_render::create_resources (resource_flags flags) {
+    using namespace sge::utils;
+    if (get_flag_at_mask (flags, PIPELINE) || get_flag_at_mask (flags, COMMAND_BUFFER))
+        state.current_viewport = get_viewport_fn ();
+
+    if (get_flag_at_mask (flags, SYNCHRONISATION))       { assert (!get_flag_at_mask (state.resource_status, SYNCHRONISATION));       create_synchronisation        (); set_flag_at_mask (state.resource_status, SYNCHRONISATION,       true ); }
+    if (get_flag_at_mask (flags, DESCRIPTOR_SET_LAYOUT)) { assert (!get_flag_at_mask (state.resource_status, DESCRIPTOR_SET_LAYOUT)); create_descriptor_set_layout  (); set_flag_at_mask (state.resource_status, DESCRIPTOR_SET_LAYOUT, true ); }
+    if (get_flag_at_mask (flags, COMMAND_POOL))          { assert (!get_flag_at_mask (state.resource_status, COMMAND_POOL));          create_command_pool           (); set_flag_at_mask (state.resource_status, COMMAND_POOL,          true ); }
+    if (get_flag_at_mask (flags, DESCRIPTOR_POOL))       { assert (!get_flag_at_mask (state.resource_status, DESCRIPTOR_POOL));       create_descriptor_pool        (); set_flag_at_mask (state.resource_status, DESCRIPTOR_POOL,       true ); }
+    if (get_flag_at_mask (flags, DESCRIPTOR_SET))        { assert (!get_flag_at_mask (state.resource_status, DESCRIPTOR_SET));        create_descriptor_set         (); set_flag_at_mask (state.resource_status, DESCRIPTOR_SET,        true ); }
+    if (get_flag_at_mask (flags, PIPELINE))              { assert (!get_flag_at_mask (state.resource_status, PIPELINE));              create_pipeline               (); set_flag_at_mask (state.resource_status, PIPELINE,              true ); }
+    if (get_flag_at_mask (flags, COMMAND_BUFFER))        { assert (!get_flag_at_mask (state.resource_status, COMMAND_BUFFER));        create_command_buffer         (); set_flag_at_mask (state.resource_status, COMMAND_BUFFER,        true ); }
 }
 
+void canvas_render::destroy_resources (resource_flags flags) {
+    using namespace sge::utils;
+    if (get_flag_at_mask (flags, COMMAND_BUFFER))        { assert ( get_flag_at_mask (state.resource_status, COMMAND_BUFFER));        destroy_command_buffer        (); set_flag_at_mask (state.resource_status, COMMAND_BUFFER,        false); }
+    if (get_flag_at_mask (flags, PIPELINE))              { assert ( get_flag_at_mask (state.resource_status, PIPELINE));              destroy_pipeline              (); set_flag_at_mask (state.resource_status, PIPELINE,              false); }
+    if (get_flag_at_mask (flags, DESCRIPTOR_SET))        { assert ( get_flag_at_mask (state.resource_status, DESCRIPTOR_SET));        destroy_descriptor_set        (); set_flag_at_mask (state.resource_status, DESCRIPTOR_SET,        false); }
+    if (get_flag_at_mask (flags, DESCRIPTOR_POOL))       { assert ( get_flag_at_mask (state.resource_status, DESCRIPTOR_POOL));       destroy_descriptor_pool       (); set_flag_at_mask (state.resource_status, DESCRIPTOR_POOL,       false); }
+    if (get_flag_at_mask (flags, COMMAND_POOL))          { assert ( get_flag_at_mask (state.resource_status, COMMAND_POOL));          destroy_command_pool          (); set_flag_at_mask (state.resource_status, COMMAND_POOL,          false); }
+    if (get_flag_at_mask (flags, DESCRIPTOR_SET_LAYOUT)) { assert ( get_flag_at_mask (state.resource_status, DESCRIPTOR_SET_LAYOUT)); destroy_descriptor_set_layout (); set_flag_at_mask (state.resource_status, DESCRIPTOR_SET_LAYOUT, false); }
+    if (get_flag_at_mask (flags, SYNCHRONISATION))       { assert ( get_flag_at_mask (state.resource_status, SYNCHRONISATION));       destroy_synchronisation       (); set_flag_at_mask (state.resource_status, SYNCHRONISATION,       false); }
+}
 
-void canvas_render::destroy () {
-    destroy_r ();
+//--------------------------------------------------------------------------------------------------------------------//
 
-    vkDestroyCommandPool (context.logical_device, state.command_pool, context.allocation_callbacks);
-    state.command_pool = VK_NULL_HANDLE;
+void canvas_render::create_synchronisation () {
+    const auto semaphore_info = utils::init_VkSemaphoreCreateInfo ();
+    vk_assert (vkCreateSemaphore (context.logical_device, &semaphore_info, context.allocation_callbacks, &state.render_finished));;
+}
 
-    vkDestroyDescriptorSetLayout (context.logical_device, state.descriptor_set_layout, context.allocation_callbacks);
-    state.descriptor_set_layout = VK_NULL_HANDLE;
-
+void canvas_render::destroy_synchronisation () {
     vkDestroySemaphore (context.logical_device, state.render_finished, context.allocation_callbacks);
     state.render_finished = VK_NULL_HANDLE;
 }
 
-void canvas_render::create_r () {
-    state.current_viewport = get_viewport_fn ();
-    create_pipeline ();
-    create_descriptor_pool ();
-    create_descriptor_set ();
-    create_command_buffers ();
-}
-
-void canvas_render::destroy_r () {
-
-    vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
-    vkFreeDescriptorSets (context.logical_device, state.descriptor_pool, 1, &state.descriptor_set);
-
-    vkDestroyDescriptorPool (context.logical_device, state.descriptor_pool, context.allocation_callbacks);
-    state.descriptor_pool = VK_NULL_HANDLE;
-
-    vkDestroyPipeline (context.logical_device, state.pipeline, context.allocation_callbacks);
-    state.pipeline = VK_NULL_HANDLE;
-    vkDestroyPipelineLayout (context.logical_device, state.pipeline_layout, context.allocation_callbacks);
-    state.pipeline_layout = VK_NULL_HANDLE;
-}
-
-void canvas_render::refresh_command_buffers () {
-    vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
-
-    state.current_viewport = get_viewport_fn ();
-
-    create_command_buffers ();
-}
+//--------------------------------------------------------------------------------------------------------------------//
 
 void canvas_render::create_descriptor_set_layout () {
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings = {
@@ -81,31 +69,47 @@ void canvas_render::create_descriptor_set_layout () {
     vk_assert (vkCreateDescriptorSetLayout (context.logical_device, &descriptor_layout, context.allocation_callbacks, &state.descriptor_set_layout));
 }
 
+void canvas_render::destroy_descriptor_set_layout () {
+    vkDestroyDescriptorSetLayout (context.logical_device, state.descriptor_set_layout, context.allocation_callbacks);
+    state.descriptor_set_layout = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void canvas_render::create_command_pool () {
     const auto pool_info = utils::init_VkCommandPoolCreateInfo (identifier.family_index, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     vk_assert (vkCreateCommandPool (context.logical_device, &pool_info, context.allocation_callbacks, &state.command_pool));
 }
 
+void canvas_render::destroy_command_pool () {
+    vkDestroyCommandPool (context.logical_device, state.command_pool, context.allocation_callbacks);
+    state.command_pool = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void canvas_render::create_descriptor_pool () {
 
-    std::vector<VkDescriptorPoolSize> pool_sizes = {
+    const std::vector<VkDescriptorPoolSize> pool_sizes = {
         utils::init_VkDescriptorPoolSize (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
         utils::init_VkDescriptorPoolSize (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
     };
 
-    VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-        utils::init_VkDescriptorPoolCreateInfo (
-            pool_sizes,
-            2);
-    descriptor_pool_create_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    const VkDescriptorPoolCreateInfo descriptor_pool_create_info = utils::init_VkDescriptorPoolCreateInfo (pool_sizes, 2, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
     vk_assert (vkCreateDescriptorPool (
         context.logical_device,
         &descriptor_pool_create_info,
         context.allocation_callbacks,
         &state.descriptor_pool));
-
 }
+
+void canvas_render::destroy_descriptor_pool () {
+    vkDestroyDescriptorPool (context.logical_device, state.descriptor_pool, context.allocation_callbacks);
+    state.descriptor_pool = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 void canvas_render::create_descriptor_set () {
 
@@ -115,8 +119,7 @@ void canvas_render::create_descriptor_set () {
 
     VkDescriptorImageInfo ii = compute_tex ();
 
-    std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-    {
+    std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
         utils::init_VkWriteDescriptorSet (
             state.descriptor_set,
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -127,6 +130,13 @@ void canvas_render::create_descriptor_set () {
 
     vkUpdateDescriptorSets (context.logical_device, (uint32_t) write_descriptor_sets.size (), write_descriptor_sets.data (), 0, NULL);
 }
+
+void canvas_render::destroy_descriptor_set () {
+    vkFreeDescriptorSets (context.logical_device, state.descriptor_pool, 1, &state.descriptor_set);
+    state.descriptor_set = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 void canvas_render::create_pipeline () {
 
@@ -187,8 +197,18 @@ void canvas_render::create_pipeline () {
     vkDestroyShaderModule (context.logical_device, vertex_shader, context.allocation_callbacks);
 }
 
+void canvas_render::destroy_pipeline () {
 
-void canvas_render::create_command_buffers () {
+    vkDestroyPipeline (context.logical_device, state.pipeline, context.allocation_callbacks);
+    state.pipeline = VK_NULL_HANDLE;
+    vkDestroyPipelineLayout (context.logical_device, state.pipeline_layout, context.allocation_callbacks);
+    state.pipeline_layout = VK_NULL_HANDLE;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+
+void canvas_render::create_command_buffer () {
 
     state.command_buffers.resize (presentation.num_frame_buffers ());
 
@@ -220,17 +240,19 @@ void canvas_render::create_command_buffers () {
 
         vkCmdSetViewport(state.command_buffers[i], 0, 1, &state.current_viewport);
 
-
         vkCmdBeginRenderPass (state.command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline);
         vkCmdBindDescriptorSets (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline_layout, 0, 1, &state.descriptor_set, 0, NULL);
         vkCmdDraw (state.command_buffers[i], 3, 1, 0, 0);
         vkCmdEndRenderPass (state.command_buffers[i]);
 
-
-
         vk_assert (vkEndCommandBuffer (state.command_buffers[i]));
     }
+}
+
+void canvas_render::destroy_command_buffer () {
+    vkFreeCommandBuffers (context.logical_device, state.command_pool, static_cast<uint32_t>(state.command_buffers.size ()), state.command_buffers.data ());
+    state.command_buffers.clear ();
 }
 
 }

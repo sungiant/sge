@@ -21,6 +21,22 @@ public:
     typedef std::function<const VkDescriptorImageInfo&()> tex_fn;
     typedef std::function<VkViewport ()> viewport_fn;
 
+    enum resource_bit : uint32_t {
+        SYNCHRONISATION = (1 << 0),
+        DESCRIPTOR_SET_LAYOUT = (1 << 1),
+        COMMAND_POOL = (1 << 2),
+        DESCRIPTOR_POOL = (1 << 3),
+        DESCRIPTOR_SET = (1 << 4),
+        PIPELINE = (1 << 5),
+        COMMAND_BUFFER = (1 << 6),
+    };
+
+    typedef uint32_t resource_flags;
+
+    static const resource_flags static_resources = resource_bit::SYNCHRONISATION | resource_bit::DESCRIPTOR_SET_LAYOUT | resource_bit::COMMAND_POOL;
+    static const resource_flags transient_resources = resource_bit::DESCRIPTOR_POOL | resource_bit::DESCRIPTOR_SET | resource_bit::PIPELINE | resource_bit::COMMAND_BUFFER;
+    static const resource_flags all_resources = static_resources | transient_resources;
+
     canvas_render (
         const context&,
         const queue_identifier,
@@ -34,25 +50,46 @@ public:
     const VkCommandBuffer               get_command_buffer                      (image_index i)   const { return state.command_buffers[i]; }
     const VkSemaphore                   get_render_finished                     ()                const { return state.render_finished; }
 
-    void                                create                                  ();
-    void                                destroy                                 ();
-    void                                create_r ();
-    void                                destroy_r ();
+    void                                create_resources                        (resource_flags);
+    void                                destroy_resources                       (resource_flags);
 
-    void                                refresh_command_buffers                 ();
+    //void                                refresh_command_buffers                 ();
 
 private:
+    void                                create_synchronisation                  ();
+    void                                create_descriptor_set_layout            ();
+    void                                create_command_pool                     ();
+    void                                create_descriptor_pool                  ();
+    void                                create_descriptor_set                   ();
+    void                                create_pipeline                         ();
+    void                                create_command_buffer                   ();
+
+    void                                destroy_synchronisation                 ();
+    void                                destroy_descriptor_set_layout           ();
+    void                                destroy_command_pool                    ();
+    void                                destroy_descriptor_pool                 ();
+    void                                destroy_descriptor_set                  ();
+    void                                destroy_pipeline                        ();
+    void                                destroy_command_buffer                  ();
 
     struct state {
-        VkDescriptorSetLayout           descriptor_set_layout;
-        VkDescriptorPool                descriptor_pool;
-        VkDescriptorSet                 descriptor_set;
-        VkPipelineLayout                pipeline_layout;
-        VkPipeline                      pipeline;
-        VkCommandPool                   command_pool;
+        VkViewport                      current_viewport                        = {};
+        uint32_t                        resource_status                         = 0;
+
+        VkSemaphore                     render_finished                         = VK_NULL_HANDLE;
+
+        VkDescriptorSetLayout           descriptor_set_layout                   = VK_NULL_HANDLE;
+
+        VkCommandPool                   command_pool                            = VK_NULL_HANDLE;
+
+        VkDescriptorPool                descriptor_pool                         = VK_NULL_HANDLE;
+
+        VkDescriptorSet                 descriptor_set                          = VK_NULL_HANDLE;
+
+        VkPipelineLayout                pipeline_layout                         = VK_NULL_HANDLE;
+        VkPipeline                      pipeline                                = VK_NULL_HANDLE;
+
         std::vector<VkCommandBuffer>    command_buffers;
-        VkSemaphore                     render_finished;
-        VkViewport                      current_viewport;
     };
 
     const context&                      context;
@@ -63,14 +100,6 @@ private:
     state                               state;
 
 
-private:
-
-    void                                create_descriptor_set_layout            ();
-    void                                create_command_pool                     ();
-    void                                create_descriptor_pool                  ();
-    void                                create_descriptor_set                   ();
-    void                                create_pipeline                         ();
-    void                                create_command_buffers                  ();
 
 };
 

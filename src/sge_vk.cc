@@ -76,7 +76,7 @@ void vk::create_systems (const std::function<void ()>& z_imgui_fn) {
             return state.canvas_viewport;
         }
     );
-    canvas_render->create ();
+    canvas_render->create_resources (canvas_render::all_resources);
 
     // ImGUI
     imgui = std::make_unique<class imgui> (
@@ -91,7 +91,7 @@ void vk::destroy () {
     imgui->destroy_resources (imgui::all_resources);
     imgui.reset ();
 
-    canvas_render->destroy ();
+    canvas_render->destroy_resources (canvas_render::all_resources);
     canvas_render.reset ();
 
     compute_target->destroy ();
@@ -202,14 +202,14 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
         const bool compute_size_needs_refresh = !utils::equal (required_compute_size, state.compute_size);
         const bool canvas_viewport_needs_refresh = !utils::equal (required_canvas_viewport, state.canvas_viewport) || compute_size_needs_refresh;
 
-        if (canvas_viewport_needs_refresh)  canvas_render->destroy_r ();
+        if (canvas_viewport_needs_refresh)  canvas_render->destroy_resources (canvas_render::transient_resources);
         if (compute_size_needs_refresh)     compute_target->destroy_r ();
 
         state.compute_size = required_compute_size;
         state.canvas_viewport = required_canvas_viewport;
 
         if (compute_size_needs_refresh)     compute_target->create_r ();
-        if (canvas_viewport_needs_refresh)  canvas_render->create_r ();
+        if (canvas_viewport_needs_refresh)  canvas_render->create_resources (canvas_render::transient_resources);
     }
 
     // pre-update

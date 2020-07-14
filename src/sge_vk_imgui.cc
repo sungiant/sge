@@ -177,30 +177,30 @@ void imgui::record (image_index i) {
 
 void imgui::create_resources (resource_flags flags) {
     using namespace sge::utils;
-    if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert (!get_flag_at_mask (state.resource_status, SYNCHRONISATION)); create_synchronisation ();  set_flag_at_mask (state.resource_status, SYNCHRONISATION, true); }
-    if (get_flag_at_mask (flags, COMMAND_POOL)) { assert (!get_flag_at_mask (state.resource_status, COMMAND_POOL)); create_command_pool ();  set_flag_at_mask (state.resource_status, COMMAND_POOL, true); }
-    if (get_flag_at_mask (flags, SHADER)) { assert (!get_flag_at_mask (state.resource_status, SHADER)); create_shader ();  set_flag_at_mask (state.resource_status, SHADER, true); }
-    if (get_flag_at_mask (flags, SAMPLER)) { assert (!get_flag_at_mask (state.resource_status, SAMPLER)); create_sampler ();  set_flag_at_mask (state.resource_status, SAMPLER, true); }
-    if (get_flag_at_mask (flags, FONT_TEXTURE)) { assert (!get_flag_at_mask (state.resource_status, FONT_TEXTURE)); create_font_texture ();  set_flag_at_mask (state.resource_status, FONT_TEXTURE, true); }
-    if (get_flag_at_mask (flags, FONT_DESCRIPTOR)) { assert (!get_flag_at_mask (state.resource_status, FONT_DESCRIPTOR)); create_font_descriptor ();  set_flag_at_mask (state.resource_status, FONT_DESCRIPTOR, true); }
-    if (get_flag_at_mask (flags, PIPELINE)) { assert (!get_flag_at_mask (state.resource_status, PIPELINE)); create_pipeline ();  set_flag_at_mask (state.resource_status, PIPELINE, true); }
-    if (get_flag_at_mask (flags, COMMAND_BUFFER)) { assert (!get_flag_at_mask (state.resource_status, COMMAND_BUFFER)); create_command_buffer ();  set_flag_at_mask (state.resource_status, COMMAND_BUFFER, true); }
-    if (get_flag_at_mask (flags, VERTEX_BUFFER)) { assert (!get_flag_at_mask (state.resource_status, VERTEX_BUFFER)); create_vertex_buffer ();  set_flag_at_mask (state.resource_status, VERTEX_BUFFER, true); }
-    if (get_flag_at_mask (flags, INDEX_BUFFER)) { assert (!get_flag_at_mask (state.resource_status, INDEX_BUFFER)); create_index_buffer ();  set_flag_at_mask (state.resource_status, INDEX_BUFFER, true); }
+    if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert (!get_flag_at_mask (state.resource_status, SYNCHRONISATION)); create_synchronisation  (); set_flag_at_mask (state.resource_status, SYNCHRONISATION, true ); }
+    if (get_flag_at_mask (flags, COMMAND_POOL))    { assert (!get_flag_at_mask (state.resource_status, COMMAND_POOL));    create_command_pool     (); set_flag_at_mask (state.resource_status, COMMAND_POOL,    true ); }
+    if (get_flag_at_mask (flags, SHADER))          { assert (!get_flag_at_mask (state.resource_status, SHADER));          create_shader           (); set_flag_at_mask (state.resource_status, SHADER,          true ); }
+    if (get_flag_at_mask (flags, SAMPLER))         { assert (!get_flag_at_mask (state.resource_status, SAMPLER));         create_sampler          (); set_flag_at_mask (state.resource_status, SAMPLER,         true ); }
+    if (get_flag_at_mask (flags, FONT_TEXTURE))    { assert (!get_flag_at_mask (state.resource_status, FONT_TEXTURE));    create_font_texture     (); set_flag_at_mask (state.resource_status, FONT_TEXTURE,    true ); }
+    if (get_flag_at_mask (flags, FONT_DESCRIPTOR)) { assert (!get_flag_at_mask (state.resource_status, FONT_DESCRIPTOR)); create_font_descriptor  (); set_flag_at_mask (state.resource_status, FONT_DESCRIPTOR, true ); }
+    if (get_flag_at_mask (flags, PIPELINE))        { assert (!get_flag_at_mask (state.resource_status, PIPELINE));        create_pipeline         (); set_flag_at_mask (state.resource_status, PIPELINE,        true ); }
+    if (get_flag_at_mask (flags, COMMAND_BUFFER))  { assert (!get_flag_at_mask (state.resource_status, COMMAND_BUFFER));  create_command_buffer   (); set_flag_at_mask (state.resource_status, COMMAND_BUFFER,  true ); }
+    if (get_flag_at_mask (flags, VERTEX_BUFFER))   { assert (!get_flag_at_mask (state.resource_status, VERTEX_BUFFER));   create_vertex_buffer    (); set_flag_at_mask (state.resource_status, VERTEX_BUFFER,   true ); }
+    if (get_flag_at_mask (flags, INDEX_BUFFER))    { assert (!get_flag_at_mask (state.resource_status, INDEX_BUFFER));    create_index_buffer     (); set_flag_at_mask (state.resource_status, INDEX_BUFFER,    true ); }
 }
 
 void imgui::destroy_resources (resource_flags flags) {
     using namespace sge::utils;
-    if (get_flag_at_mask (flags, INDEX_BUFFER)) { assert (get_flag_at_mask (state.resource_status, INDEX_BUFFER)); destroy_index_buffer (); set_flag_at_mask (state.resource_status, INDEX_BUFFER, false); }
-    if (get_flag_at_mask (flags, VERTEX_BUFFER)) { assert (get_flag_at_mask (state.resource_status, VERTEX_BUFFER)); destroy_vertex_buffer (); set_flag_at_mask (state.resource_status, VERTEX_BUFFER, false); }
-    if (get_flag_at_mask (flags, COMMAND_BUFFER)) { assert (get_flag_at_mask (state.resource_status, COMMAND_BUFFER)); destroy_command_buffer (); set_flag_at_mask (state.resource_status, COMMAND_BUFFER, false); }
-    if (get_flag_at_mask (flags, PIPELINE)) { assert (get_flag_at_mask (state.resource_status, PIPELINE)); destroy_pipeline (); set_flag_at_mask (state.resource_status, PIPELINE, false); }
-    if (get_flag_at_mask (flags, FONT_DESCRIPTOR)) { assert (get_flag_at_mask (state.resource_status, FONT_DESCRIPTOR)); destroy_font_descriptor (); set_flag_at_mask (state.resource_status, FONT_DESCRIPTOR, false); }
-    if (get_flag_at_mask (flags, FONT_TEXTURE)) { assert (get_flag_at_mask (state.resource_status, FONT_TEXTURE)); destroy_font_texture (); set_flag_at_mask (state.resource_status, FONT_TEXTURE, false); }
-    if (get_flag_at_mask (flags, SAMPLER)) { assert (get_flag_at_mask (state.resource_status, SAMPLER)); destroy_sampler (); set_flag_at_mask (state.resource_status, SAMPLER, false); }
-    if (get_flag_at_mask (flags, SHADER)) { assert (get_flag_at_mask (state.resource_status, SHADER)); destroy_shader (); set_flag_at_mask (state.resource_status, SHADER, false); }
-    if (get_flag_at_mask (flags, COMMAND_POOL)) { assert (get_flag_at_mask (state.resource_status, COMMAND_POOL)); destroy_command_pool (); set_flag_at_mask (state.resource_status, COMMAND_POOL, false); }
-    if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert (get_flag_at_mask (state.resource_status, SYNCHRONISATION)); destroy_synchronisation (); set_flag_at_mask (state.resource_status, SYNCHRONISATION, false); }
+    if (get_flag_at_mask (flags, INDEX_BUFFER))    { assert ( get_flag_at_mask (state.resource_status, INDEX_BUFFER));    destroy_index_buffer    (); set_flag_at_mask (state.resource_status, INDEX_BUFFER,    false); }
+    if (get_flag_at_mask (flags, VERTEX_BUFFER))   { assert ( get_flag_at_mask (state.resource_status, VERTEX_BUFFER));   destroy_vertex_buffer   (); set_flag_at_mask (state.resource_status, VERTEX_BUFFER,   false); }
+    if (get_flag_at_mask (flags, COMMAND_BUFFER))  { assert ( get_flag_at_mask (state.resource_status, COMMAND_BUFFER));  destroy_command_buffer  (); set_flag_at_mask (state.resource_status, COMMAND_BUFFER,  false); }
+    if (get_flag_at_mask (flags, PIPELINE))        { assert ( get_flag_at_mask (state.resource_status, PIPELINE));        destroy_pipeline        (); set_flag_at_mask (state.resource_status, PIPELINE,        false); }
+    if (get_flag_at_mask (flags, FONT_DESCRIPTOR)) { assert ( get_flag_at_mask (state.resource_status, FONT_DESCRIPTOR)); destroy_font_descriptor (); set_flag_at_mask (state.resource_status, FONT_DESCRIPTOR, false); }
+    if (get_flag_at_mask (flags, FONT_TEXTURE))    { assert ( get_flag_at_mask (state.resource_status, FONT_TEXTURE));    destroy_font_texture    (); set_flag_at_mask (state.resource_status, FONT_TEXTURE,    false); }
+    if (get_flag_at_mask (flags, SAMPLER))         { assert ( get_flag_at_mask (state.resource_status, SAMPLER));         destroy_sampler         (); set_flag_at_mask (state.resource_status, SAMPLER,         false); }
+    if (get_flag_at_mask (flags, SHADER))          { assert ( get_flag_at_mask (state.resource_status, SHADER));          destroy_shader          (); set_flag_at_mask (state.resource_status, SHADER,          false); }
+    if (get_flag_at_mask (flags, COMMAND_POOL))    { assert ( get_flag_at_mask (state.resource_status, COMMAND_POOL));    destroy_command_pool    (); set_flag_at_mask (state.resource_status, COMMAND_POOL,    false); }
+    if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert ( get_flag_at_mask (state.resource_status, SYNCHRONISATION)); destroy_synchronisation (); set_flag_at_mask (state.resource_status, SYNCHRONISATION, false); }
 }
 
 

@@ -88,21 +88,21 @@ std::variant<presentation::swapchain_status, sge::vk::image_index> presentation:
 
 void presentation::create_resources (resource_flags flags) {
     using namespace sge::utils;
-    if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert (!get_flag_at_mask (state.resource_status, SYNCHRONISATION)); create_synchronisation ();  set_flag_at_mask (state.resource_status, SYNCHRONISATION, true ); }
-    if (get_flag_at_mask (flags, SURFACE))         { assert (!get_flag_at_mask (state.resource_status, SURFACE));         create_surface ();          set_flag_at_mask (state.resource_status, SURFACE,         true ); }
-    if (get_flag_at_mask (flags, SWAPCHAIN))       { assert (!get_flag_at_mask (state.resource_status, SWAPCHAIN));       create_swapchain ();        set_flag_at_mask (state.resource_status, SWAPCHAIN,       true ); }
-    if (get_flag_at_mask (flags, DEPTH_STENCIL))   { assert (!get_flag_at_mask (state.resource_status, DEPTH_STENCIL));   create_depth_stencil ();    set_flag_at_mask (state.resource_status, DEPTH_STENCIL,   true ); }
-    if (get_flag_at_mask (flags, RENDER_PASS))     { assert (!get_flag_at_mask (state.resource_status, RENDER_PASS));     create_render_pass ();      set_flag_at_mask (state.resource_status, RENDER_PASS,     true ); }
-    if (get_flag_at_mask (flags, FRAMEBUFFER))     { assert (!get_flag_at_mask (state.resource_status, FRAMEBUFFER));     create_framebuffer ();      set_flag_at_mask (state.resource_status, FRAMEBUFFER,     true ); }
+    if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert (!get_flag_at_mask (state.resource_status, SYNCHRONISATION)); create_synchronisation  (); set_flag_at_mask (state.resource_status, SYNCHRONISATION, true ); }
+    if (get_flag_at_mask (flags, SURFACE))         { assert (!get_flag_at_mask (state.resource_status, SURFACE));         create_surface          (); set_flag_at_mask (state.resource_status, SURFACE,         true ); }
+    if (get_flag_at_mask (flags, SWAPCHAIN))       { assert (!get_flag_at_mask (state.resource_status, SWAPCHAIN));       create_swapchain        (); set_flag_at_mask (state.resource_status, SWAPCHAIN,       true ); }
+    if (get_flag_at_mask (flags, DEPTH_STENCIL))   { assert (!get_flag_at_mask (state.resource_status, DEPTH_STENCIL));   create_depth_stencil    (); set_flag_at_mask (state.resource_status, DEPTH_STENCIL,   true ); }
+    if (get_flag_at_mask (flags, RENDER_PASS))     { assert (!get_flag_at_mask (state.resource_status, RENDER_PASS));     create_render_pass      (); set_flag_at_mask (state.resource_status, RENDER_PASS,     true ); }
+    if (get_flag_at_mask (flags, FRAMEBUFFER))     { assert (!get_flag_at_mask (state.resource_status, FRAMEBUFFER));     create_framebuffer      (); set_flag_at_mask (state.resource_status, FRAMEBUFFER,     true ); }
 }
 
 void presentation::destroy_resources (resource_flags flags) {
     using namespace sge::utils;
-    if (get_flag_at_mask (flags, FRAMEBUFFER))     { assert ( get_flag_at_mask (state.resource_status, FRAMEBUFFER));     destroy_framebuffer ();     set_flag_at_mask (state.resource_status, FRAMEBUFFER,     false); }
-    if (get_flag_at_mask (flags, RENDER_PASS))     { assert ( get_flag_at_mask (state.resource_status, RENDER_PASS));     destroy_render_pass ();     set_flag_at_mask (state.resource_status, RENDER_PASS,     false); }
-    if (get_flag_at_mask (flags, DEPTH_STENCIL))   { assert ( get_flag_at_mask (state.resource_status, DEPTH_STENCIL));   destroy_depth_stencil ();   set_flag_at_mask (state.resource_status, DEPTH_STENCIL,   false); }
-    if (get_flag_at_mask (flags, SWAPCHAIN))       { assert ( get_flag_at_mask (state.resource_status, SWAPCHAIN));       destroy_swapchain ();       set_flag_at_mask (state.resource_status, SWAPCHAIN,       false); }
-    if (get_flag_at_mask (flags, SURFACE))         { assert ( get_flag_at_mask (state.resource_status, SURFACE));         destroy_surface ();         set_flag_at_mask (state.resource_status, SURFACE,         false); }
+    if (get_flag_at_mask (flags, FRAMEBUFFER))     { assert ( get_flag_at_mask (state.resource_status, FRAMEBUFFER));     destroy_framebuffer     (); set_flag_at_mask (state.resource_status, FRAMEBUFFER,     false); }
+    if (get_flag_at_mask (flags, RENDER_PASS))     { assert ( get_flag_at_mask (state.resource_status, RENDER_PASS));     destroy_render_pass     (); set_flag_at_mask (state.resource_status, RENDER_PASS,     false); }
+    if (get_flag_at_mask (flags, DEPTH_STENCIL))   { assert ( get_flag_at_mask (state.resource_status, DEPTH_STENCIL));   destroy_depth_stencil   (); set_flag_at_mask (state.resource_status, DEPTH_STENCIL,   false); }
+    if (get_flag_at_mask (flags, SWAPCHAIN))       { assert ( get_flag_at_mask (state.resource_status, SWAPCHAIN));       destroy_swapchain       (); set_flag_at_mask (state.resource_status, SWAPCHAIN,       false); }
+    if (get_flag_at_mask (flags, SURFACE))         { assert ( get_flag_at_mask (state.resource_status, SURFACE));         destroy_surface         (); set_flag_at_mask (state.resource_status, SURFACE,         false); }
     if (get_flag_at_mask (flags, SYNCHRONISATION)) { assert ( get_flag_at_mask (state.resource_status, SYNCHRONISATION)); destroy_synchronisation (); set_flag_at_mask (state.resource_status, SYNCHRONISATION, false); }
 }
 
