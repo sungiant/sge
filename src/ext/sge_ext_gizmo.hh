@@ -153,7 +153,7 @@ public:
         {
             const int canvas_x = sge.system__get_state_int (runtime::system_int_state::canvas_offset_x);
             const int canvas_y = sge.system__get_state_int (runtime::system_int_state::canvas_offset_y);
-            const int canvas_w = sge.system__get_state_int(runtime::system_int_state::canvas_width);
+            const int canvas_w = sge.system__get_state_int (runtime::system_int_state::canvas_width);
             math::rect gizmo_container = { { canvas_x + canvas_w - gizmo_size, canvas_y }, { gizmo_size, gizmo_size }};
 
             imgui::ext::draw_user_triangles (

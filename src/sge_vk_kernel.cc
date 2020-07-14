@@ -28,8 +28,10 @@ const std::vector<const char*> required_device_layers = { "VK_LAYER_RENDERDOC_Ca
 const std::vector<const char*> required_device_extensions = { "VK_KHR_swapchain" };
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report (VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData) {
+#if SGE_DEBUG_MODE
     (void) flags; (void) object; (void) location; (void) messageCode; (void) pUserData; (void) pLayerPrefix; // Unused arguments
     fprintf (stderr, "[vulkan] ObjectType: %i\n\t* Message: %s\n", objectType, pMessage);
+#endif
     return VK_FALSE;
 }
 

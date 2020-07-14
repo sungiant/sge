@@ -39,7 +39,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 - [x] Easy to access and to hook into ImGui.
 - [x] Built in debugging overlays.
 - [x] Modular design.
-- [x] Minimal codebase, ~6000 lines total (including platform code).
+- [x] Minimal codebase, ~10,000 lines total (including platform code).
 - [x] Nominal dependencies (OS, Vulkan, ImGui).
 
 ## Rationale
