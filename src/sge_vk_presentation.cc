@@ -67,7 +67,8 @@ presentation::surface_status presentation::check_surface_status () {
 }
 
 std::variant<presentation::swapchain_status, sge::vk::image_index> presentation::next_image () {
-    uint32_t image_index;
+    assert (check_surface_status () == surface_status::OK); // make sure this was checked by the caller before hand.
+    uint32_t image_index = std::numeric_limits<uint32_t>::max();
     const VkResult result = vkAcquireNextImageKHR (context.logical_device, state.swapchain.value, std::numeric_limits<uint64_t>::max (), state.synchronisation.image_available, VK_NULL_HANDLE, &image_index);
     switch (result) {
         case VK_SUCCESS:                                        return image_index;
@@ -79,7 +80,9 @@ std::variant<presentation::swapchain_status, sge::vk::image_index> presentation:
         case VK_ERROR_OUT_OF_HOST_MEMORY:
         case VK_ERROR_OUT_OF_DEVICE_MEMORY:
         case VK_ERROR_DEVICE_LOST:
-        case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:      return presentation::swapchain_status::FATAL;
+        case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+        default:
+            return presentation::swapchain_status::FATAL;
     }
 }
 

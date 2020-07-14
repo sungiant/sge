@@ -47,7 +47,7 @@ if (G_TARGET STREQUAL "WIN32")
 add_definitions (-DSGE_VK_USE_CUSTOM_ALLOCATOR)
 endif ()
 
-add_definitions (-DSGE_DEBUG_MODE)
+#add_definitions (-DSGE_DEBUG_MODE)
 #add_definitions (-DSGE_PROFILING_MODE)
 
 ################################################################################

@@ -170,6 +170,7 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 
     std::variant<presentation::swapchain_status, image_index> swapchain_status = presentation::swapchain_status::FATAL;
 
+    bool surface_changed = false;
     if (surface_ok) {
         swapchain_status = presentation->next_image ();
 
@@ -182,6 +183,7 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 
                 swapchain_status = presentation->next_image ();
                 assert (!std::get_if<presentation::swapchain_status> (&swapchain_status)); // make sure we fixed the issue
+                surface_changed = true;
             }
             else if (swapchain_issue) {
                 assert (false);
@@ -191,7 +193,13 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
 
         assert (std::get_if<image_index> (&swapchain_status)); // at this point the swapchain should be ok
     }
-    else if (!surface_minimised) return; // lost
+    else if (surface_minimised) {
+        std::cout << "minimised" << '\n';
+    }
+    else if (!surface_minimised) {
+        std::cout << "lost" << '\n';
+        return; // lost
+    }
 
     const bool swapchain_ok = std::get_if<image_index> (&swapchain_status);
 
@@ -213,7 +221,9 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
     }
 
     // pre-update
-    compute_target->update (push_flag, ubo_flags, sbo_flags);
+    compute_target->update ( // todo: better abstract this logic into the compute_target
+        surface_changed ? surface_changed : push_flag, // make sure user push constant ranges get updated imediately as some user apps need to response this frame to surface changes - i.e. the lazy update mode in the raymarching demo
+        ubo_flags, sbo_flags); // these can wait until the next frame for now
 
     if (surface_ok && swapchain_ok) {
         const uint32_t image_index = std::get<sge::vk::image_index> (swapchain_status);
@@ -221,7 +231,9 @@ void vk::update (bool& push_flag, std::vector<bool>& ubo_flags, std::vector<std:
         const VkSemaphore all_done = submit_all (image_index);
 
         const auto present_info = utils::init_VkPresentInfoKHR (all_done, presentation->swapchain (), image_index);
-        const VkResult result = vkQueuePresentKHR (kernel->primary_graphics_queue (), &present_info); // ignore the result as any error we'll deal with next frame.
+        const VkResult result = vkQueuePresentKHR (kernel->primary_graphics_queue (), &present_info);
+        
+        // ignore the result as any error we'll deal with next frame.
     }
 
     // post-update

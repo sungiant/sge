@@ -399,114 +399,84 @@ void engine::process_user_log (const log& z_log) {
     // todo: probably want to persist this lot somewhere and also provide access to it.
 }
 
-void engine::internal_update (sge::app::response& user_response, struct engine_state& engine_state, struct  engine_tasks& engine_tasks) {
-    const auto tStart = std::chrono::high_resolution_clock::now ();
-
-    // USER TASKS
-    {
-        if (engine_tasks.change_imgui_enabled.has_value ()) {
-            engine_state.graphics.state.imgui_on = engine_tasks.change_imgui_enabled.value ();
-            engine_tasks.change_imgui_enabled.reset ();
-        }
-
-        if (engine_tasks.change_fullscreen_enabled.has_value () && engine_state.host.set_window_fullscreen_fn.has_value ()) {
-            const bool v = engine_tasks.change_fullscreen_enabled.value ();
-            engine_state.host.set_window_fullscreen_fn.value() (v);
-            engine_state.host.is_fullscreen = v;
-            engine_tasks.change_fullscreen_enabled.reset ();
-            engine_state.host.container_just_changed = true;
-        }
-
-        if (engine_tasks.change_window_title.has_value () && engine_state.host.set_window_title_fn.has_value ()) {
-            const std::string& v = engine_tasks.change_window_title.value ();
-            engine_state.host.set_window_title_fn.value () (v.c_str ());
-            engine_state.host.window_title = v;
-            engine_tasks.change_window_title.reset ();
-        }
-
-        if ((engine_tasks.change_canvas_width.has_value () || engine_tasks.change_canvas_height.has_value ()) && engine_state.host.set_window_size_fn.has_value ()) {
-            const int vw = engine_tasks.change_canvas_width.has_value () ? engine_tasks.change_canvas_width.value () : engine_state.client.container_width;
-            const int vh = engine_tasks.change_canvas_height.has_value() ? engine_tasks.change_canvas_height.value () : engine_state.client.container_height;
-
-            const int adjusted_size_x = vw;
-            const int adjusted_size_y = engine_state.graphics.state.imgui_on ? vh + imgui::ext::guess_main_menu_bar_height () : vh;
-
-            engine_state.host.set_window_size_fn.value () (adjusted_size_x, adjusted_size_y);
-            engine_tasks.change_canvas_width.reset ();
-            engine_tasks.change_canvas_height.reset ();
-            engine_state.host.container_just_changed = true;
-        }
-
-        if (engine_tasks.shutdown_request.has_value ()) {
-            engine_state.host.shutdown_request_fn.value() ();
-            engine_tasks.shutdown_request.reset ();
-        }
-
-        {
-            for (int i = 0; i < engine_tasks.new_logs.size (); ++i) {
-                process_user_log (engine_tasks.new_logs[i]);
-            }
-            engine_tasks.new_logs.clear ();
-        }
-
+void engine::process_user_tasks (struct engine_state& engine_state, struct engine_tasks& engine_tasks) {
+    if (engine_tasks.change_imgui_enabled.has_value ()) {
+        engine_state.graphics.state.imgui_on = engine_tasks.change_imgui_enabled.value ();
+        engine_tasks.change_imgui_enabled.reset ();
     }
 
-    // IMGUI
-    {
-        ImGuiIO& io = ImGui::GetIO ();
-
-        const auto& input = engine_state.input;
-        static int mouse_wheel_last_frame = 0;
-
-        const int mouse_wheel_this_frame = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
-               ? std::get<input_digital_control> (input.at (input_control_identifier::md_scrollwheel))
-               : 0;
-        const int mouse_wheel_delta = mouse_wheel_this_frame - mouse_wheel_last_frame;
-
-        mouse_wheel_last_frame = mouse_wheel_this_frame;
-
-        auto p = (input.find (input_control_identifier::mp_position) != input.end ())
-            ? std::get<input_point_control> (input.at (input_control_identifier::mp_position))
-        : sge::math::point2 { 0, 0 };
-
-        io.MousePos = ImVec2 (p.x, p.y);
-        io.MouseDown[0] = input.find (input_control_identifier::mb_left) != input.end () && std::get<input_binary_control>(input.at(input_control_identifier::mb_left));
-        io.MouseDown[2] = input.find (input_control_identifier::mb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
-        io.MouseDown[1] = input.find (input_control_identifier::mb_right) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_right));
-        io.DeltaTime = engine_state.instrumentation.frameTimer;
-        io.MouseWheel = (float) mouse_wheel_delta;
-
-        io.KeyCtrl = input.find (input_control_identifier::kb_control) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_control));
-        io.KeyShift = input.find (input_control_identifier::kb_shift) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_shift));
-        io.KeyAlt = input.find (input_control_identifier::kb_alt) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_alt));
-        io.KeySuper = input.find (input_control_identifier::kb_cmd) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_cmd));
-
+    if (engine_tasks.change_fullscreen_enabled.has_value () && engine_state.host.set_window_fullscreen_fn.has_value ()) {
+        const bool v = engine_tasks.change_fullscreen_enabled.value ();
+        engine_state.host.set_window_fullscreen_fn.value() (v);
+        engine_state.host.is_fullscreen = v;
+        engine_tasks.change_fullscreen_enabled.reset ();
+        engine_state.host.container_just_changed = true;
     }
 
-    // VULKAN
-    engine_state.graphics.update (
-        user_response.push_constants_changed,
-        user_response.uniform_changes,
-        user_response.blob_changes,
-        engine_state.instrumentation.frameTimer);
+    if (engine_tasks.change_window_title.has_value () && engine_state.host.set_window_title_fn.has_value ()) {
+        const std::string& v = engine_tasks.change_window_title.value ();
+        engine_state.host.set_window_title_fn.value () (v.c_str ());
+        engine_state.host.window_title = v;
+        engine_tasks.change_window_title.reset ();
+    }
 
-    // INSTRUMENTATION
+    if ((engine_tasks.change_canvas_width.has_value () || engine_tasks.change_canvas_height.has_value ()) && engine_state.host.set_window_size_fn.has_value ()) {
+        const int vw = engine_tasks.change_canvas_width.has_value () ? engine_tasks.change_canvas_width.value () : engine_state.client.container_width;
+        const int vh = engine_tasks.change_canvas_height.has_value() ? engine_tasks.change_canvas_height.value () : engine_state.client.container_height;
+
+        const int adjusted_size_x = vw;
+        const int adjusted_size_y = engine_state.graphics.state.imgui_on ? vh + imgui::ext::guess_main_menu_bar_height () : vh;
+
+        engine_state.host.set_window_size_fn.value () (adjusted_size_x, adjusted_size_y);
+        engine_tasks.change_canvas_width.reset ();
+        engine_tasks.change_canvas_height.reset ();
+        engine_state.host.container_just_changed = true;
+    }
+
+    if (engine_tasks.shutdown_request.has_value ()) {
+        engine_state.host.shutdown_request_fn.value() ();
+        engine_tasks.shutdown_request.reset ();
+    }
+
     {
-        engine_state.instrumentation.frameCounter++;
-        const auto tEnd = std::chrono::high_resolution_clock::now ();
-        const auto tDiff = std::chrono::duration<double, std::milli> (tEnd - tStart).count ();
-        engine_state.instrumentation.frameTimer = (float)tDiff / 1000.0f;
-        engine_state.instrumentation.totalTimer += engine_state.instrumentation.frameTimer;
-        const float fpsTimer = (float)(std::chrono::duration<double, std::milli> (tEnd - engine_state.instrumentation.lastTimestamp).count ());
-        if (fpsTimer > 1000.0f) {
-            engine_state.instrumentation.lastFPS = static_cast<uint32_t>((float) engine_state.instrumentation.frameCounter * (1000.0f / fpsTimer));
-
-            engine_state.instrumentation.frameCounter = 0;
-            engine_state.instrumentation.lastTimestamp = tEnd;
+        for (int i = 0; i < engine_tasks.new_logs.size (); ++i) {
+            process_user_log (engine_tasks.new_logs[i]);
         }
+        engine_tasks.new_logs.clear ();
     }
+
 }
 
+void engine::provide_imgui_with_input_info (struct engine_state& engine_state) {
+    ImGuiIO& io = ImGui::GetIO ();
+
+    const auto& input = engine_state.input;
+    static int mouse_wheel_last_frame = 0;
+
+    const int mouse_wheel_this_frame = (input.find (input_control_identifier::md_scrollwheel) != input.end ())
+           ? std::get<input_digital_control> (input.at (input_control_identifier::md_scrollwheel))
+           : 0;
+    const int mouse_wheel_delta = mouse_wheel_this_frame - mouse_wheel_last_frame;
+
+    mouse_wheel_last_frame = mouse_wheel_this_frame;
+
+    auto p = (input.find (input_control_identifier::mp_position) != input.end ())
+        ? std::get<input_point_control> (input.at (input_control_identifier::mp_position))
+    : sge::math::point2 { 0, 0 };
+
+    io.MousePos = ImVec2 (p.x, p.y);
+    io.MouseDown[0] = input.find (input_control_identifier::mb_left) != input.end () && std::get<input_binary_control>(input.at(input_control_identifier::mb_left));
+    io.MouseDown[2] = input.find (input_control_identifier::mb_middle) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_middle));
+    io.MouseDown[1] = input.find (input_control_identifier::mb_right) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::mb_right));
+    io.DeltaTime = engine_state.instrumentation.frameTimer;
+    io.MouseWheel = (float) mouse_wheel_delta;
+
+    io.KeyCtrl = input.find (input_control_identifier::kb_control) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_control));
+    io.KeyShift = input.find (input_control_identifier::kb_shift) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_shift));
+    io.KeyAlt = input.find (input_control_identifier::kb_alt) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_alt));
+    io.KeySuper = input.find (input_control_identifier::kb_cmd) != input.end () && std::get<input_binary_control> (input.at (input_control_identifier::kb_cmd));
+
+}
 
 
 engine::engine () {
@@ -613,7 +583,9 @@ void engine::start () {
 }
 
 void engine::update (client_state& z_container, input_state& z_input) {
-
+    
+    const auto tStart = std::chrono::high_resolution_clock::now ();
+    
     engine_state->host.container_just_changed = false;
 
     /*
@@ -633,7 +605,11 @@ void engine::update (client_state& z_container, input_state& z_input) {
     engine_state->client = z_container;
     engine_state->input = z_input;
 
-    internal_update (*user_response, *engine_state, *engine_tasks);
+    // USER TASKS (from last frame)
+    process_user_tasks (*engine_state, *engine_tasks);
+
+    // IMGUI
+    provide_imgui_with_input_info (*engine_state);
 
     // update all registered extensions
     for (auto& kvp : engine_extensions) {
@@ -643,6 +619,31 @@ void engine::update (client_state& z_container, input_state& z_input) {
 
     // update the user's app
     sge::app::update (*user_response, *user_api);
+    
+    
+    // VULKAN
+    engine_state->graphics.update (
+        user_response->push_constants_changed,
+        user_response->uniform_changes,
+        user_response->blob_changes,
+        engine_state->instrumentation.frameTimer // from last frame
+    );
+
+    // INSTRUMENTATION
+    {
+        engine_state->instrumentation.frameCounter++;
+        const auto tEnd = std::chrono::high_resolution_clock::now ();
+        const auto tDiff = std::chrono::duration<double, std::milli> (tEnd - tStart).count ();
+        engine_state->instrumentation.frameTimer = (float)tDiff / 1000.0f;
+        engine_state->instrumentation.totalTimer += engine_state->instrumentation.frameTimer;
+        const float fpsTimer = (float)(std::chrono::duration<double, std::milli> (tEnd - engine_state->instrumentation.lastTimestamp).count ());
+        if (fpsTimer > 1000.0f) {
+            engine_state->instrumentation.lastFPS = static_cast<uint32_t>((float) engine_state->instrumentation.frameCounter * (1000.0f / fpsTimer));
+
+            engine_state->instrumentation.frameCounter = 0;
+            engine_state->instrumentation.lastTimestamp = tEnd;
+        }
+    }
 
 }
 

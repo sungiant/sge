@@ -299,8 +299,9 @@ public:
     void memory_window (bool*);
 
 private:
-    void process_user_log (const log&);
-    void internal_update (sge::app::response&, struct engine_state&, struct engine_tasks&);
+    static void process_user_log (const log&);
+    static void process_user_tasks (struct engine_state&, struct engine_tasks&);
+    static void provide_imgui_with_input_info (struct engine_state&);
 };
 
 }
