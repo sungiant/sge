@@ -33,8 +33,8 @@ public:
 
     typedef uint32_t resource_flags;
 
-    static const resource_flags static_resources = resource_bit::SYNCHRONISATION | resource_bit::DESCRIPTOR_SET_LAYOUT | resource_bit::COMMAND_POOL;
-    static const resource_flags transient_resources = resource_bit::DESCRIPTOR_POOL | resource_bit::DESCRIPTOR_SET | resource_bit::PIPELINE | resource_bit::COMMAND_BUFFER;
+    static const resource_flags static_resources = resource_bit::SYNCHRONISATION | resource_bit::DESCRIPTOR_SET_LAYOUT | resource_bit::COMMAND_POOL | resource_bit::PIPELINE;
+    static const resource_flags transient_resources = resource_bit::DESCRIPTOR_POOL | resource_bit::DESCRIPTOR_SET | resource_bit::COMMAND_BUFFER;
     static const resource_flags all_resources = static_resources | transient_resources;
 
     canvas_render (
@@ -77,18 +77,12 @@ private:
         uint32_t                        resource_status                         = 0;
 
         VkSemaphore                     render_finished                         = VK_NULL_HANDLE;
-
         VkDescriptorSetLayout           descriptor_set_layout                   = VK_NULL_HANDLE;
-
         VkCommandPool                   command_pool                            = VK_NULL_HANDLE;
-
         VkDescriptorPool                descriptor_pool                         = VK_NULL_HANDLE;
-
         VkDescriptorSet                 descriptor_set                          = VK_NULL_HANDLE;
-
         VkPipelineLayout                pipeline_layout                         = VK_NULL_HANDLE;
         VkPipeline                      pipeline                                = VK_NULL_HANDLE;
-
         std::vector<VkCommandBuffer>    command_buffers;
     };
 

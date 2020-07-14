@@ -20,7 +20,7 @@ canvas_render::canvas_render (const struct context& context, const queue_identif
 
 void canvas_render::create_resources (resource_flags flags) {
     using namespace sge::utils;
-    if (get_flag_at_mask (flags, PIPELINE) || get_flag_at_mask (flags, COMMAND_BUFFER))
+    if (get_flag_at_mask (flags, COMMAND_BUFFER))
         state.current_viewport = get_viewport_fn ();
 
     if (get_flag_at_mask (flags, SYNCHRONISATION))       { assert (!get_flag_at_mask (state.resource_status, SYNCHRONISATION));       create_synchronisation        (); set_flag_at_mask (state.resource_status, SYNCHRONISATION,       true ); }
@@ -154,8 +154,7 @@ void canvas_render::create_pipeline () {
 
     const auto empty_input_state             = utils::init_VkPipelineVertexInputStateCreateInfo ();
     const auto input_assembly                = utils::init_VkPipelineInputAssemblyStateCreateInfo (VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
-    const auto scissor                       = utils::init_VkRect2D ((int)state.current_viewport.width, (int) state.current_viewport.height, (int)state.current_viewport.x, (int)state.current_viewport.y);
-    const auto viewport_state                = utils::init_VkPipelineViewportStateCreateInfo (state.current_viewport, scissor); // viewport is ignored here as we set it in the command buffer
+    const auto viewport_state                = utils::init_VkPipelineViewportStateCreateInfo (VkViewport {}, VkRect2D {}); // viewport and scissor are ignored here as we set them in the command buffer
     const auto rasterizer                    = utils::init_VkPipelineRasterizationStateCreateInfo (VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
     const auto multisampling                 = utils::init_VkPipelineMultisampleStateCreateInfo (VK_SAMPLE_COUNT_1_BIT);
 
@@ -172,7 +171,7 @@ void canvas_render::create_pipeline () {
 
     vk_assert (vkCreatePipelineLayout (context.logical_device, &pipeline_layout_info, context.allocation_callbacks, &state.pipeline_layout));
 
-    const std::vector<VkDynamicState> dynamic_states_to_enable = { VK_DYNAMIC_STATE_VIEWPORT };
+    const std::vector<VkDynamicState> dynamic_states_to_enable = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
     const auto dynamic_state = utils::init_VkPipelineDynamicStateCreateInfo (dynamic_states_to_enable);
 
     const auto depth_stencil_state = utils::init_VkPipelineDepthStencilStateCreateInfo (VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -239,6 +238,9 @@ void canvas_render::create_command_buffer () {
         render_pass_begin_info.pClearValues = clear_values.data ();
 
         vkCmdSetViewport(state.command_buffers[i], 0, 1, &state.current_viewport);
+
+        const auto scissor = utils::init_VkRect2D ((int)state.current_viewport.width, (int) state.current_viewport.height, (int)state.current_viewport.x, (int)state.current_viewport.y);
+        vkCmdSetScissor(state.command_buffers[i], 0, 1, &scissor);
 
         vkCmdBeginRenderPass (state.command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline (state.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline);
