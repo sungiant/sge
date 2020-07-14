@@ -128,7 +128,7 @@ void presentation::create_surface () {
     vk_assert (vkCreateWin32SurfaceKHR (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface.value));
 #elif TARGET_MACOSX
     auto surface_create_info = utils::init_VkMacOSSurfaceCreateInfoMVK (const_cast<void*> (app_view));
-    vk_assert (vkCreateMacOSSurfaceMVK (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface));
+    vk_assert (vkCreateMacOSSurfaceMVK (context.instance, &surface_create_info, context.allocation_callbacks, &state.surface.value));
 
     //{ // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCreateMetalSurfaceEXT.html
     //

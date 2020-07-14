@@ -7,7 +7,6 @@
 #pragma once
 
 #include "sge.hh"
-#include "sge_math.hh"
 #include "sge_vk_utils.hh"
 #include "sge_vk_buffer.hh"
 
@@ -71,18 +70,17 @@ struct logical_device_info {
 };
 
 
-class context {
-public:
+struct context {
 
-    const VkAllocationCallbacks const*      allocation_callbacks;
-    const VkInstance                        instance;
-    const VkPhysicalDevice                  physical_device;
-    const VkDevice                          logical_device;
-    const physical_device_info&             physical_device_info;
-    logical_device_info&                    logical_device_info;
-    
+    const VkAllocationCallbacks * const allocation_callbacks;
+    const VkInstance                    instance;
+    const VkPhysicalDevice              physical_device;
+    const VkDevice                      logical_device;
+    const physical_device_info&         physical_device_info;
+    logical_device_info&          logical_device_info;
+
     context (
-        const VkAllocationCallbacks const* z_allocation_callbacks,
+        const VkAllocationCallbacks * const z_allocation_callbacks,
         const VkInstance z_instance,
         const VkPhysicalDevice z_physical_device,
         const VkDevice z_logical_device,
