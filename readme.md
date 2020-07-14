@@ -77,8 +77,6 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 ### 0.1.0 - Remaining tasks
 
-- [x] Improve Vulkan queue selection logic.
-- [ ] Fix issue with ImGui not refreshing quickly when window is resized.
 - [ ] Complete dynamic csg tree SBO implementation.
 - [ ] Resolve/query issue with having more than one SBO with Molten VK.
 - [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
