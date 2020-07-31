@@ -28,7 +28,7 @@
 
 ## Features
 
-SGE has a minimal feature set - you could think of it as being something like [ShaderToy](https://www.shadertoy.com) running against Vulkan for desktop environments with direct control in C++ over shader input data.
+SGE has a minimal feature set - you could think of it as being something like [ShaderToy][shader_toy] running against Vulkan for desktop environments with direct control in C++ over shader input data.
 
 - [x] Easily author compute shader based rendering demos.
 - [x] Configurable input data: push constants, and uniform buffers.
@@ -78,8 +78,7 @@ SGE has a minimal feature set - you could think of it as being something like [S
 ### 0.1.0 - Remaining tasks
 
 - [ ] Complete dynamic csg tree SBO implementation.
-- [ ] Resolve/query issue with having more than one SBO with Molten VK.
-- [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain the issue with SBOs).
+- [ ] Replace ray tracing example (right now there is a familiar placeholder to help explain [this issue][[molten_vk_sbo_issue]] - now resolved).
 - [ ] Clean separation between host, engine, runtime, and app.
 
 ### Backlog
@@ -104,15 +103,15 @@ SGE has a minimal feature set - you could think of it as being something like [S
 
 ### Prerequisite software
 
-* [CMake](https://cmake.org)
-* [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
+* [CMake][cmake]
+* [Vulkan SDK][vulkan_sdk]
 
 ### Environment setup: Windows
 
 * It may be nessasary to update `gen.py` to specify the specific version of Visual Studio being targetted.
 
 
-Example [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-7) configuration:
+Example [PowerShell][powershell] configuration:
 
 ```
 $env:VULKAN_SDK="C:\VulkanSDK\1.2.131.2"
@@ -120,7 +119,7 @@ $env:VULKAN_SDK="C:\VulkanSDK\1.2.131.2"
 
 ### Environment setup: OSX
 
-Example [Fish](https://fishshell.com/) configuration:
+Example [Fish][fish_shell] configuration:
 
 ```
 set -x VULKAN_SDK_PATH /Users/sungiant/sdks/vulkansdk-macos-1.2.131.1
@@ -138,6 +137,7 @@ set -gx PATH $PATH $VULKAN_SDK/bin
 
 #### Notes
 
+* Releases of Molten VK prior to version 1.2.141.1 contain a blocking issue for some of the examples in this project, described [here][molten_vk_sbo_issue].
 * When running via XCode Vulkan calls can fail due to environment variables being inaccessible; opening XCode with `open -a xcode` can fix the issue.
 
 ### Environment setup: Linux
@@ -154,13 +154,21 @@ To build SGE and it's associated examples:
 
 ## Alternatives
 
-* [ShaderToy](https://www.shadertoy.com)
-* [Bonzomatic](https://github.com/Gargaj/Bonzomatic)
-* [Taichi](https://github.com/taichi-dev/taichi)
+* [ShaderToy][shader_toy]
+* [Bonzomatic][bonzomatic]
+* [Taichi][taichi]
 
 ## License
 
 SGE is licensed under the **[MIT License](/license)**; you may not use this software except in compliance with the License.
 
+[molten_vk_sbo_issue]: https://github.com/KhronosGroup/MoltenVK/issues/959
+[shader_toy]: https://www.shadertoy.com
+[bonzomatic]: https://github.com/Gargaj/Bonzomatic
+[taichi]: https://github.com/taichi-dev/taichi
+[fish_shell]: https://fishshell.com/
+[cmake]: https://cmake.org
+[vulkan_sdk]: https://vulkan.lunarg.com/sdk/home
+[powershell]: https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-7
 
 

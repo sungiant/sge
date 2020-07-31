@@ -1,15 +1,5 @@
 #include <sge_app.hh>
 
-#ifdef TARGET_MACOSX
-#define USE_SBO_MATERIALS 1
-#define USE_SBO_LIGHTS 0
-#define USE_SBO_SCENE 0
-#else
-#define USE_SBO_MATERIALS 1
-#define USE_SBO_LIGHTS 1
-#define USE_SBO_SCENE 1
-#endif
-
 #define UPDATE_STORAGE_BUFFER_DELAY 0.2f
 
 struct PUSH {
@@ -84,14 +74,11 @@ std::vector<std::optional<sge::dataspan>> blobs_changed;
 float last_blob_update_time = 0.0f;
 
 
-#if (USE_SBO_MATERIALS == 1)
 struct Material { sge::math::vector3 colour; float shininess; };
 typedef std::vector<Material> SBO_MATERIALS;
 SBO_MATERIALS sbo_materials;
 sge::dataspan current_materials_dataspan () { return sge::dataspan{ sbo_materials.data (), sbo_materials.size () * sizeof (Material) }; }
-#endif
 
-#if (USE_SBO_LIGHTS == 1)
 struct PointLight {
     sge::math::vector3 position;
     float range; // for now linear fall off over range
@@ -101,9 +88,7 @@ struct PointLight {
 typedef std::vector<PointLight> SBO_LIGHTS;
 SBO_LIGHTS sbo_lights;
 sge::dataspan current_lights_dataspan () { return sge::dataspan{ sbo_lights.data (), sbo_lights.size () * sizeof (PointLight) }; }
-#endif
 
-#if (USE_SBO_SCENE == 1)
 enum TreeElement : uint32_t { TREE_NODE, TREE_LEAF };
 enum ShapeType : uint32_t { SDF_SPHERE, SDF_CUBE, SDF_CUBOID };
 enum CSG_OP : uint32_t { CSG_UNION, CSG_INTERSECTION, CSG_DIFFERENCE };
@@ -115,7 +100,6 @@ SBO_SHAPES sbo_shapes;
 SBO_TREE sbo_tree;
 sge::dataspan current_shapes_dataspan () { return sge::dataspan{ sbo_shapes.data (), sbo_shapes.size () * sizeof (Shape) }; }
 sge::dataspan current_tree_dataspan () { return sge::dataspan{ sbo_tree.data (), sbo_tree.size () * sizeof (Tree) }; }
-#endif
 
 void initialise () {
     config.app_name = "Dynamic CSG evaluation";
@@ -127,7 +111,6 @@ void initialise () {
     ubo_camera.aspect = (float)config.app_width / (float)config.app_height;
     ubo_settings.iterations = 64;
     ubo_settings.display_mode = 0;
-#if (USE_SBO_MATERIALS == 1)
     const auto magenta      = sge::math::vector3 { 1.00, 0.00, 1.00 };
     const auto my_black     = sge::math::vector3 { 0.03, 0.04, 0.08 };
     const auto yellow       = sge::math::vector3 { 1.00, 0.90, 0.00 };
@@ -143,15 +126,11 @@ void initialise () {
     sbo_materials.emplace_back (Material { blue, 54 });
     sbo_materials.emplace_back (Material { green, 54 });
     sbo_materials.emplace_back (Material { red, 54 });
-#endif
 
-#if (USE_SBO_LIGHTS == 1)
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {2.143f, 4.286f, -2.069f}, 20.395f, sge::math::vector3 {0.91f, 0, 1}, 0.266f });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {-1.429, 0.714f, 4.138f}, 19.684f, sge::math::vector3 {0.96f, 0.32f, 0.12f}, 0.459f });
     sbo_lights.emplace_back (PointLight { sge::math::vector3 {0, 0, 0}, 3.105f, sge::math::vector3 {0.16f, 0.65f, 0}, 0.422f });
-#endif
 
-#if (USE_SBO_SCENE == 1)
     sbo_shapes.emplace_back (Shape{ sge::math::vector3 {0, -5.8, 0},  ShapeType::SDF_CUBE, sge::math::vector4 {10, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{-3.5, 0.7, -3.5}, ShapeType::SDF_CUBE, sge::math::vector4 {3, 0, 0, 0} });
     sbo_shapes.emplace_back (Shape{ sge::math::vector3{2, 0.2, -4.5}, ShapeType::SDF_CUBOID, sge::math::vector4 {1, 2.4, 1, 0} });
@@ -223,8 +202,6 @@ void initialise () {
     sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
     sbo_tree.emplace_back (Tree{ TreeElement::TREE_NODE, CSG_OP::CSG_UNION });
 
-#endif
-
     computation.shader_path = "csg.comp.spv";
     computation.push_constants = std::optional<sge::dataspan> ({ &push, sizeof (PUSH) });
     computation.uniforms = {
@@ -232,16 +209,10 @@ void initialise () {
         sge::dataspan { &ubo_settings, sizeof (UBO_SETTINGS) },
     };
     computation.blobs = {
-#if (USE_SBO_MATERIALS == 1)
         current_materials_dataspan (),
-#endif
-#if (USE_SBO_LIGHTS == 1)
         current_lights_dataspan (),
-#endif
-#if (USE_SBO_SCENE == 1)
         current_shapes_dataspan (),
         current_tree_dataspan (),
-#endif
     };
 
     blobs_changed.resize (computation.blobs.size ());
@@ -351,7 +322,6 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
     ImGui::End();
 
     // ---------------------------------
-#if (USE_SBO_MATERIALS == 1)
     ImGui::Begin("Material editor");
     {
         ImGui::Columns(3);
@@ -387,10 +357,8 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         }
     }
     ImGui::End();
-#endif
-
+    
     // ---------------------------------
-#if (USE_SBO_LIGHTS == 1)
     ImGui::Begin("Lighting Editor");
     {
         ImGui::Columns(6);
@@ -461,7 +429,6 @@ void debug_ui (sge::app::response& r, const sge::app::api& sge) {
         }
     }
     ImGui::End();
-#endif
 
 }
 

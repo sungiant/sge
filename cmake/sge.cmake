@@ -20,6 +20,7 @@ target_include_directories (sge PUBLIC ${G_ROOT_DIR}/src/impl/)
 elseif (G_TARGET STREQUAL "MACOSX")
 
 set (MVK_FRAMEWORK $ENV{MOLTEN_VK}/macOS/framework/MoltenVK.framework)
+# set (MVK_FRAMEWORK $ENV{HOME}/repos/MoltenVK/Package/Release/MoltenVK/macOS/framework/MoltenVK.framework) # Local build.
 
 add_library (sge ${SOURCE_LIST} ${MVK_FRAMEWORK})
 
