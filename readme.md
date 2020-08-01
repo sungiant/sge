@@ -137,7 +137,7 @@ set -gx PATH $PATH $VULKAN_SDK/bin
 
 #### Notes
 
-* Releases of Molten VK prior to version 1.2.141.1 contain a blocking issue for some of the examples in this project, described [here][molten_vk_sbo_issue].
+* Releases of Molten VK before version 1.2.148 contain a blocking issue for some of the examples in this project, described [here][molten_vk_sbo_issue].
 * When running via XCode Vulkan calls can fail due to environment variables being inaccessible; opening XCode with `open -a xcode` can fix the issue.
 
 ### Environment setup: Linux
